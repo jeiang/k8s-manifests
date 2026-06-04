@@ -1,0 +1,33 @@
+replicaCount: 1
+
+image:
+  repository: ghcr.io/jeiang/website
+  tag: sha-6ac94e3
+  pullPolicy: IfNotPresent
+
+service:
+  type: ClusterIP
+  port: 80
+
+ingress:
+  enabled: true
+  className: traefik
+
+  hosts:
+    # - jeiang.dev
+    # - aidanpinard.co
+    - pinard.co.tt
+
+  tls:
+    enabled: true
+    secretName: website-tls
+
+  redirectToHttps: true
+
+certManager:
+  enabled: true
+  clusterIssuer:
+    create: false
+    name: letsencrypt-prod
+    email: aidan@aidanpinard.co
+    server: https://acme-v02.api.letsencrypt.org/directory
