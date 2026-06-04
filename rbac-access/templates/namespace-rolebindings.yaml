@@ -1,0 +1,43 @@
+{{- if .Values.namespaceAccess.create }}
+{{- $allNamespaces := list }}
+{{- range .Values.namespaces.additional }}
+{{- $allNamespaces = append $allNamespaces . }}
+{{- end }}
+{{- range .Values.namespaceAccess.users }}
+{{- range .namespaces }}
+{{- $allNamespaces = append $allNamespaces . }}
+{{- end }}
+{{- end }}
+{{- $allNamespaces = $allNamespaces | uniq | sortAlpha }}
+{{- range $user := .Values.namespaceAccess.users }}
+{{- $boundNamespaces := list }}
+{{- range $user.namespaces }}
+{{- $boundNamespaces = append $boundNamespaces . }}
+{{- end }}
+{{- if $.Values.namespaceAccess.includeUserNamePrefix }}
+{{- $prefix := printf "%s%s" $user.name $.Values.namespaceAccess.userNamePrefixSeparator }}
+{{- range $allNamespaces }}
+{{- if or (eq . $user.name) (hasPrefix $prefix .) }}
+{{- $boundNamespaces = append $boundNamespaces . }}
+{{- end }}
+{{- end }}
+{{- end }}
+{{- range $namespace := $boundNamespaces | uniq | sortAlpha }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: {{ printf "%s-%s" $user.name $.Values.namespaceAccess.clusterRole | trunc 63 | trimSuffix "-" | quote }}
+  namespace: {{ $namespace | quote }}
+  labels:
+    {{- include "rbac-access.labels" $ | nindent 4 }}
+    rbac-access/user: {{ $user.name | quote }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: {{ $.Values.namespaceAccess.clusterRole | quote }}
+subjects:
+{{- toYaml $user.subjects | nindent 2 }}
+{{- end }}
+{{- end }}
+{{- end }}
