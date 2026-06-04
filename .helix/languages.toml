@@ -1,5 +1,0 @@
-# Define the language server settings
-[language-server.yaml-language-server.config.yaml]
-schemas = { "kubernetes" = "/*.yaml" }
-format = { enable = true }
-validate = true
