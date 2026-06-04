@@ -1,0 +1,20 @@
+{{- if .Values.namespaces.create }}
+{{- $namespaces := list }}
+{{- range .Values.namespaces.additional }}
+{{- $namespaces = append $namespaces . }}
+{{- end }}
+{{- range .Values.namespaceAccess.users }}
+{{- range .namespaces }}
+{{- $namespaces = append $namespaces . }}
+{{- end }}
+{{- end }}
+{{- range $namespace := $namespaces | uniq | sortAlpha }}
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: {{ $namespace | quote }}
+  labels:
+    {{- include "rbac-access.labels" $ | nindent 4 }}
+{{- end }}
+{{- end }}

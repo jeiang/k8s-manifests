@@ -1,0 +1,34 @@
+namespaces:
+  create: true
+  additional: []
+
+admin:
+  create: true
+  clusterRole: cluster-admin
+  subjects:
+    - kind: User
+      name: aidanp
+      apiGroup: rbac.authorization.k8s.io
+
+namespaceAccess:
+  create: true
+  clusterRole: admin
+  includeUserNamePrefix: true
+  userNamePrefixSeparator: "-"
+  users:
+    - name: saeed
+      subjects:
+        - kind: User
+          name: saeed
+          apiGroup: rbac.authorization.k8s.io
+      namespaces:
+        - shared
+        - saeed
+    - name: noel
+      subjects:
+        - kind: User
+          name: noel
+          apiGroup: rbac.authorization.k8s.io
+      namespaces:
+        - shared
+        - noel
