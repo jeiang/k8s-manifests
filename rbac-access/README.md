@@ -12,7 +12,8 @@ By default this chart creates:
 Install it with:
 
 ```sh
-helm upgrade --install rbac-access ./rbac-access
+helm upgrade --install rbac-access ./rbac-access \
+  --namespace kube-system
 ```
 
 If the namespaces already exist and are not managed by this chart, set:
@@ -32,4 +33,19 @@ Kubernetes RBAC does not support namespace wildcard bindings. Prefix access is g
 namespaces:
   additional:
     - saeed-website
+```
+
+To add another namespace-scoped user, add a new entry under `namespaceAccess.users`:
+
+```yaml
+namespaceAccess:
+  users:
+    - name: example
+      subjects:
+        - kind: User
+          name: example
+          apiGroup: rbac.authorization.k8s.io
+      namespaces:
+        - shared
+        - example
 ```

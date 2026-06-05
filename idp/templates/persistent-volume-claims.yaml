@@ -1,0 +1,21 @@
+{{- $fullname := include "idp.fullname" . }}
+{{- $labels := include "idp.labels" . }}
+{{- range $name, $config := dict "pocket-id" .Values.persistence.pocketId "lldap" .Values.persistence.lldap }}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ printf "%s-%s" $fullname $name | trunc 63 | trimSuffix "-" | quote }}
+  labels:
+    {{- $labels | nindent 4 }}
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ $config.size | quote }}
+  storageClassName: {{ $.Values.persistence.storageClassName | quote }}
+  {{- if $.Values.persistence.createPersistentVolumes }}
+  volumeName: {{ printf "%s-%s" $fullname $name | trunc 63 | trimSuffix "-" | quote }}
+  {{- end }}
+{{- end }}

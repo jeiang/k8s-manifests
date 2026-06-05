@@ -1,0 +1,6 @@
+apiVersion: v2
+name: idp
+description: Pocket ID with LLDAP
+type: application
+version: 0.1.0
+appVersion: "v2.6.2"

@@ -1,0 +1,148 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "idp.pocketIdName" . | quote }}
+  labels:
+    {{- include "idp.labels" . | nindent 4 }}
+    app.kubernetes.io/component: pocket-id
+spec:
+  replicas: {{ .Values.pocketId.replicaCount }}
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      {{- include "idp.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: pocket-id
+  template:
+    metadata:
+      labels:
+        {{- include "idp.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: pocket-id
+    spec:
+      containers:
+        - name: pocket-id
+          image: "{{ .Values.pocketId.image.repository }}:{{ .Values.pocketId.image.tag }}"
+          imagePullPolicy: {{ .Values.pocketId.image.pullPolicy }}
+          env:
+            - name: APP_URL
+              value: "https://{{ .Values.global.pocketIdHost }}"
+            - name: TRUST_PROXY
+              value: "true"
+            - name: UI_CONFIG_DISABLED
+              value: "true"
+            - name: ANALYTICS_DISABLED
+              value: "true"
+            - name: DB_CONNECTION_STRING
+              value: /app/data/pocket-id.db
+            - name: ENCRYPTION_KEY_FILE
+              value: /run/secrets/pocket-id-encryption-key
+            - name: STATIC_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "idp.secretName" . | quote }}
+                  key: {{ .Values.secrets.keys.pocketIdStaticApiKey | quote }}
+            - name: LDAP_ENABLED
+              value: {{ .Values.pocketId.ldap.enabled | quote }}
+            - name: LDAP_URL
+              value: "ldap://{{ include "idp.lldapName" . }}:{{ .Values.service.lldap.ldapPort }}"
+            - name: LDAP_BIND_DN
+              value: {{ .Values.pocketId.ldap.bindDn | quote }}
+            - name: LDAP_BIND_PASSWORD_FILE
+              value: /run/secrets/pocket-id-ldap-bind-password
+            - name: LDAP_BASE
+              value: {{ .Values.pocketId.ldap.baseDn | quote }}
+            - name: LDAP_USER_SEARCH_FILTER
+              value: {{ .Values.pocketId.ldap.usersFilter | quote }}
+            - name: LDAP_USER_GROUP_SEARCH_FILTER
+              value: {{ .Values.pocketId.ldap.groupsFilter | quote }}
+            - name: LDAP_ADMIN_GROUP_NAME
+              value: {{ .Values.pocketId.ldap.adminGroupName | quote }}
+            - name: LDAP_ATTRIBUTE_USER_UNIQUE_IDENTIFIER
+              value: {{ .Values.pocketId.ldap.attributes.userUniqueIdentifier | quote }}
+            - name: LDAP_ATTRIBUTE_USER_USERNAME
+              value: {{ .Values.pocketId.ldap.attributes.userUsername | quote }}
+            - name: LDAP_ATTRIBUTE_USER_EMAIL
+              value: {{ .Values.pocketId.ldap.attributes.userEmail | quote }}
+            - name: LDAP_ATTRIBUTE_USER_FIRST_NAME
+              value: {{ .Values.pocketId.ldap.attributes.userFirstName | quote }}
+            - name: LDAP_ATTRIBUTE_USER_LAST_NAME
+              value: {{ .Values.pocketId.ldap.attributes.userLastName | quote }}
+            - name: LDAP_ATTRIBUTE_GROUP_UNIQUE_IDENTIFIER
+              value: {{ .Values.pocketId.ldap.attributes.groupUniqueIdentifier | quote }}
+            - name: LDAP_ATTRIBUTE_GROUP_NAME
+              value: {{ .Values.pocketId.ldap.attributes.groupName | quote }}
+            - name: LDAP_ATTRIBUTE_GROUP_MEMBER
+              value: {{ .Values.pocketId.ldap.attributes.groupMember | quote }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.pocketId.port }}
+              protocol: TCP
+          livenessProbe:
+            exec:
+              command:
+                - /app/pocket-id
+                - healthcheck
+            initialDelaySeconds: 20
+            periodSeconds: 20
+          readinessProbe:
+            exec:
+              command:
+                - /app/pocket-id
+                - healthcheck
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          resources:
+            {{- toYaml .Values.pocketId.resources | nindent 12 }}
+          volumeMounts:
+            - name: data
+              mountPath: /app/data
+            - name: secrets
+              mountPath: /run/secrets/pocket-id-encryption-key
+              subPath: pocket-id-encryption-key
+              readOnly: true
+            - name: secrets
+              mountPath: /run/secrets/pocket-id-ldap-bind-password
+              subPath: pocket-id-ldap-bind-password
+              readOnly: true
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: {{ printf "%s-pocket-id" (include "idp.fullname" .) | trunc 63 | trimSuffix "-" | quote }}
+        - name: secrets
+          secret:
+            secretName: {{ include "idp.secretName" . | quote }}
+            items:
+              - key: {{ .Values.secrets.keys.pocketIdEncryptionKey | quote }}
+                path: pocket-id-encryption-key
+              - key: {{ .Values.secrets.keys.pocketIdLdapBindPassword | quote }}
+                path: pocket-id-ldap-bind-password
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "idp.pocketIdName" . | quote }}
+  labels:
+    {{- include "idp.labels" . | nindent 4 }}
+    app.kubernetes.io/component: pocket-id
+spec:
+  type: {{ .Values.service.pocketId.type }}
+  selector:
+    {{- include "idp.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: pocket-id
+  ports:
+    - name: http
+      port: {{ .Values.service.pocketId.port }}
+      targetPort: http
+      protocol: TCP

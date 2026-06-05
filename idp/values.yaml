@@ -1,0 +1,99 @@
+global:
+  domain: jeiang.dev
+  pocketIdHost: auth.jeiang.dev
+  lldapHost: lldap.jeiang.dev
+
+secrets:
+  existingSecret: idp-secrets
+  keys:
+    pocketIdEncryptionKey: pocket-id-encryption-key
+    pocketIdStaticApiKey: pocket-id-static-api-key
+    lldapJwtSecret: lldap-jwt-secret
+    lldapKeySeed: lldap-key-seed
+    lldapAdminPassword: lldap-admin-password
+    pocketIdLdapBindPassword: lldap-admin-password
+
+pocketId:
+  replicaCount: 1
+  image:
+    repository: ghcr.io/pocket-id/pocket-id
+    tag: v2.6.2
+    pullPolicy: IfNotPresent
+  port: 1411
+  ldap:
+    enabled: true
+    bindDn: uid=admin,ou=people,dc=jeiang,dc=dev
+    baseDn: dc=jeiang,dc=dev
+    usersFilter: "(objectClass=person)"
+    groupsFilter: "(objectClass=groupOfUniqueNames)"
+    adminGroupName: _pocket_id_admins
+    attributes:
+      userUniqueIdentifier: entryUUID
+      userUsername: uid
+      userEmail: mail
+      userFirstName: givenName
+      userLastName: sn
+      groupUniqueIdentifier: entryUUID
+      groupName: cn
+      groupMember: uniqueMember
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+lldap:
+  image:
+    repository: lldap/lldap
+    tag: stable
+    pullPolicy: IfNotPresent
+  baseDn: dc=jeiang,dc=dev
+  uid: "1000"
+  gid: "1000"
+  timezone: UTC
+  ports:
+    ldap: 3890
+    http: 17170
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+service:
+  pocketId:
+    type: ClusterIP
+    port: 80
+  lldap:
+    type: ClusterIP
+    ldapPort: 3890
+    httpPort: 80
+
+ingress:
+  enabled: true
+  className: traefik
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+  tls:
+    enabled: true
+    secretName: idp-tls
+  lldap:
+    enabled: true
+
+persistence:
+  createPersistentVolumes: true
+  storageClassName: ""
+  reclaimPolicy: Retain
+  hostPathBase: /var/lib/idp
+  pocketId:
+    size: 5Gi
+  lldap:
+    size: 2Gi
+
+nodeSelector: {}
+tolerations: []
+affinity: {}
