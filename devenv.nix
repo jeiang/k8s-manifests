@@ -2,7 +2,7 @@
 
 {
   packages = with pkgs; [
-    # openssl
+    openssl
     kubectl
     kubernetes-helm
     helm-ls
