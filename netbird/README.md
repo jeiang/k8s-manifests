@@ -37,14 +37,14 @@ The chart expects a pre-created `netbird-secrets` Secret. Keep these values stab
 
 - `store-encryption-key`: base64-encoded 32-byte key for encrypting sensitive management data.
 - `relay-auth-secret`: shared secret between the management server and relay pods.
-- `idp-session-cookie-encryption-key`: embedded IdP session cookie encryption key.
+- `idp-session-cookie-encryption-key`: 32-character hex embedded IdP session cookie encryption key.
 
 Generate and create the Secret:
 
 ```fish
 set NETBIRD_STORE_ENCRYPTION_KEY (openssl rand -base64 32)
 set NETBIRD_RELAY_AUTH_SECRET (openssl rand -hex 32)
-set NETBIRD_IDP_SESSION_COOKIE_ENCRYPTION_KEY (openssl rand -hex 32)
+set NETBIRD_IDP_SESSION_COOKIE_ENCRYPTION_KEY (openssl rand -hex 16)
 
 kubectl create namespace netbird --dry-run=client -o yaml | kubectl apply -f -
 
