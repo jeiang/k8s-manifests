@@ -1,0 +1,87 @@
+{{- if .Values.ingress.enabled }}
+{{- if and .Values.ingress.tls.enabled .Values.ingress.certManager.enabled }}
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: {{ include "netbird.fullname" . | quote }}
+  labels:
+    {{- include "netbird.labels" . | nindent 4 }}
+spec:
+  secretName: {{ .Values.ingress.tls.secretName | quote }}
+  dnsNames:
+    - {{ .Values.global.host | quote }}
+  issuerRef:
+    kind: ClusterIssuer
+    name: {{ .Values.ingress.certManager.clusterIssuer | quote }}
+---
+{{- end }}
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: {{ printf "%s-grpc" (include "netbird.fullname" .) | trunc 63 | trimSuffix "-" | quote }}
+  labels:
+    {{- include "netbird.labels" . | nindent 4 }}
+spec:
+  entryPoints:
+    - {{ .Values.ingress.entryPoint | quote }}
+  {{- if .Values.ingress.tls.enabled }}
+  tls:
+    secretName: {{ .Values.ingress.tls.secretName | quote }}
+  {{- end }}
+  routes:
+    - kind: Rule
+      match: Host(`{{ .Values.global.host }}`) && (PathPrefix(`/signalexchange.SignalExchange/`) || PathPrefix(`/management.ManagementService/`) || PathPrefix(`/management.ProxyService/`))
+      priority: 100
+      services:
+        - name: {{ include "netbird.serverName" . | quote }}
+          port: {{ .Values.server.port }}
+          scheme: h2c
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: {{ printf "%s-backend" (include "netbird.fullname" .) | trunc 63 | trimSuffix "-" | quote }}
+  labels:
+    {{- include "netbird.labels" . | nindent 4 }}
+spec:
+  entryPoints:
+    - {{ .Values.ingress.entryPoint | quote }}
+  {{- if .Values.ingress.tls.enabled }}
+  tls:
+    secretName: {{ .Values.ingress.tls.secretName | quote }}
+  {{- end }}
+  routes:
+    - kind: Rule
+      match: Host(`{{ .Values.global.host }}`) && (PathPrefix(`/ws-proxy/`) || PathPrefix(`/api`) || PathPrefix(`/oauth2`))
+      priority: 90
+      services:
+        - name: {{ include "netbird.serverName" . | quote }}
+          port: {{ .Values.server.port }}
+    - kind: Rule
+      match: Host(`{{ .Values.global.host }}`) && PathPrefix(`/relay`)
+      priority: 100
+      services:
+        - name: {{ include "netbird.relayName" . | quote }}
+          port: {{ .Values.relay.port }}
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: {{ printf "%s-dashboard" (include "netbird.fullname" .) | trunc 63 | trimSuffix "-" | quote }}
+  labels:
+    {{- include "netbird.labels" . | nindent 4 }}
+spec:
+  entryPoints:
+    - {{ .Values.ingress.entryPoint | quote }}
+  {{- if .Values.ingress.tls.enabled }}
+  tls:
+    secretName: {{ .Values.ingress.tls.secretName | quote }}
+  {{- end }}
+  routes:
+    - kind: Rule
+      match: Host(`{{ .Values.global.host }}`)
+      priority: 1
+      services:
+        - name: {{ include "netbird.dashboardName" . | quote }}
+          port: {{ .Values.dashboard.port }}
+{{- end }}

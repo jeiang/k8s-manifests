@@ -14,7 +14,7 @@ ingress:
   className: traefik
 
   hosts:
-    # - jeiang.dev
+    - jeiang.dev
     # - aidanpinard.co
     - pinard.co.tt
 

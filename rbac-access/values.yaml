@@ -7,7 +7,7 @@ admin:
   clusterRole: cluster-admin
   subjects:
     - kind: User
-      name: aidanp
+      name: aidan
       apiGroup: rbac.authorization.k8s.io
 
 namespaceAccess:
@@ -32,3 +32,11 @@ namespaceAccess:
       namespaces:
         - shared
         - noel
+    - name: gilliano
+      subjects:
+        - kind: User
+          name: gilliano
+          apiGroup: rbac.authorization.k8s.io
+      namespaces:
+        - shared
+        - gilliano

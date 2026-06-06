@@ -1,0 +1,99 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "netbird.relayName" . | quote }}
+  labels:
+    {{- include "netbird.labels" . | nindent 4 }}
+    app.kubernetes.io/component: relay
+spec:
+  replicas: {{ .Values.relay.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "netbird.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: relay
+  template:
+    metadata:
+      labels:
+        {{- include "netbird.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: relay
+    spec:
+      containers:
+        - name: relay
+          image: "{{ .Values.relay.image.repository }}:{{ .Values.relay.image.tag }}"
+          imagePullPolicy: {{ .Values.relay.image.pullPolicy }}
+          env:
+            - name: NB_LISTEN_ADDRESS
+              value: ":{{ .Values.relay.port }}"
+            - name: NB_EXPOSED_ADDRESS
+              value: {{ .Values.relay.exposedAddress | quote }}
+            - name: NB_AUTH_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "netbird.secretName" . | quote }}
+                  key: {{ .Values.secrets.keys.relayAuthSecret | quote }}
+            - name: NB_ENABLE_STUN
+              value: {{ .Values.relay.enableStun | quote }}
+            - name: NB_STUN_PORTS
+              value: {{ .Values.relay.stunPort | quote }}
+            - name: NB_LOG_LEVEL
+              value: {{ .Values.relay.logLevel | quote }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.relay.port }}
+            - name: stun
+              containerPort: {{ .Values.relay.stunPort }}
+              protocol: UDP
+          resources:
+            {{- toYaml .Values.relay.resources | nindent 12 }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "netbird.relayName" . | quote }}
+  labels:
+    {{- include "netbird.labels" . | nindent 4 }}
+    app.kubernetes.io/component: relay
+spec:
+  type: {{ .Values.service.type }}
+  selector:
+    {{- include "netbird.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: relay
+  ports:
+    - name: http
+      port: {{ .Values.relay.port }}
+      targetPort: http
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ printf "%s-stun" (include "netbird.relayName" .) | trunc 63 | trimSuffix "-" | quote }}
+  labels:
+    {{- include "netbird.labels" . | nindent 4 }}
+    app.kubernetes.io/component: relay
+  {{- with .Values.service.stun.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  type: {{ .Values.service.stun.type }}
+  externalTrafficPolicy: {{ .Values.service.stun.externalTrafficPolicy }}
+  selector:
+    {{- include "netbird.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: relay
+  ports:
+    - name: stun
+      port: {{ .Values.relay.stunPort }}
+      targetPort: stun
+      protocol: UDP

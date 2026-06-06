@@ -9,6 +9,7 @@ Helm charts and Kubernetes manifests for my servers.
 | [`aidanp-website`](./aidanp-website) | Static website deployment behind Traefik with cert-manager TLS. |
 | [`blocky-dns`](./blocky-dns) | Public Blocky DNS resolver exposed through a `LoadBalancer` Service. |
 | [`idp`](./idp) | Pocket ID and LLDAP identity provider stack with persistent state. |
+| [`netbird`](./netbird) | NetBird management server, dashboard, and relay stack. |
 | [`rbac-access`](./rbac-access) | Cluster admin and namespace admin RBAC bindings. |
 
 ## Prerequisites

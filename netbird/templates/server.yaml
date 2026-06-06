@@ -1,0 +1,171 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "netbird.serverName" . | quote }}
+  labels:
+    {{- include "netbird.labels" . | nindent 4 }}
+    app.kubernetes.io/component: server
+spec:
+  replicas: {{ .Values.server.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "netbird.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: server
+  template:
+    metadata:
+      labels:
+        {{- include "netbird.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: server
+    spec:
+      initContainers:
+        - name: render-config
+          image: alpine:3.20
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: NETBIRD_STORE_ENCRYPTION_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "netbird.secretName" . | quote }}
+                  key: {{ .Values.secrets.keys.storeEncryptionKey | quote }}
+            - name: NETBIRD_RELAY_AUTH_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "netbird.secretName" . | quote }}
+                  key: {{ .Values.secrets.keys.relayAuthSecret | quote }}
+            - name: NETBIRD_IDP_SESSION_COOKIE_ENCRYPTION_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "netbird.secretName" . | quote }}
+                  key: {{ .Values.secrets.keys.idpSessionCookieEncryptionKey | quote }}
+          command:
+            - /bin/sh
+            - -ec
+            - |
+              cat > /config/config.yaml <<EOF
+              server:
+                listenAddress: ":{{ .Values.server.port }}"
+                exposedAddress: "{{ .Values.global.publicUrl }}:443"
+                metricsPort: {{ .Values.server.metricsPort }}
+                healthcheckAddress: ":{{ .Values.server.healthPort }}"
+                logLevel: "{{ .Values.server.logLevel }}"
+                logFile: "console"
+                tls:
+                  certFile: ""
+                  keyFile: ""
+                  letsencrypt:
+                    enabled: false
+                    dataDir: ""
+                    domains: []
+                    email: ""
+                    awsRoute53: false
+                authSecret: "${NETBIRD_RELAY_AUTH_SECRET}"
+                dataDir: "{{ .Values.server.dataDir }}"
+                stuns:
+                  - uri: "stun:{{ .Values.global.host }}:{{ .Values.relay.stunPort }}"
+                    proto: "udp"
+                relays:
+                  addresses:
+                    - "{{ .Values.relay.exposedAddress }}"
+                  secret: "${NETBIRD_RELAY_AUTH_SECRET}"
+                  credentialsTTL: "{{ .Values.server.credentialsTTL }}"
+                disableAnonymousMetrics: false
+                disableGeoliteUpdate: false
+                auth:
+                  issuer: "{{ .Values.global.publicUrl }}/oauth2"
+                  localAuthDisabled: false
+                  signKeyRefreshEnabled: true
+                  sessionCookieEncryptionKey: "${NETBIRD_IDP_SESSION_COOKIE_ENCRYPTION_KEY}"
+                  dashboardRedirectURIs:
+                    - "{{ .Values.global.publicUrl }}/nb-auth"
+                    - "{{ .Values.global.publicUrl }}/nb-silent-auth"
+                  cliRedirectURIs:
+                    - "http://localhost:53000/"
+                dnsDomain: "{{ .Values.server.dnsDomain }}"
+                store:
+                  engine: "sqlite"
+                  dsn: ""
+                  encryptionKey: "${NETBIRD_STORE_ENCRYPTION_KEY}"
+              EOF
+          volumeMounts:
+            - name: config
+              mountPath: /config
+      containers:
+        - name: netbird-server
+          image: "{{ .Values.server.image.repository }}:{{ .Values.server.image.tag }}"
+          imagePullPolicy: {{ .Values.server.image.pullPolicy }}
+          args:
+            - --config
+            - /etc/netbird/config.yaml
+          ports:
+            - name: http
+              containerPort: {{ .Values.server.port }}
+            - name: metrics
+              containerPort: {{ .Values.server.metricsPort }}
+            - name: health
+              containerPort: {{ .Values.server.healthPort }}
+          readinessProbe:
+            httpGet:
+              path: /metrics
+              port: metrics
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /metrics
+              port: metrics
+            initialDelaySeconds: 30
+            periodSeconds: 20
+          resources:
+            {{- toYaml .Values.server.resources | nindent 12 }}
+          volumeMounts:
+            - name: config
+              mountPath: /etc/netbird
+              readOnly: true
+            - name: data
+              mountPath: {{ .Values.server.dataDir | quote }}
+      volumes:
+        - name: config
+          emptyDir:
+            medium: Memory
+        - name: data
+          {{- if .Values.persistence.enabled }}
+          persistentVolumeClaim:
+            claimName: {{ include "netbird.serverName" . | quote }}
+          {{- else }}
+          emptyDir: {}
+          {{- end }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "netbird.serverName" . | quote }}
+  labels:
+    {{- include "netbird.labels" . | nindent 4 }}
+    app.kubernetes.io/component: server
+spec:
+  type: {{ .Values.service.type }}
+  selector:
+    {{- include "netbird.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: server
+  ports:
+    - name: http
+      port: {{ .Values.server.port }}
+      targetPort: http
+    - name: metrics
+      port: {{ .Values.server.metricsPort }}
+      targetPort: metrics
+    - name: health
+      port: {{ .Values.server.healthPort }}
+      targetPort: health

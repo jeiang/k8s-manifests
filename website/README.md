@@ -1,4 +1,4 @@
-# aidanp-website
+# website
 
 Helm chart for deploying the website container behind Traefik.
 
@@ -13,7 +13,7 @@ By default this chart creates:
 Install it with:
 
 ```sh
-helm upgrade --install aidanp-website ./aidanp-website \
+helm upgrade --install website ./website \
   --namespace website \
   --create-namespace
 ```

@@ -1,0 +1,92 @@
+global:
+  host: netbird.jeiang.dev
+  publicUrl: https://netbird.jeiang.dev
+
+secrets:
+  existingSecret: netbird-secrets
+  keys:
+    storeEncryptionKey: store-encryption-key
+    relayAuthSecret: relay-auth-secret
+    idpSessionCookieEncryptionKey: idp-session-cookie-encryption-key
+
+server:
+  replicaCount: 1
+  image:
+    repository: netbirdio/netbird-server
+    tag: 0.72.1
+    pullPolicy: IfNotPresent
+  port: 80
+  metricsPort: 9090
+  healthPort: 9000
+  logLevel: info
+  dataDir: /var/lib/netbird
+  dnsDomain: jeiang.vpn
+  credentialsTTL: 24h
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 750m
+      memory: 768Mi
+
+dashboard:
+  replicaCount: 1
+  image:
+    repository: netbirdio/dashboard
+    tag: v2.39.0
+    pullPolicy: IfNotPresent
+  port: 80
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 250m
+      memory: 256Mi
+
+relay:
+  replicaCount: 2
+  image:
+    repository: netbirdio/relay
+    tag: 0.72.1
+    pullPolicy: IfNotPresent
+  port: 80
+  stunPort: 3478
+  exposedAddress: rels://netbird.jeiang.dev:443
+  enableStun: true
+  logLevel: info
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+service:
+  type: ClusterIP
+  stun:
+    type: LoadBalancer
+    annotations: {}
+    externalTrafficPolicy: Cluster
+
+ingress:
+  enabled: true
+  className: traefik
+  entryPoint: websecure
+  tls:
+    enabled: true
+    secretName: netbird-tls
+  certManager:
+    enabled: true
+    clusterIssuer: letsencrypt-prod
+
+persistence:
+  enabled: true
+  size: 10Gi
+  storageClassName: ""
+
+nodeSelector: {}
+tolerations: []
+affinity: {}
