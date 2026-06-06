@@ -19,6 +19,20 @@ spec:
         {{- include "idp.selectorLabels" . | nindent 8 }}
         app.kubernetes.io/component: pocket-id
     spec:
+      initContainers:
+        - name: wait-for-lldap
+          image: "{{ .Values.pocketId.waitForLldap.image.repository }}:{{ .Values.pocketId.waitForLldap.image.tag }}"
+          imagePullPolicy: {{ .Values.pocketId.waitForLldap.image.pullPolicy }}
+          command:
+            - sh
+            - -c
+            - |
+              until nc -z {{ include "idp.lldapName" . }} {{ .Values.service.lldap.ldapPort }}; do
+                echo "waiting for lldap"
+                sleep 2
+              done
+          resources:
+            {{- toYaml .Values.pocketId.waitForLldap.resources | nindent 12 }}
       containers:
         - name: pocket-id
           image: "{{ .Values.pocketId.image.repository }}:{{ .Values.pocketId.image.tag }}"

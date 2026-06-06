@@ -4,37 +4,51 @@ Helm chart for running Blocky as a public DNS service.
 
 Default application version: `v0.28.2`.
 
-By default this chart creates:
+## What This Chart Creates
 
-- 2 Blocky replicas.
-- A `LoadBalancer` Service exposing DNS on port `53` for both UDP and TCP.
+- A Blocky Deployment.
+- A `HorizontalPodAutoscaler` that keeps at least 1 pod and scales up to 5 pods.
+- A `LoadBalancer` Service exposing DNS on port `53` for UDP and TCP.
 - A ConfigMap-mounted Blocky `config.yml`.
 - DNS blocklists from StevenBlack and Hagezi.
 - Default upstreams for Cloudflare, Google, and Quad9.
 - Resource limits of `500m` CPU and `350Mi` memory.
 
-Install it with:
+## Dependencies
+
+- Helm 3 and `kubectl`.
+- A cluster load balancer implementation that supports both UDP and TCP on port `53`.
+- metrics-server or another Kubernetes resource metrics provider for HPA CPU scaling.
+- Outbound HTTPS access so Blocky can download remote blocklists.
+- Outbound DNS access to the configured upstream resolvers.
+- Firewall rules, ACLs, or load balancer policy to protect the public resolver from abuse.
+
+## Install
 
 ```sh
+helm lint ./blocky-dns
+helm template blocky-dns ./blocky-dns --namespace dns
 helm upgrade --install blocky-dns ./blocky-dns \
   --namespace dns \
   --create-namespace
 ```
 
-Verify the Service:
+Verify the Service and HPA:
 
 ```sh
-kubectl get svc blocky-dns
+kubectl -n dns get svc blocky-dns
+kubectl -n dns get hpa blocky-dns
 ```
-
-Blocky needs at least one upstream DNS server in the default upstream group. Change `blocky.config` in `values.yaml` if you want different upstreams, blocklists, allowlists, or other Blocky settings.
-
-This chart intentionally exposes DNS publicly. Public recursive DNS resolvers can be abused if they are not protected by firewall rules, ACLs, or rate limits at your load balancer or network edge.
 
 Common values to review before installing:
 
 ```yaml
-replicaCount: 2
+replicaCount: 1
+autoscaling:
+  enabled: true
+  minReplicas: 1
+  maxReplicas: 5
+  targetCPUUtilizationPercentage: 70
 service:
   type: LoadBalancer
   externalTrafficPolicy: Cluster

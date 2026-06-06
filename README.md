@@ -6,19 +6,29 @@ Helm charts and Kubernetes manifests for my servers.
 
 | Chart | Purpose |
 | --- | --- |
-| [`aidanp-website`](./aidanp-website) | Static website deployment behind Traefik with cert-manager TLS. |
+| [`website`](./website) | Static website deployment behind Traefik with cert-manager TLS. |
 | [`blocky-dns`](./blocky-dns) | Public Blocky DNS resolver exposed through a `LoadBalancer` Service. |
 | [`idp`](./idp) | Pocket ID and LLDAP identity provider stack with persistent state. |
 | [`netbird`](./netbird) | NetBird management server, dashboard, and relay stack. |
 | [`rbac-access`](./rbac-access) | Cluster admin and namespace admin RBAC bindings. |
 
-## Prerequisites
+## Global Prerequisites
 
 - Helm 3.
 - `kubectl` configured for the target cluster.
-- Traefik for charts that enable ingress by default.
-- cert-manager and a `letsencrypt-prod` `ClusterIssuer` for charts that request TLS by default.
+- Optional: `devenv shell` to load `kubectl`, Helm, `helm-ls`, and `yaml-language-server`.
 - Working DNS records for public ingress hosts before installing internet-facing charts.
+- A load balancer implementation for charts that expose `LoadBalancer` Services.
+
+## Chart Dependencies
+
+| Chart | Dependencies |
+| --- | --- |
+| `website` | Traefik IngressClass named `traefik`; Traefik `Middleware` CRD; cert-manager CRDs/controller; existing `letsencrypt-prod` `ClusterIssuer` unless `certManager.clusterIssuer.create=true`; DNS for all `ingress.hosts`. |
+| `blocky-dns` | Load balancer that supports UDP and TCP port `53`; metrics-server or another resource metrics provider for the HPA; outbound DNS/HTTPS access for upstreams and blocklists; firewall or network ACLs for public resolver protection. |
+| `idp` | Traefik IngressClass named `traefik`; cert-manager controller and `letsencrypt-prod` `ClusterIssuer`; DNS for `auth.jeiang.dev` and `lldap.jeiang.dev`; pre-created `idp-secrets`; hostPath storage under `/var/lib/idp` or alternative persistence values. |
+| `netbird` | Traefik `IngressRoute` CRDs and `websecure` entryPoint; cert-manager `Certificate` CRD/controller and `letsencrypt-prod` `ClusterIssuer`; load balancer access for UDP `3478`; DNS for `netbird.jeiang.dev`; pre-created `netbird-secrets`; persistent storage for the server PVC. |
+| `rbac-access` | Installer must have permission to create `Namespace`, `RoleBinding`, and `ClusterRoleBinding` resources; configured subjects must match identities from cluster authentication. |
 
 ## Usage
 

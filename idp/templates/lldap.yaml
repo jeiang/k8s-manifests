@@ -54,6 +54,11 @@ spec:
             - name: http
               containerPort: {{ .Values.lldap.ports.http }}
               protocol: TCP
+          readinessProbe:
+            tcpSocket:
+              port: ldap
+            initialDelaySeconds: 5
+            periodSeconds: 5
           resources:
             {{- toYaml .Values.lldap.resources | nindent 12 }}
           volumeMounts:

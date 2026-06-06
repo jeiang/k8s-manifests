@@ -4,17 +4,25 @@ Helm chart for running Pocket ID with LLDAP.
 
 Default application version: Pocket ID `v2.6.2`.
 
-By default this chart creates:
+## What This Chart Creates
 
-- Pocket ID at `https://auth.jeiang.dev`
-- LLDAP at `https://lldap.jeiang.dev`
-- Internal LDAP at `ldap://idp-lldap.idp.svc.cluster.local:3890`
+- Pocket ID at `https://auth.jeiang.dev`.
+- LLDAP at `https://lldap.jeiang.dev`.
+- Internal LDAP at `ldap://idp-lldap.idp.svc.cluster.local:3890`.
 - PersistentVolumes and PersistentVolumeClaims for Pocket ID and LLDAP state.
-- A `ClusterIP` Service for Pocket ID.
-- A `ClusterIP` Service for LLDAP HTTP and LDAP ports.
-- Ingress TLS using the `idp-tls` Secret.
+- `ClusterIP` Services for Pocket ID and LLDAP.
+- Kubernetes Ingress resources with cert-manager annotations.
+- A Pocket ID init container that waits for LLDAP's LDAP port before startup.
+- Resource limits for Pocket ID, LLDAP, and the Pocket ID wait init container.
 
-The Ingresses request cert-manager certificates with the `letsencrypt-prod` `ClusterIssuer`. Make sure `auth.jeiang.dev` and `lldap.jeiang.dev` point at the ingress load balancer before installing or upgrading.
+## Dependencies
+
+- Helm 3, `kubectl`, and `openssl` for secret generation.
+- Traefik installed with an IngressClass named `traefik`.
+- cert-manager CRDs/controller installed and a `letsencrypt-prod` `ClusterIssuer`.
+- DNS records for `auth.jeiang.dev` and `lldap.jeiang.dev` pointing at the ingress load balancer.
+- A pre-created `idp-secrets` Secret with the keys listed below.
+- Nodes that can use hostPath storage under `/var/lib/idp`, or custom persistence values that use an available storage class.
 
 ## Generate Secrets
 
@@ -38,7 +46,8 @@ kubectl -n idp create secret generic idp-secrets \
   --from-literal=lldap-key-seed="$LLDAP_KEY_SEED" \
   --from-literal=lldap-admin-password="$LLDAP_ADMIN_PASSWORD" \
   --from-literal=pocket-id-encryption-key="$POCKET_ID_ENCRYPTION_KEY" \
-  --from-literal=pocket-id-static-api-key="$POCKET_ID_STATIC_API_KEY"
+  --from-literal=pocket-id-static-api-key="$POCKET_ID_STATIC_API_KEY" \
+  --dry-run=client -o yaml | kubectl apply -f -
 ```
 
 Secret meanings:
@@ -52,12 +61,12 @@ Secret meanings:
 ## Install
 
 ```sh
+helm lint ./idp
+helm template idp ./idp --namespace idp
 helm upgrade --install idp ./idp \
   --namespace idp \
   --create-namespace
 ```
-
-If this replaces a previous OpenLDAP-based install, the old `idp-ldap-data` and `idp-ldap-config` PVCs are no longer used. LLDAP now uses the `idp-lldap` PVC.
 
 Review the persistence defaults before installing. The chart creates hostPath-backed PersistentVolumes under `/var/lib/idp` with `Retain` reclaim policy:
 
@@ -69,6 +78,8 @@ persistence:
   hostPathBase: /var/lib/idp
 ```
 
+If this replaces a previous OpenLDAP-based install, the old `idp-ldap-data` and `idp-ldap-config` PVCs are no longer used. LLDAP now uses the `idp-lldap` PVC.
+
 ## Bootstrap LLDAP
 
 Use a port-forward for first setup:
@@ -77,13 +88,7 @@ Use a port-forward for first setup:
 kubectl -n idp port-forward svc/idp-lldap 17170:80
 ```
 
-Open:
-
-```text
-http://localhost:17170
-```
-
-Login:
+Open `http://localhost:17170` and log in:
 
 ```text
 Username: admin
@@ -92,9 +97,9 @@ Password: value of $LLDAP_ADMIN_PASSWORD
 
 Create:
 
-- A group named `_pocket_id_admins`
-- Your first user with a valid email address
-- Add that user to `_pocket_id_admins`
+- A group named `_pocket_id_admins`.
+- Your first user with a valid email address.
+- Add that user to `_pocket_id_admins`.
 
 LDAP connection details:
 
@@ -136,4 +141,4 @@ Callback URL: https://netbird.jeiang.dev/nb-auth
 Scopes: openid profile email groups
 ```
 
-Copy the generated client ID and client secret into `netbird/values.yaml`.
+Copy the generated client ID and client secret into `netbird/values.yaml` if you configure NetBird to use this external IdP.
