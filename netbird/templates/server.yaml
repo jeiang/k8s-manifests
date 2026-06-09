@@ -89,6 +89,8 @@ spec:
           volumeMounts:
             - name: config
               mountPath: /config
+          resources:
+            {{- toYaml .Values.server.renderConfig.resources | nindent 12 }}
       containers:
         - name: netbird-server
           image: "{{ .Values.server.image.repository }}:{{ .Values.server.image.tag }}"

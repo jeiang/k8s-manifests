@@ -1,0 +1,77 @@
+# Values for community-charts/actualbudget.
+
+replicaCount: 1
+
+fullnameOverride: actual-budget
+
+image:
+  repository: actualbudget/actual-server
+  pullPolicy: IfNotPresent
+  tag: ""
+
+service:
+  type: ClusterIP
+  port: 5006
+  name: http
+  annotations: {}
+
+ingress:
+  enabled: true
+  className: traefik
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+  hosts:
+    - host: budget.jeiang.dev
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - secretName: actual-budget-tls
+      hosts:
+        - budget.jeiang.dev
+
+persistence:
+  enabled: true
+  annotations: {}
+  existingClaim: ""
+  storageClass: ""
+  subPath: ""
+  volumeMode: ""
+  accessModes:
+    - ReadWriteOnce
+  size: 10Gi
+
+login:
+  method: password
+  skipSSLVerification: false
+  allowedLoginMethods:
+    - password
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 256Mi
+  limits:
+    cpu: 500m
+    memory: 512Mi
+
+podSecurityContext:
+  fsGroup: 1001
+  fsGroupChangePolicy: OnRootMismatch
+
+securityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+      - ALL
+  readOnlyRootFilesystem: false
+  runAsNonRoot: true
+  privileged: false
+  runAsUser: 1001
+  runAsGroup: 1001
+
+extraEnvVars: {}
+
+nodeSelector: {}
+tolerations: []
+affinity: {}

@@ -50,7 +50,11 @@ helm upgrade --install netbird-operator oci://ghcr.io/netbirdio/helm-charts/netb
   --create-namespace \
   --set managementURL=https://netbird.jeiang.dev \
   --set netbirdAPI.keyFromSecret.name=netbird-mgmt-api-key \
-  --set netbirdAPI.keyFromSecret.key=NB_API_KEY
+  --set netbirdAPI.keyFromSecret.key=NB_API_KEY \
+  --set operator.resources.requests.cpu=50m \
+  --set operator.resources.requests.memory=64Mi \
+  --set operator.resources.limits.cpu=250m \
+  --set operator.resources.limits.memory=256Mi
 ```
 
 Verify the operator and CRDs are present:

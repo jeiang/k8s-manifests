@@ -17,7 +17,7 @@ Default images:
 - Traefik `IngressRoute` resources for HTTP, WebSocket, relay, and gRPC traffic at `https://netbird.jeiang.dev`.
 - A cert-manager `Certificate` using the `letsencrypt-prod` `ClusterIssuer`.
 - A PersistentVolumeClaim for NetBird server state.
-- Resource limits for server, dashboard, and relay pods.
+- Resource limits for server, dashboard, relay, and server init containers.
 
 ## Dependencies
 
