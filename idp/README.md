@@ -7,11 +7,10 @@ Default application version: Pocket ID `v2.6.2`.
 ## What This Chart Creates
 
 - Pocket ID at `https://auth.jeiang.dev`.
-- LLDAP at `https://lldap.jeiang.dev`.
 - Internal LDAP at `ldap://idp-lldap.idp.svc.cluster.local:3890`.
 - PersistentVolumes and PersistentVolumeClaims for Pocket ID and LLDAP state.
 - `ClusterIP` Services for Pocket ID and LLDAP.
-- Kubernetes Ingress resources with cert-manager annotations.
+- A Kubernetes Ingress resource for Pocket ID with cert-manager annotations.
 - A Pocket ID init container that waits for LLDAP's LDAP port before startup.
 - Resource limits for Pocket ID, LLDAP, and the Pocket ID wait init container.
 
@@ -20,7 +19,7 @@ Default application version: Pocket ID `v2.6.2`.
 - Helm 3, `kubectl`, and `openssl` for secret generation.
 - Traefik installed with an IngressClass named `traefik`.
 - cert-manager CRDs/controller installed and a `letsencrypt-prod` `ClusterIssuer`.
-- DNS records for `auth.jeiang.dev` and `lldap.jeiang.dev` pointing at the ingress load balancer.
+- A DNS record for `auth.jeiang.dev` pointing at the ingress load balancer.
 - A pre-created `idp-secrets` Secret with the keys listed below.
 - Nodes that can use hostPath storage under `/var/lib/idp`, or custom persistence values that use an available storage class.
 
@@ -79,6 +78,8 @@ persistence:
 ```
 
 If this replaces a previous OpenLDAP-based install, the old `idp-ldap-data` and `idp-ldap-config` PVCs are no longer used. LLDAP now uses the `idp-lldap` PVC.
+
+LLDAP is internal-only by default. The chart creates a `ClusterIP` Service and does not create an LLDAP Ingress unless `ingress.lldap.enabled=true` and `global.lldapHost` is set explicitly.
 
 ## Bootstrap LLDAP
 

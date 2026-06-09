@@ -1,0 +1,28 @@
+nameOverride: ""
+fullnameOverride: ""
+
+networkRouter:
+  enabled: true
+  name: k8s
+  namespace: netbird
+  annotations: {}
+  dnsZoneRef:
+    name: k8s.jeiang.vpn
+  extraSpec: {}
+
+networkResources:
+  enabled: true
+  groups: []
+  resources:
+    - name: blocky-dns
+      namespace: dns
+      serviceRef:
+        name: blocky-dns
+      groups:
+        - name: dns
+    - name: lldap
+      namespace: idp
+      serviceRef:
+        name: idp-lldap
+      groups:
+        - name: lldap

@@ -1,7 +1,7 @@
 global:
   domain: jeiang.dev
   pocketIdHost: auth.jeiang.dev
-  lldapHost: lldap.jeiang.dev
+  lldapHost: ""
 
 secrets:
   existingSecret: idp-secrets
@@ -94,7 +94,7 @@ ingress:
     enabled: true
     secretName: idp-tls
   lldap:
-    enabled: true
+    enabled: false
 
 persistence:
   createPersistentVolumes: true

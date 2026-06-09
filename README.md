@@ -7,9 +7,10 @@ Helm charts and Kubernetes manifests for my servers.
 | Chart | Purpose |
 | --- | --- |
 | [`website`](./website) | Static website deployment behind Traefik with cert-manager TLS. |
-| [`blocky-dns`](./blocky-dns) | Public Blocky DNS resolver exposed through a `LoadBalancer` Service. |
+| [`blocky-dns`](./blocky-dns) | Internal Blocky DNS resolver exposed through a `ClusterIP` Service. |
 | [`idp`](./idp) | Pocket ID and LLDAP identity provider stack with persistent state. |
 | [`netbird`](./netbird) | NetBird management server, dashboard, and relay stack. |
+| [`netbird-resources`](./netbird-resources) | NetBird operator routing resources for Kubernetes Services. |
 | [`rbac-access`](./rbac-access) | Cluster admin and namespace admin RBAC bindings. |
 
 ## Global Prerequisites
@@ -25,9 +26,10 @@ Helm charts and Kubernetes manifests for my servers.
 | Chart | Dependencies |
 | --- | --- |
 | `website` | Traefik IngressClass named `traefik`; Traefik `Middleware` CRD; cert-manager CRDs/controller; existing `letsencrypt-prod` `ClusterIssuer` unless `certManager.clusterIssuer.create=true`; DNS for all `ingress.hosts`. |
-| `blocky-dns` | Load balancer that supports UDP and TCP port `53`; metrics-server or another resource metrics provider for the HPA; outbound DNS/HTTPS access for upstreams and blocklists; firewall or network ACLs for public resolver protection. |
-| `idp` | Traefik IngressClass named `traefik`; cert-manager controller and `letsencrypt-prod` `ClusterIssuer`; DNS for `auth.jeiang.dev` and `lldap.jeiang.dev`; pre-created `idp-secrets`; hostPath storage under `/var/lib/idp` or alternative persistence values. |
+| `blocky-dns` | metrics-server or another resource metrics provider for the HPA; outbound DNS/HTTPS access for upstreams and blocklists. |
+| `idp` | Traefik IngressClass named `traefik`; cert-manager controller and `letsencrypt-prod` `ClusterIssuer`; DNS for `auth.jeiang.dev`; pre-created `idp-secrets`; hostPath storage under `/var/lib/idp` or alternative persistence values. |
 | `netbird` | Traefik `IngressRoute` CRDs and `websecure` entryPoint; cert-manager `Certificate` CRD/controller and `letsencrypt-prod` `ClusterIssuer`; load balancer access for UDP `3478`; DNS for `netbird.jeiang.dev`; pre-created `netbird-secrets`; persistent storage for the server PVC. |
+| `netbird-resources` | NetBird Kubernetes operator and CRDs for `NetworkRouter` and `NetworkResource`; custom NetBird DNS zone; existing `blocky-dns` and `idp-lldap` Services. |
 | `rbac-access` | Installer must have permission to create `Namespace`, `RoleBinding`, and `ClusterRoleBinding` resources; configured subjects must match identities from cluster authentication. |
 
 ## Usage

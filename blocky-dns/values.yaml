@@ -6,7 +6,7 @@ image:
   pullPolicy: IfNotPresent
 
 service:
-  type: LoadBalancer
+  type: ClusterIP
   annotations: {}
   externalTrafficPolicy: Cluster
   dnsPort: 53

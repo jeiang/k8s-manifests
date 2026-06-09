@@ -45,11 +45,11 @@ spec:
   {{- if .Values.ingress.tls.enabled }}
   tls:
     - hosts:
-        - {{ .Values.global.lldapHost | quote }}
+        - {{ required "global.lldapHost is required when ingress.lldap.enabled=true" .Values.global.lldapHost | quote }}
       secretName: {{ printf "%s-lldap" .Values.ingress.tls.secretName | quote }}
   {{- end }}
   rules:
-    - host: {{ .Values.global.lldapHost | quote }}
+    - host: {{ required "global.lldapHost is required when ingress.lldap.enabled=true" .Values.global.lldapHost | quote }}
       http:
         paths:
           - path: /

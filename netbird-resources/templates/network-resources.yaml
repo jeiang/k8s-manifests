@@ -1,0 +1,27 @@
+{{- if .Values.networkResources.enabled }}
+{{- $root := . }}
+{{- range $index, $resource := .Values.networkResources.resources }}
+{{- if $index }}
+---
+{{- end }}
+apiVersion: netbird.io/v1alpha1
+kind: NetworkResource
+metadata:
+  name: {{ $resource.name | quote }}
+  namespace: {{ $resource.namespace | quote }}
+  labels:
+    {{- include "netbird-resources.labels" $root | nindent 4 }}
+  {{- with $resource.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  networkRouterRef:
+    name: {{ $root.Values.networkRouter.name | quote }}
+    namespace: {{ $root.Values.networkRouter.namespace | quote }}
+  serviceRef:
+    name: {{ $resource.serviceRef.name | quote }}
+  groups:
+    {{- default $root.Values.networkResources.groups $resource.groups | toYaml | nindent 4 }}
+{{- end }}
+{{- end }}

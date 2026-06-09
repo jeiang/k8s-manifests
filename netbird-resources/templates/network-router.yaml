@@ -1,0 +1,19 @@
+{{- if .Values.networkRouter.enabled }}
+apiVersion: netbird.io/v1alpha1
+kind: NetworkRouter
+metadata:
+  name: {{ .Values.networkRouter.name | quote }}
+  namespace: {{ .Values.networkRouter.namespace | quote }}
+  labels:
+    {{- include "netbird-resources.labels" . | nindent 4 }}
+  {{- with .Values.networkRouter.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  dnsZoneRef:
+    name: {{ .Values.networkRouter.dnsZoneRef.name | quote }}
+  {{- with .Values.networkRouter.extraSpec }}
+  {{- toYaml . | nindent 2 }}
+  {{- end }}
+{{- end }}

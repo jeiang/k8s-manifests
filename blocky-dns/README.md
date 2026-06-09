@@ -1,6 +1,6 @@
 # blocky-dns
 
-Helm chart for running Blocky as a public DNS service.
+Helm chart for running Blocky as an internal DNS service.
 
 Default application version: `v0.28.2`.
 
@@ -8,7 +8,7 @@ Default application version: `v0.28.2`.
 
 - A Blocky Deployment.
 - A `HorizontalPodAutoscaler` that keeps at least 1 pod and scales up to 5 pods.
-- A `LoadBalancer` Service exposing DNS on port `53` for UDP and TCP.
+- A `ClusterIP` Service exposing DNS on port `53` for UDP and TCP inside the cluster.
 - A ConfigMap-mounted Blocky `config.yml`.
 - DNS blocklists from StevenBlack and Hagezi.
 - Default upstreams for Cloudflare, Google, and Quad9.
@@ -17,11 +17,9 @@ Default application version: `v0.28.2`.
 ## Dependencies
 
 - Helm 3 and `kubectl`.
-- A cluster load balancer implementation that supports both UDP and TCP on port `53`.
 - metrics-server or another Kubernetes resource metrics provider for HPA CPU scaling.
 - Outbound HTTPS access so Blocky can download remote blocklists.
 - Outbound DNS access to the configured upstream resolvers.
-- Firewall rules, ACLs, or load balancer policy to protect the public resolver from abuse.
 
 ## Install
 
@@ -50,8 +48,7 @@ autoscaling:
   maxReplicas: 5
   targetCPUUtilizationPercentage: 70
 service:
-  type: LoadBalancer
-  externalTrafficPolicy: Cluster
+  type: ClusterIP
   dnsPort: 53
 blocky:
   config: |
