@@ -1,0 +1,127 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "hath.fullname" . | quote }}
+  labels:
+    {{- include "hath.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "hath.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "hath.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.podSecurityContext }}
+      securityContext:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: hath
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          args:
+            - --port
+            - {{ .Values.hath.port | quote }}
+            - --cache-dir
+            - {{ .Values.hath.cacheDir | quote }}
+            - --data-dir
+            - {{ .Values.hath.dataDir | quote }}
+            - --download-dir
+            - {{ .Values.hath.downloadDir | quote }}
+            - --log-dir
+            - {{ .Values.hath.logDir | quote }}
+            - --temp-dir
+            - {{ .Values.hath.tempDir | quote }}
+            - --max-connection
+            - {{ .Values.hath.maxConnection | quote }}
+            {{- if .Values.hath.disableLogging }}
+            - --disable-logging
+            {{- end }}
+            {{- if .Values.hath.flushLog }}
+            - --flush-log
+            {{- end }}
+            {{- if .Values.hath.disableIpOriginCheck }}
+            - --disable-ip-origin-check
+            {{- end }}
+            {{- if .Values.hath.disableFloodControl }}
+            - --disable-flood-control
+            {{- end }}
+            {{- if .Values.hath.proxy }}
+            - --proxy
+            - {{ .Values.hath.proxy | quote }}
+            {{- end }}
+            {{- if .Values.hath.forceBackgroundScan }}
+            - --force-background-scan
+            {{- end }}
+            {{- if gt (int .Values.hath.quiet) 0 }}
+            - {{ printf "-%s" (repeat (int .Values.hath.quiet) "q") | quote }}
+            {{- end }}
+            {{- if .Values.hath.rpcServerIp }}
+            - --rpc-server-ip
+            - {{ .Values.hath.rpcServerIp | quote }}
+            {{- end }}
+            {{- if .Values.hath.enableMetrics }}
+            - --enable-metrics
+            {{- end }}
+            {{- if .Values.hath.sniStrict }}
+            - --sni-strict
+            {{- end }}
+            {{- if .Values.hath.enableH3 }}
+            - --enable-h3
+            {{- end }}
+            {{- with .Values.hath.extraArgs }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.hath.port }}
+              protocol: TCP
+            {{- if .Values.hath.enableH3 }}
+            - name: http3
+              containerPort: {{ .Values.hath.port }}
+              protocol: UDP
+            {{- end }}
+          readinessProbe:
+            tcpSocket:
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          volumeMounts:
+            - name: data
+              mountPath: {{ .Values.persistence.mountPath | quote }}
+            - name: temp
+              mountPath: {{ .Values.hath.tempDir | quote }}
+      volumes:
+        - name: data
+          {{- if .Values.persistence.enabled }}
+          persistentVolumeClaim:
+            claimName: {{ default (include "hath.fullname" .) .Values.persistence.existingClaim | quote }}
+          {{- else }}
+          emptyDir: {}
+          {{- end }}
+        - name: temp
+          {{- if .Values.temp.sizeLimit }}
+          emptyDir:
+            sizeLimit: {{ .Values.temp.sizeLimit | quote }}
+          {{- else }}
+          emptyDir: {}
+          {{- end }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

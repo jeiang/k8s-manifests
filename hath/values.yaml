@@ -1,0 +1,70 @@
+replicaCount: 1
+
+image:
+  repository: ghcr.io/james58899/hath-rust
+  tag: latest
+  pullPolicy: IfNotPresent
+
+hath:
+  port: 8888
+  cacheDir: /hath/cache
+  dataDir: /hath/data
+  downloadDir: /hath/download
+  logDir: /hath/log
+  tempDir: /tmp/hath
+  disableLogging: false
+  flushLog: false
+  maxConnection: 0
+  disableIpOriginCheck: true
+  disableFloodControl: false
+  proxy: ""
+  forceBackgroundScan: false
+  quiet: 0
+  rpcServerIp: ""
+  enableMetrics: true
+  sniStrict: false
+  enableH3: false
+  extraArgs: []
+
+service:
+  type: LoadBalancer
+  annotations: {}
+  port: 8888
+
+persistence:
+  enabled: true
+  annotations: {}
+  existingClaim: ""
+  storageClassName: longhorn
+  accessModes:
+    - ReadWriteMany
+  size: 15Gi
+  mountPath: /hath
+
+temp:
+  sizeLimit: ""
+
+resources:
+  requests:
+    cpu: 250m
+    memory: 512Mi
+  limits:
+    cpu: "2"
+    memory: 2Gi
+
+podSecurityContext:
+  fsGroup: 1000
+  fsGroupChangePolicy: OnRootMismatch
+
+securityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+      - ALL
+  runAsNonRoot: true
+  runAsUser: 1000
+  runAsGroup: 1000
+
+nodeSelector: {}
+tolerations: []
+affinity: {}

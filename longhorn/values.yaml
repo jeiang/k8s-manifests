@@ -1,0 +1,18 @@
+# Values for longhorn/longhorn.
+
+persistence:
+  createStorageClass: true
+  defaultFsType: ext4
+  defaultDataLocality: best-effort
+  defaultReplicaAutoBalance: best-effort
+
+defaultSettings:
+  defaultDataPath: /var/lib/longhorn
+  defaultReplicaCount: '{"v1":"2","v2":"2"}'
+  storageOverProvisioningPercentage: "100"
+  storageMinimalAvailablePercentage: "20"
+  replicaSoftAntiAffinity: true
+  upgradeChecker: false
+
+ingress:
+  enabled: false

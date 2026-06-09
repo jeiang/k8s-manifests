@@ -26,3 +26,9 @@ networkResources:
         name: idp-lldap
       groups:
         - name: lldap
+    - name: longhorn-frontend
+      namespace: longhorn-system
+      serviceRef:
+        name: longhorn-frontend
+      groups:
+        - name: longhorn
