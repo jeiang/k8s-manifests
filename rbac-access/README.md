@@ -19,7 +19,7 @@ Helm chart for cluster and namespace RBAC.
 
 ## Install
 
-```sh
+```fish
 helm lint ./rbac-access
 helm template rbac-access ./rbac-access --namespace kube-system
 helm upgrade --install rbac-access ./rbac-access \

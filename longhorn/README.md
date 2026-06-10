@@ -4,14 +4,12 @@ Values for deploying Longhorn with the upstream `longhorn/longhorn` Helm chart.
 
 ## What This Values File Configures
 
-- A `longhorn` StorageClass created by Longhorn.
-- The `longhorn` StorageClass as the default storage class.
-- `Retain` reclaim policy for safer data handling.
-- `WaitForFirstConsumer` volume binding.
+- The upstream Longhorn chart's built-in `longhorn` StorageClass creation.
+- `ext4` as the default filesystem for Longhorn volumes.
+- Best-effort data locality and replica auto-balance.
 - Two replicas by default for Longhorn volumes.
-- Longhorn UI exposed only as a `ClusterIP` Service.
-- Resource requests and limits for Longhorn Manager.
-- Resource settings for Longhorn-managed CSI components.
+- Longhorn UI ingress disabled.
+- Longhorn upgrade checks disabled.
 
 The upstream Longhorn chart version checked while creating this file was `1.12.0`.
 
@@ -82,12 +80,16 @@ Its cache, login data, downloads, and logs persist on the Longhorn PVC mounted a
 
 ```yaml
 persistence:
+  defaultFsType: ext4
   defaultClassReplicaCount: 2
-  reclaimPolicy: Retain
+  defaultDataLocality: best-effort
+  defaultReplicaAutoBalance: best-effort
 
 defaultSettings:
   defaultDataPath: /var/lib/longhorn
   defaultReplicaCount: '{"v1":"2","v2":"2"}'
+  storageOverProvisioningPercentage: "100"
+  storageMinimalAvailablePercentage: "20"
 ```
 
 Adjust replica counts for your cluster size and storage budget before installing.

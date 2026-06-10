@@ -57,7 +57,7 @@ kubectl -n netbird create secret generic netbird-secrets \
 
 ## Install
 
-```sh
+```fish
 helm lint ./netbird
 helm template netbird ./netbird --namespace netbird
 helm upgrade --install netbird ./netbird \

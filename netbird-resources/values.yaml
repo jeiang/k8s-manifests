@@ -32,3 +32,9 @@ networkResources:
         name: longhorn-frontend
       groups:
         - name: longhorn
+    - name: longhorn-backend
+      namespace: longhorn-system
+      serviceRef:
+        name: longhorn-backend
+      groups:
+        - name: longhorn

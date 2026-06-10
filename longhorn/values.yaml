@@ -3,6 +3,7 @@
 persistence:
   createStorageClass: true
   defaultFsType: ext4
+  defaultClassReplicaCount: 2
   defaultDataLocality: best-effort
   defaultReplicaAutoBalance: best-effort
 

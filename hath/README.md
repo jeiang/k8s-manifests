@@ -11,7 +11,7 @@ Default image: `ghcr.io/james58899/hath-rust:latest`.
 - A Longhorn-backed RWX persistent volume claim mounted at `/hath`.
 - Persistent directories for cache, login data, downloads, and logs.
 - An ephemeral `emptyDir` for temporary files at `/tmp/hath`.
-- Optional metrics endpoint and HTTP/3 UDP port.
+- Metrics endpoint and optional HTTP/3 UDP port.
 
 ## Dependencies
 
@@ -57,7 +57,7 @@ hath:
   downloadDir: /hath/download
   logDir: /hath/log
   tempDir: /tmp/hath
-  enableMetrics: false
+  enableMetrics: true
   enableH3: false
 
 persistence:

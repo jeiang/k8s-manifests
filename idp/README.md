@@ -27,17 +27,17 @@ Default application version: Pocket ID `v2.6.2`.
 
 Generate the values locally:
 
-```sh
-LLDAP_JWT_SECRET="$(openssl rand -base64 48)"
-LLDAP_KEY_SEED="$(openssl rand -base64 32)"
-LLDAP_ADMIN_PASSWORD="$(openssl rand -base64 24)"
-POCKET_ID_ENCRYPTION_KEY="$(openssl rand -base64 32)"
-POCKET_ID_STATIC_API_KEY="$(openssl rand -hex 32)"
+```fish
+set LLDAP_JWT_SECRET (openssl rand -base64 48)
+set LLDAP_KEY_SEED (openssl rand -base64 32)
+set LLDAP_ADMIN_PASSWORD (openssl rand -base64 24)
+set POCKET_ID_ENCRYPTION_KEY (openssl rand -base64 32)
+set POCKET_ID_STATIC_API_KEY (openssl rand -hex 32)
 ```
 
 Create the namespace and secret:
 
-```sh
+```fish
 kubectl create namespace idp --dry-run=client -o yaml | kubectl apply -f -
 
 kubectl -n idp create secret generic idp-secrets \
@@ -59,7 +59,7 @@ Secret meanings:
 
 ## Install
 
-```sh
+```fish
 helm lint ./idp
 helm template idp ./idp --namespace idp
 helm upgrade --install idp ./idp \
@@ -85,7 +85,7 @@ LLDAP is internal-only by default. The chart creates a `ClusterIP` Service and d
 
 Use a port-forward for first setup:
 
-```sh
+```fish
 kubectl -n idp port-forward svc/idp-lldap 17170:80
 ```
 
@@ -115,16 +115,16 @@ Password: idp-secrets/lldap-admin-password
 
 Wait for Pocket ID to sync LDAP:
 
-```sh
+```fish
 kubectl -n idp logs deploy/idp-pocket-id --tail=100
 ```
 
 Generate a one-time access token for the LDAP user you created:
 
-```sh
-POCKET_ID_POD="$(kubectl -n idp get pod \
+```fish
+set POCKET_ID_POD (kubectl -n idp get pod \
   -l app.kubernetes.io/component=pocket-id \
-  -o jsonpath='{.items[0].metadata.name}')"
+  -o jsonpath='{.items[0].metadata.name}')
 
 kubectl -n idp exec "$POCKET_ID_POD" -- \
   /app/pocket-id one-time-access-token your-user-or-email

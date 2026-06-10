@@ -25,7 +25,7 @@ Default application image: `ghcr.io/jeiang/website:sha-6ac94e3`.
 
 ## Install
 
-```sh
+```fish
 helm lint ./website
 helm template website ./website --namespace website
 helm upgrade --install website ./website \

@@ -23,7 +23,7 @@ Default application version: `v0.28.2`.
 
 ## Install
 
-```sh
+```fish
 helm lint ./blocky-dns
 helm template blocky-dns ./blocky-dns --namespace dns
 helm upgrade --install blocky-dns ./blocky-dns \
@@ -33,7 +33,7 @@ helm upgrade --install blocky-dns ./blocky-dns \
 
 Verify the Service and HPA:
 
-```sh
+```fish
 kubectl -n dns get svc blocky-dns
 kubectl -n dns get hpa blocky-dns
 ```

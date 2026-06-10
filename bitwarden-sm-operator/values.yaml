@@ -1,0 +1,61 @@
+# Values for bitwarden/sm-operator.
+
+settings:
+  # How often the operator synchronizes Bitwarden Secrets Manager data, in seconds.
+  # Bitwarden requires a minimum of 180.
+  bwSecretsManagerRefreshInterval: 300
+  # Use US or EU for Bitwarden Cloud. For self-hosted Bitwarden, leave this blank
+  # and set bwApiUrlOverride and bwIdentityUrlOverride.
+  cloudRegion: US
+  bwApiUrlOverride: ""
+  bwIdentityUrlOverride: ""
+  kubernetesClusterDomain: cluster.local
+  replicas: 1
+
+commonLabels: {}
+
+containers:
+  manager:
+    enableLeaderElection: true
+    image:
+      repository: ghcr.io/bitwarden/sm-operator
+      tag: ""
+    resources:
+      requests:
+        cpu: 10m
+        memory: 64Mi
+      limits:
+        cpu: 500m
+        memory: 128Mi
+    terminationGracePeriodSeconds: 10
+
+  serviceAccount:
+    annotations: {}
+  enableSeccompProfileRuntimeDefault: true
+  imagePullSecrets: ""
+  nodeSelector: {}
+  tolerations: []
+
+revisionHistoryLimit: ""
+
+metricsService:
+  type: ClusterIP
+  ports:
+    - name: https
+      port: 8443
+      protocol: TCP
+      targetPort: https
+
+livenessProbe:
+  initialDelaySeconds: 15
+  periodSeconds: 20
+  timeoutSeconds: 1
+  successThreshold: 1
+  failureThreshold: 3
+
+readinessProbe:
+  initialDelaySeconds: 5
+  periodSeconds: 10
+  timeoutSeconds: 1
+  successThreshold: 1
+  failureThreshold: 3
