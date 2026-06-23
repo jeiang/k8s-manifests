@@ -17,13 +17,13 @@ Default images:
 - Traefik `IngressRoute` resources for HTTP, WebSocket, relay, and gRPC traffic at `https://netbird.jeiang.dev`.
 - A cert-manager `Certificate` using the `letsencrypt-prod` `ClusterIssuer`.
 - A PersistentVolumeClaim for NetBird server state.
-- An optional `BitwardenSecret` that syncs `netbird-secrets` from Bitwarden Secrets Manager.
+- A `BitwardenSecret` that syncs `netbird-secrets` from Bitwarden Secrets Manager.
 - A `ServiceMonitor` for NetBird server metrics.
 - Resource limits for server, dashboard, relay, and server init containers.
 
 ## Dependencies
 
-- Helm 3, `kubectl`, and `openssl` for secret generation.
+- Helm 3, `kubectl`, and `openssl` for generating initial secret values.
 - Traefik CRDs installed, specifically `traefik.io/v1alpha1` `IngressRoute`.
 - A Traefik entryPoint named `websecure`.
 - cert-manager CRDs/controller installed, including `cert-manager.io/v1` `Certificate`.
@@ -32,37 +32,32 @@ Default images:
 - DNS for `stun.netbird.jeiang.dev` pointing at the public IPv4 and IPv6 addresses of the two labeled STUN relay nodes.
 - Hetzner firewall rules allowing inbound UDP `3478` to those two STUN relay nodes.
 - Hetzner CSI installed with the RWO `hcloud-volumes` StorageClass.
-- A pre-created `netbird-secrets` Secret with the keys listed below.
-- Bitwarden Secrets Manager operator CRDs if `bitwardenSecrets.enabled=true`.
+- Bitwarden Secrets Manager operator CRDs.
+- A `bw-auth-token` Secret in the `netbird` namespace so the Bitwarden operator can sync `netbird-secrets`.
 - Prometheus Operator CRDs installed if `metrics.serviceMonitor.enabled=true`.
 
-## Generate Secrets
+## Generate Bitwarden Secrets
 
-The chart expects a pre-created `netbird-secrets` Secret. Keep these values stable after the first install:
+The chart expects `netbird-secrets` to be synced from Bitwarden Secrets Manager. Keep these values stable after the first install:
 
 - `store-encryption-key`: base64-encoded 32-byte key for encrypting sensitive management data.
 - `relay-auth-secret`: shared secret between the management server and relay pods.
 - `idp-session-cookie-encryption-key`: 32-character hex embedded IdP session cookie encryption key.
 
-Generate and create the Secret:
+Generate the values locally:
 
 ```fish
 set NETBIRD_STORE_ENCRYPTION_KEY (openssl rand -base64 32)
 set NETBIRD_RELAY_AUTH_SECRET (openssl rand -hex 32)
 set NETBIRD_IDP_SESSION_COOKIE_ENCRYPTION_KEY (openssl rand -hex 16)
 
-kubectl create namespace netbird --dry-run=client -o yaml | kubectl apply -f -
-
-kubectl -n netbird create secret generic netbird-secrets \
-  --from-literal=store-encryption-key="$NETBIRD_STORE_ENCRYPTION_KEY" \
-  --from-literal=relay-auth-secret="$NETBIRD_RELAY_AUTH_SECRET" \
-  --from-literal=idp-session-cookie-encryption-key="$NETBIRD_IDP_SESSION_COOKIE_ENCRYPTION_KEY" \
-  --dry-run=client -o yaml | kubectl apply -f -
 ```
+
+Store each generated value in Bitwarden Secrets Manager and put the resulting Bitwarden secret IDs in `values.yaml` under `bitwardenSecrets.secretIds`.
 
 ## Bitwarden Secrets Manager
 
-Instead of creating `netbird-secrets` with `kubectl create secret`, enable the chart-managed `BitwardenSecret`. Create matching secrets in Bitwarden Secrets Manager, then set the organization ID and Bitwarden secret IDs:
+The chart-managed `BitwardenSecret` is enabled by default. Create matching secrets in Bitwarden Secrets Manager, then set the organization ID and Bitwarden secret IDs:
 
 ```fish
 helm upgrade --install netbird ./netbird \
@@ -78,6 +73,7 @@ helm upgrade --install netbird ./netbird \
 The Bitwarden machine-account token Secret must already exist in the `netbird` namespace:
 
 ```fish
+kubectl create namespace netbird --dry-run=client -o yaml | kubectl apply -f -
 kubectl -n netbird get secret bw-auth-token
 ```
 

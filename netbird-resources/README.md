@@ -5,7 +5,7 @@ Helm chart for NetBird operator routing resources.
 ## What This Chart Creates
 
 - A `NetworkRouter` named `k8s` in the `netbird` namespace.
-- An optional `BitwardenSecret` that syncs the NetBird operator API token Secret.
+- A `BitwardenSecret` that syncs the NetBird operator API token Secret.
 - Optional `NetworkResource` objects when `networkResources.enabled=true`.
 
 The NetBird operator uses these resources to expose Kubernetes services to your NetBird network. The shared router and API token live in this chart. Workload-specific `NetworkResource` objects are owned by the workload charts that expose those Services:
@@ -19,7 +19,8 @@ The NetBird operator uses these resources to expose Kubernetes services to your 
 - NetBird Kubernetes operator installed.
 - NetBird operator CRDs for `NetworkRouter` and `NetworkResource`.
 - A custom NetBird DNS zone matching `networkRouter.dnsZoneRef.name`.
-- Bitwarden Secrets Manager operator CRDs if `bitwardenSecrets.netbirdApi.enabled=true`.
+- Bitwarden Secrets Manager operator CRDs.
+- A `bw-auth-token` Secret in the `netbird` namespace so the Bitwarden operator can sync `netbird-mgmt-api-key`.
 
 Before creating a `NetworkRouter`, create the DNS zone in the NetBird dashboard. The NetBird documentation requires this zone to exist before the operator can register it.
 
@@ -31,17 +32,13 @@ Install cert-manager if it is not already installed. NetBird recommends it so th
 kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.17.0/cert-manager.yaml
 ```
 
-Create the NetBird namespace and API token Secret. Replace `~/nb-pat.secret` with the path to your NetBird personal access token:
+Create the NetBird namespace:
 
 ```fish
 kubectl create namespace netbird --dry-run=client -o yaml | kubectl apply -f -
-
-kubectl -n netbird create secret generic netbird-mgmt-api-key \
-  --from-literal=NB_API_KEY=(cat ~/nb-pat.secret) \
-  --dry-run=client -o yaml | kubectl apply -f -
 ```
 
-Or sync the same Secret from Bitwarden Secrets Manager. This renders only the `BitwardenSecret`, so it can run before the NetBird operator CRDs are installed:
+Store the NetBird personal access token in Bitwarden Secrets Manager and set `bitwardenSecrets.netbirdApi.secretId` to that Bitwarden secret ID. Apply the `BitwardenSecret` before installing the NetBird operator resources:
 
 ```fish
 helm template netbird-resources ./netbird-resources \

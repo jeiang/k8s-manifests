@@ -2,7 +2,7 @@
 
 Helm charts and Kubernetes manifests for my servers.
 
-Repository-wide cluster notes live in [`AGENTS.md`](./AGENTS.md). Chart-specific maintenance guidance lives in each non-monitoring chart directory's `AGENTS.md`.
+Repository-wide cluster notes live in [`AGENTS.md`](./AGENTS.md). Chart-specific maintenance guidance lives in each chart directory's `AGENTS.md` when present.
 
 ## Charts
 
@@ -54,6 +54,15 @@ Important k3s flags for this platform:
 
 The Hetzner Cloud Controller Manager should own node provider IDs and cloud-discovered node addresses. Do not commit live Hetzner API tokens, real secret values, or one-off cluster bootstrap tokens to this repository.
 
+## Secrets Policy
+
+All application and workload secrets should live in Bitwarden Secrets Manager and be synced into Kubernetes with `BitwardenSecret` resources. The only Kubernetes Secrets that should be created directly are bootstrap/operator credentials required before Bitwarden can sync anything:
+
+- `kube-system/hcloud`, used by Hetzner Cloud Controller Manager and Hetzner CSI.
+- Per-namespace `bw-auth-token` Secrets, used by the Bitwarden Secrets Manager operator to read Bitwarden items.
+
+Do not create application Secrets manually with literal values when a `BitwardenSecret` can own them instead.
+
 Install the Hetzner components after the k3s nodes are up:
 
 ```fish
@@ -91,13 +100,13 @@ kubectl get storageclass rclone-csi
 | --- | --- |
 | `website` | Traefik IngressClass named `traefik`; Traefik `Middleware` CRD; cert-manager CRDs/controller; existing `letsencrypt-prod` `ClusterIssuer` unless `certManager.clusterIssuer.create=true`; DNS for all `ingress.hosts`. |
 | `bitwarden-sm-operator` | Bitwarden organization with Secrets Manager enabled; machine account access token; permissions to install CRDs/RBAC/operator resources; network egress to Bitwarden Cloud or self-hosted Bitwarden URLs. |
-| `actual-budget` | Traefik IngressClass named `traefik`; cert-manager controller and `letsencrypt-prod` `ClusterIssuer`; DNS for `budget.jeiang.dev`; rclone CSI `rclone-csi` StorageClass and synced `rclone-config` Secret. |
+| `actual-budget` | Traefik IngressClass named `traefik`; cert-manager controller and `letsencrypt-prod` `ClusterIssuer`; DNS for `budget.jeiang.dev`; rclone CSI `rclone-csi` StorageClass and Bitwarden-synced `rclone-config` Secret. |
 | `blocky-dns` | metrics-server or another resource metrics provider for the HPA; outbound DNS/HTTPS access for upstreams and blocklists; optional NetBird operator CRDs when `netbird.enabled=true`. |
-| `hath` | Hetzner CSI `hcloud-volumes` storage for cache/data directories; firewall rules for TCP `8888` to the node running the Hath pod; Prometheus Operator CRDs if ServiceMonitor output is enabled. |
-| `idp` | Traefik IngressClass named `traefik`; cert-manager controller and `letsencrypt-prod` `ClusterIssuer`; DNS for `auth.jeiang.dev`; pre-created `idp-secrets` or Bitwarden Secrets Manager operator; Hetzner CSI `hcloud-volumes` storage; optional NetBird operator CRDs when `netbird.enabled=true`. |
-| `monitoring` | Kubernetes `>=1.25`; permissions to install Prometheus Operator CRDs/RBAC; Hetzner CSI `hcloud-volumes` storage class for Prometheus, Alertmanager, Grafana, and Loki PVCs; Discord webhook Secret for Alertmanager; optional Traefik/cert-manager/DNS for Grafana ingress. |
-| `netbird` | Traefik `IngressRoute` CRDs and `websecure` entryPoint; cert-manager `Certificate` CRD/controller and `letsencrypt-prod` `ClusterIssuer`; DNS for `netbird.jeiang.dev` to the Traefik load balancer; DNS for `stun.netbird.jeiang.dev` to the two labeled STUN relay nodes; firewall access for UDP `3478`; pre-created `netbird-secrets` or Bitwarden Secrets Manager operator; persistent storage for the server PVC; Prometheus Operator CRDs if ServiceMonitor output is enabled. |
-| `netbird-resources` | NetBird Kubernetes operator and CRDs for `NetworkRouter` and `NetworkResource`; custom NetBird DNS zone; optional Bitwarden Secrets Manager operator for the NetBird API token Secret. |
+| `hath` | rclone CSI `rclone-csi` storage for cache/data directories; firewall rules for TCP `8888` to the node running the Hath pod; Prometheus Operator CRDs if ServiceMonitor output is enabled. |
+| `idp` | Traefik IngressClass named `traefik`; cert-manager controller and `letsencrypt-prod` `ClusterIssuer`; DNS for `auth.jeiang.dev`; Bitwarden Secrets Manager operator for `idp-secrets`; Hetzner CSI `hcloud-volumes` storage; optional NetBird operator CRDs when `netbird.enabled=true`. |
+| `monitoring` | Kubernetes `>=1.25`; permissions to install Prometheus Operator CRDs/RBAC; rclone CSI `rclone-csi` StorageClass and Bitwarden-synced `rclone-config` Secret for Prometheus, Alertmanager, Grafana, and Loki PVCs; Bitwarden-synced Discord webhook Secret for Alertmanager; optional Traefik/cert-manager/DNS for Grafana ingress. |
+| `netbird` | Traefik `IngressRoute` CRDs and `websecure` entryPoint; cert-manager `Certificate` CRD/controller and `letsencrypt-prod` `ClusterIssuer`; DNS for `netbird.jeiang.dev` to the Traefik load balancer; DNS for `stun.netbird.jeiang.dev` to the two labeled STUN relay nodes; firewall access for UDP `3478`; Bitwarden Secrets Manager operator for `netbird-secrets`; persistent storage for the server PVC; Prometheus Operator CRDs if ServiceMonitor output is enabled. |
+| `netbird-resources` | NetBird Kubernetes operator and CRDs for `NetworkRouter` and `NetworkResource`; custom NetBird DNS zone; Bitwarden Secrets Manager operator for the NetBird API token Secret. |
 | `rclone-csi-driver` | FUSE support on cluster nodes; Bitwarden Secrets Manager operator for `rclone-config`; network access from nodes to the configured rclone backend; upstream OCI Helm chart access to `ghcr.io/veloxpack/charts/csi-driver-rclone`. |
 | `rbac-access` | Installer must have permission to create `Namespace`, `RoleBinding`, and `ClusterRoleBinding` resources; configured subjects must match identities from cluster authentication. |
 | `traefik` | k3s bundled Traefik chart enabled; Hetzner Cloud Controller Manager installed; `legion-lb1` Load Balancer in the `us-east` network zone. |

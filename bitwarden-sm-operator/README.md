@@ -21,6 +21,8 @@ The upstream Bitwarden chart version checked while creating this file was `2.0.1
 - Kubernetes permissions to install CRDs, RBAC, Deployments, Services, and `BitwardenSecret` resources.
 - Network egress from the operator pod to Bitwarden Cloud, or to your self-hosted Bitwarden API and identity URLs.
 
+Repository policy: all application and workload secrets should be stored in Bitwarden Secrets Manager and synced with `BitwardenSecret` resources. The only Kubernetes Secrets created directly in normal operation are `kube-system/hcloud` for Hetzner components and per-namespace `bw-auth-token` Secrets that let this operator read Bitwarden items.
+
 ## Install
 
 Add the official Bitwarden chart repository:

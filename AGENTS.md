@@ -10,8 +10,6 @@ Top-level directories generally fall into one of three forms:
 - Values-only directories for upstream Helm charts installed from external repositories.
 - Plain Kubernetes manifest directories for cluster-owned components such as k3s bundled Traefik configuration.
 
-The `monitoring/` directory is intentionally out of scope for this guidance unless a task explicitly asks to work on it.
-
 ## Build, Test, and Development Commands
 
 Use the Nix/devenv environment when available:
@@ -68,7 +66,7 @@ Pull requests should describe the affected chart, summarize behavior changes, li
 
 ## Security & Configuration Tips
 
-Do not commit live secret values. Prefer existing Kubernetes Secrets referenced from `values.yaml`. Review public hostnames, ACME issuer names, external services, hostPort exposure, and persistent storage before applying manifests to any cluster.
+Do not commit live secret values. Application and workload secrets should be stored in Bitwarden Secrets Manager and synced through `BitwardenSecret` resources. The only direct Kubernetes Secrets expected in normal operation are bootstrap/operator credentials required before Bitwarden can sync secrets: `kube-system/hcloud` for Hetzner components and per-namespace `bw-auth-token` Secrets for the Bitwarden operator. Prefer existing Kubernetes Secret references in `values.yaml`; do not add literal secret values. Review public hostnames, ACME issuer names, external services, hostPort exposure, and persistent storage before applying manifests to any cluster.
 
 ## External Cluster Components
 

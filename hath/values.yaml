@@ -40,9 +40,9 @@ persistence:
   enabled: true
   annotations: {}
   existingClaim: ""
-  storageClassName: hcloud-volumes
+  storageClassName: rclone-csi
   accessModes:
-    - ReadWriteOnce
+    - ReadWriteMany
   size: 15Gi
   mountPath: /hath
 

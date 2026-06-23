@@ -9,7 +9,7 @@ Default image: `ghcr.io/james58899/hath-rust:latest`.
 - A single `hath-rust` Deployment.
 - A `ClusterIP` Service exposing the configured H@H port inside the cluster.
 - A TCP `hostPort` on port `8888` for direct node-level exposure.
-- A Hetzner CSI-backed persistent volume claim mounted at `/hath`.
+- A rclone CSI-backed persistent volume claim mounted at `/hath`.
 - Persistent directories for cache, login data, downloads, and logs.
 - An ephemeral `emptyDir` for temporary files at `/tmp/hath`.
 - Metrics endpoint and optional HTTP/3 UDP port.
@@ -18,7 +18,8 @@ Default image: `ghcr.io/james58899/hath-rust:latest`.
 ## Dependencies
 
 - Helm 3 and `kubectl`.
-- Hetzner CSI installed with the RWO `hcloud-volumes` StorageClass.
+- rclone CSI driver installed with the `rclone-csi` StorageClass, RWX-capable backend configuration, and a working `rclone-config` Secret.
+- The `rclone-csi` StorageClass mount options set UID/GID `1000`; this chart runs the Hath pod as UID/GID `1000`.
 - Firewall rules allowing inbound TCP `8888` to the node running the Hath pod.
 - Prometheus Operator CRDs installed if `metrics.serviceMonitor.enabled=true`.
 
@@ -73,9 +74,9 @@ service:
 
 persistence:
   enabled: true
-  storageClassName: hcloud-volumes
+  storageClassName: rclone-csi
   accessModes:
-    - ReadWriteOnce
+    - ReadWriteMany
   size: 15Gi
 
 resources:
