@@ -13,6 +13,19 @@ secrets:
     lldapAdminPassword: lldap-admin-password
     pocketIdLdapBindPassword: lldap-admin-password
 
+bitwardenSecrets:
+  enabled: true
+  organizationId: af918704-c223-4f10-a245-b4640144f2d9
+  authToken:
+    secretName: bw-auth-token
+    secretKey: token
+  secretIds:
+    lldapJwtSecret: "cc5ad9f3-ce88-4b1c-a9a5-b4650028413d"
+    lldapKeySeed: "22be0108-6075-46d7-8b5b-b465002841ca"
+    lldapAdminPassword: "384b2038-81d5-45fd-9eca-b46500284255"
+    pocketIdEncryptionKey: "d617ec9e-e4b2-4be1-b2e6-b465002842e5"
+    pocketIdStaticApiKey: "3c30732f-f3e3-4f68-bbbe-b46500284379"
+
 pocketId:
   replicaCount: 1
   image:

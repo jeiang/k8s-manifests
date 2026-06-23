@@ -114,6 +114,13 @@ kubectl -n $BW_NAMESPACE get bitwardensecret app-secrets
 kubectl -n $BW_NAMESPACE get secret app-secrets
 ```
 
+This repository also includes saved `BitwardenSecret` manifests for the charts that consume Kubernetes Secrets:
+
+- `idp/templates/bitwardensecret.yaml` for `idp-secrets`.
+- `netbird/templates/bitwardensecret.yaml` for `netbird-secrets`.
+- `netbird-resources/templates/bitwardensecret-netbird-api.yaml` for `netbird-mgmt-api-key`.
+- `monitoring/alertmanager-discord-webhook-bitwardensecret.yaml` for the Alertmanager Discord webhook Secret.
+
 ## Values To Review
 
 ```yaml

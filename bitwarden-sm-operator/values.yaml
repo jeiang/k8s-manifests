@@ -7,8 +7,8 @@ settings:
   # Use US or EU for Bitwarden Cloud. For self-hosted Bitwarden, leave this blank
   # and set bwApiUrlOverride and bwIdentityUrlOverride.
   cloudRegion: US
-  bwApiUrlOverride: ""
-  bwIdentityUrlOverride: ""
+  bwApiUrlOverride: "https://vault.bitwarden.com/api"
+  bwIdentityUrlOverride: "https://vault.bitwarden.com/identity"
   kubernetesClusterDomain: cluster.local
   replicas: 1
 

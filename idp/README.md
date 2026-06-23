@@ -12,6 +12,7 @@ Default application version: Pocket ID `v2.6.2`.
 - `ClusterIP` Services for Pocket ID and LLDAP.
 - A Kubernetes Ingress resource for Pocket ID with cert-manager annotations.
 - A Pocket ID init container that waits for LLDAP's LDAP port before startup.
+- An optional `BitwardenSecret` that syncs `idp-secrets` from Bitwarden Secrets Manager.
 - Resource limits for Pocket ID, LLDAP, and the Pocket ID wait init container.
 
 ## Dependencies
@@ -21,6 +22,7 @@ Default application version: Pocket ID `v2.6.2`.
 - cert-manager CRDs/controller installed and a `letsencrypt-prod` `ClusterIssuer`.
 - A DNS record for `auth.jeiang.dev` pointing at the ingress load balancer.
 - A pre-created `idp-secrets` Secret with the keys listed below.
+- Bitwarden Secrets Manager operator CRDs if `bitwardenSecrets.enabled=true`.
 - Nodes that can use hostPath storage under `/var/lib/idp`, or custom persistence values that use an available storage class.
 
 ## Generate Secrets
@@ -56,6 +58,29 @@ Secret meanings:
 - `lldap-admin-password`: password for the LLDAP `admin` user and Pocket ID LDAP bind. Keep stable unless deliberately rotating it.
 - `pocket-id-encryption-key`: Pocket ID encryption key. Keep stable or encrypted data may become unreadable.
 - `pocket-id-static-api-key`: Pocket ID static API key.
+
+## Bitwarden Secrets Manager
+
+Instead of creating `idp-secrets` with `kubectl create secret`, enable the chart-managed `BitwardenSecret`. Create matching secrets in Bitwarden Secrets Manager, then set the organization ID and Bitwarden secret IDs:
+
+```fish
+helm upgrade --install idp ./idp \
+  --namespace idp \
+  --create-namespace \
+  --set bitwardenSecrets.enabled=true \
+  --set bitwardenSecrets.organizationId=replace-with-organization-uuid \
+  --set bitwardenSecrets.secretIds.lldapJwtSecret=replace-with-secret-uuid \
+  --set bitwardenSecrets.secretIds.lldapKeySeed=replace-with-secret-uuid \
+  --set bitwardenSecrets.secretIds.lldapAdminPassword=replace-with-secret-uuid \
+  --set bitwardenSecrets.secretIds.pocketIdEncryptionKey=replace-with-secret-uuid \
+  --set bitwardenSecrets.secretIds.pocketIdStaticApiKey=replace-with-secret-uuid
+```
+
+The Bitwarden machine-account token Secret must already exist in the `idp` namespace:
+
+```fish
+kubectl -n idp get secret bw-auth-token
+```
 
 ## Install
 

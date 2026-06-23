@@ -17,6 +17,8 @@ Default images:
 - Traefik `IngressRoute` resources for HTTP, WebSocket, relay, and gRPC traffic at `https://netbird.jeiang.dev`.
 - A cert-manager `Certificate` using the `letsencrypt-prod` `ClusterIssuer`.
 - A PersistentVolumeClaim for NetBird server state.
+- An optional `BitwardenSecret` that syncs `netbird-secrets` from Bitwarden Secrets Manager.
+- A `ServiceMonitor` for NetBird server metrics.
 - Resource limits for server, dashboard, relay, and server init containers.
 
 ## Dependencies
@@ -30,6 +32,8 @@ Default images:
 - A load balancer path for UDP `3478` to the relay STUN Service.
 - A default storage class or `persistence.storageClassName` set for the server PVC.
 - A pre-created `netbird-secrets` Secret with the keys listed below.
+- Bitwarden Secrets Manager operator CRDs if `bitwardenSecrets.enabled=true`.
+- Prometheus Operator CRDs installed if `metrics.serviceMonitor.enabled=true`.
 
 ## Generate Secrets
 
@@ -55,6 +59,27 @@ kubectl -n netbird create secret generic netbird-secrets \
   --dry-run=client -o yaml | kubectl apply -f -
 ```
 
+## Bitwarden Secrets Manager
+
+Instead of creating `netbird-secrets` with `kubectl create secret`, enable the chart-managed `BitwardenSecret`. Create matching secrets in Bitwarden Secrets Manager, then set the organization ID and Bitwarden secret IDs:
+
+```fish
+helm upgrade --install netbird ./netbird \
+  --namespace netbird \
+  --create-namespace \
+  --set bitwardenSecrets.enabled=true \
+  --set bitwardenSecrets.organizationId=replace-with-organization-uuid \
+  --set bitwardenSecrets.secretIds.storeEncryptionKey=replace-with-secret-uuid \
+  --set bitwardenSecrets.secretIds.relayAuthSecret=replace-with-secret-uuid \
+  --set bitwardenSecrets.secretIds.idpSessionCookieEncryptionKey=replace-with-secret-uuid
+```
+
+The Bitwarden machine-account token Secret must already exist in the `netbird` namespace:
+
+```fish
+kubectl -n netbird get secret bw-auth-token
+```
+
 ## Install
 
 ```fish
@@ -68,3 +93,27 @@ helm upgrade --install netbird ./netbird \
 Before installing, make sure `netbird.jeiang.dev` points at the Traefik load balancer and UDP `3478` reaches the relay STUN `LoadBalancer` Service. HTTP reverse proxies cannot proxy STUN traffic, so UDP `3478` must be reachable directly.
 
 After installation, open `https://netbird.jeiang.dev` and complete NetBird's first-load owner setup.
+
+## Verify
+
+```fish
+kubectl -n netbird get deploy,pods,svc,pvc,servicemonitor
+kubectl -n netbird rollout status deployment/netbird-server --timeout=5m
+kubectl -n netbird rollout status deployment/netbird-dashboard --timeout=5m
+kubectl -n netbird rollout status deployment/netbird-relay --timeout=5m
+```
+
+## Values To Review
+
+```yaml
+server:
+  metricsPort: 9090
+
+metrics:
+  serviceMonitor:
+    enabled: true
+    labels:
+      release: monitoring
+    interval: 30s
+    path: /metrics
+```

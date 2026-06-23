@@ -12,6 +12,7 @@ Default image: `ghcr.io/james58899/hath-rust:latest`.
 - Persistent directories for cache, login data, downloads, and logs.
 - An ephemeral `emptyDir` for temporary files at `/tmp/hath`.
 - Metrics endpoint and optional HTTP/3 UDP port.
+- A `ServiceMonitor` for Prometheus Operator when metrics are enabled.
 
 ## Dependencies
 
@@ -20,6 +21,7 @@ Default image: `ghcr.io/james58899/hath-rust:latest`.
 - Longhorn RWX support available on the storage nodes.
 - A cluster load balancer implementation and firewall rules that allow public access to the configured H@H port.
 - Network/firewall rules appropriate for the configured H@H port.
+- Prometheus Operator CRDs installed if `metrics.serviceMonitor.enabled=true`.
 
 ## Install
 
@@ -43,6 +45,7 @@ helm upgrade --install hath ./hath \
 
 ```fish
 kubectl -n hath get deploy,pods,svc,pvc
+kubectl -n hath get servicemonitor hath
 kubectl -n hath rollout status deployment/hath --timeout=5m
 kubectl -n hath logs deploy/hath --tail=100
 ```
@@ -74,6 +77,14 @@ resources:
   limits:
     cpu: "2"
     memory: 2Gi
+
+metrics:
+  serviceMonitor:
+    enabled: true
+    labels:
+      release: monitoring
+    interval: 30s
+    path: /metrics
 ```
 
 Set any additional `hath-rust` options through the `hath` values or `hath.extraArgs`.

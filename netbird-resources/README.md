@@ -9,6 +9,8 @@ Helm chart for NetBird operator routing resources.
 - A `NetworkResource` for the `idp-lldap` Service in the `idp` namespace.
 - A `NetworkResource` for the `longhorn-frontend` Service in the `longhorn-system` namespace.
 - A `NetworkResource` for the `longhorn-backend` Service in the `longhorn-system` namespace.
+- A `NetworkResource` for the `monitoring-grafana` Service in the `monitoring` namespace.
+- An optional `BitwardenSecret` that syncs the NetBird operator API token Secret.
 
 The NetBird operator uses these resources to expose Kubernetes services to your NetBird network. With the default DNS zone, the expected service records are:
 
@@ -16,6 +18,7 @@ The NetBird operator uses these resources to expose Kubernetes services to your 
 - `idp-lldap.idp.k8s.jeiang.vpn`
 - `longhorn-frontend.longhorn-system.k8s.jeiang.vpn`
 - `longhorn-backend.longhorn-system.k8s.jeiang.vpn`
+- `monitoring-grafana.monitoring.k8s.jeiang.vpn`
 
 ## Dependencies
 
@@ -26,6 +29,8 @@ The NetBird operator uses these resources to expose Kubernetes services to your 
 - Existing `blocky-dns` Service in the `dns` namespace.
 - Existing `idp-lldap` Service in the `idp` namespace.
 - Existing `longhorn-frontend` and `longhorn-backend` Services in the `longhorn-system` namespace.
+- Existing `monitoring-grafana` Service in the `monitoring` namespace.
+- Bitwarden Secrets Manager operator CRDs if `bitwardenSecrets.netbirdApi.enabled=true`.
 
 Before creating a `NetworkRouter`, create the DNS zone in the NetBird dashboard. The NetBird documentation requires this zone to exist before the operator can register it.
 
@@ -45,6 +50,25 @@ kubectl create namespace netbird --dry-run=client -o yaml | kubectl apply -f -
 kubectl -n netbird create secret generic netbird-mgmt-api-key \
   --from-literal=NB_API_KEY=(cat ~/nb-pat.secret) \
   --dry-run=client -o yaml | kubectl apply -f -
+```
+
+Or sync the same Secret from Bitwarden Secrets Manager. This renders only the `BitwardenSecret`, so it can run before the NetBird operator CRDs are installed:
+
+```fish
+helm template netbird-resources ./netbird-resources \
+  --namespace netbird \
+  --set networkRouter.enabled=false \
+  --set networkResources.enabled=false \
+  --set bitwardenSecrets.netbirdApi.enabled=true \
+  --set bitwardenSecrets.netbirdApi.organizationId=replace-with-organization-uuid \
+  --set bitwardenSecrets.netbirdApi.secretId=replace-with-secret-uuid \
+  | kubectl apply -f -
+```
+
+The Bitwarden machine-account token Secret must already exist in the `netbird` namespace:
+
+```fish
+kubectl -n netbird get secret bw-auth-token
 ```
 
 Install the upstream NetBird operator chart with the self-hosted management URL set to `https://netbird.jeiang.dev`:
@@ -103,12 +127,14 @@ kubectl -n dns get networkresource blocky-dns
 kubectl -n idp get networkresource lldap
 kubectl -n longhorn-system get networkresource longhorn-frontend
 kubectl -n longhorn-system get networkresource longhorn-backend
+kubectl -n monitoring get networkresource grafana
 
 kubectl -n netbird describe networkrouter k8s
 kubectl -n dns describe networkresource blocky-dns
 kubectl -n idp describe networkresource lldap
 kubectl -n longhorn-system describe networkresource longhorn-frontend
 kubectl -n longhorn-system describe networkresource longhorn-backend
+kubectl -n monitoring describe networkresource grafana
 ```
 
 ## Values To Review
@@ -140,4 +166,15 @@ networkResources:
       namespace: longhorn-system
       serviceRef:
         name: longhorn-backend
+    - name: grafana
+      namespace: monitoring
+      serviceRef:
+        name: monitoring-grafana
+
+bitwardenSecrets:
+  netbirdApi:
+    enabled: false
+    namespace: netbird
+    secretName: netbird-mgmt-api-key
+    secretKeyName: NB_API_KEY
 ```

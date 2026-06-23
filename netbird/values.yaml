@@ -9,6 +9,17 @@ secrets:
     relayAuthSecret: relay-auth-secret
     idpSessionCookieEncryptionKey: idp-session-cookie-encryption-key
 
+bitwardenSecrets:
+  enabled: true
+  organizationId: af918704-c223-4f10-a245-b4640144f2d9
+  authToken:
+    secretName: bw-auth-token
+    secretKey: token
+  secretIds:
+    storeEncryptionKey: "9eb3d9c5-58ed-4a6a-afa4-b465002871e7"
+    relayAuthSecret: "263bee8d-be56-4d26-bec4-b4650028727c"
+    idpSessionCookieEncryptionKey: "0bddc1f8-cb8c-4f2f-b1c1-b465002872ff"
+
 server:
   replicaCount: 1
   image:
@@ -94,6 +105,15 @@ persistence:
   enabled: true
   size: 10Gi
   storageClassName: ""
+
+metrics:
+  serviceMonitor:
+    enabled: true
+    labels:
+      release: monitoring
+    interval: 30s
+    scrapeTimeout: ""
+    path: /metrics
 
 nodeSelector: {}
 tolerations: []

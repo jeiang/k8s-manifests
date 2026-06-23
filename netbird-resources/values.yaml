@@ -1,6 +1,18 @@
 nameOverride: ""
 fullnameOverride: ""
 
+bitwardenSecrets:
+  netbirdApi:
+    enabled: true
+    namespace: netbird
+    organizationId: af918704-c223-4f10-a245-b4640144f2d9
+    secretName: netbird-mgmt-api-key
+    secretKeyName: NB_API_KEY
+    secretId: 1824f6b7-989d-40c1-abe5-b46500292bf7
+    authToken:
+      secretName: bw-auth-token
+      secretKey: token
+
 networkRouter:
   enabled: true
   name: k8s
@@ -38,3 +50,9 @@ networkResources:
         name: longhorn-backend
       groups:
         - name: longhorn
+    - name: grafana
+      namespace: monitoring
+      serviceRef:
+        name: monitoring-grafana
+      groups:
+        - name: monitoring

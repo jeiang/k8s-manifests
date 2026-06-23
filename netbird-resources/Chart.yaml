@@ -2,5 +2,5 @@ apiVersion: v2
 name: netbird-resources
 description: NetBird operator NetworkRouter and NetworkResource definitions
 type: application
-version: 0.1.0
+version: 0.1.2
 appVersion: "v1alpha1"
