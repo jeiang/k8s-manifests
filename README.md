@@ -16,6 +16,7 @@ Repository-wide cluster notes live in [`AGENTS.md`](./AGENTS.md). Chart-specific
 | [`monitoring`](./monitoring) | Values for upstream Prometheus, Alertmanager, Grafana, Loki, and Alloy charts. |
 | [`netbird`](./netbird) | NetBird management server, dashboard, and relay stack. |
 | [`netbird-resources`](./netbird-resources) | Shared NetBird operator API token and router resources for Kubernetes Services. |
+| [`rclone-csi-driver`](./rclone-csi-driver) | Values and Bitwarden configuration for the upstream rclone CSI driver chart. |
 | [`rbac-access`](./rbac-access) | Cluster admin and namespace admin RBAC bindings. |
 | [`traefik`](./traefik) | k3s bundled Traefik `HelmChartConfig` with Hetzner Load Balancer annotations. |
 
@@ -95,6 +96,7 @@ kubectl get storageclass hcloud-volumes
 | `monitoring` | Kubernetes `>=1.25`; permissions to install Prometheus Operator CRDs/RBAC; Hetzner CSI `hcloud-volumes` storage class for Prometheus, Alertmanager, Grafana, and Loki PVCs; Discord webhook Secret for Alertmanager; optional Traefik/cert-manager/DNS for Grafana ingress. |
 | `netbird` | Traefik `IngressRoute` CRDs and `websecure` entryPoint; cert-manager `Certificate` CRD/controller and `letsencrypt-prod` `ClusterIssuer`; DNS for `netbird.jeiang.dev` to the Traefik load balancer; DNS for `stun.netbird.jeiang.dev` to the two labeled STUN relay nodes; firewall access for UDP `3478`; pre-created `netbird-secrets` or Bitwarden Secrets Manager operator; persistent storage for the server PVC; Prometheus Operator CRDs if ServiceMonitor output is enabled. |
 | `netbird-resources` | NetBird Kubernetes operator and CRDs for `NetworkRouter` and `NetworkResource`; custom NetBird DNS zone; optional Bitwarden Secrets Manager operator for the NetBird API token Secret. |
+| `rclone-csi-driver` | FUSE support on cluster nodes; Bitwarden Secrets Manager operator for `rclone-config`; network access from nodes to the configured rclone backend; upstream OCI Helm chart access to `ghcr.io/veloxpack/charts/csi-driver-rclone`. |
 | `rbac-access` | Installer must have permission to create `Namespace`, `RoleBinding`, and `ClusterRoleBinding` resources; configured subjects must match identities from cluster authentication. |
 | `traefik` | k3s bundled Traefik chart enabled; Hetzner Cloud Controller Manager installed; `legion-lb1` Load Balancer in the `us-east` network zone. |
 

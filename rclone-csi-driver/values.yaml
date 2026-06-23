@@ -1,0 +1,84 @@
+# Values for oci://ghcr.io/veloxpack/charts/csi-driver-rclone.
+
+driver:
+  name: rclone.csi.veloxpack.io
+
+kubeletDir: /var/lib/kubelet
+
+controller:
+  replicas: 1
+  logLevel: 3
+  resources:
+    csiProvisioner:
+      requests:
+        cpu: 10m
+        memory: 20Mi
+      limits:
+        memory: 400Mi
+    livenessProbe:
+      requests:
+        cpu: 10m
+        memory: 20Mi
+      limits:
+        memory: 100Mi
+    rclone:
+      requests:
+        cpu: 10m
+        memory: 20Mi
+      limits:
+        memory: 200Mi
+
+node:
+  logLevel: 3
+  metrics:
+    enabled: false
+    service:
+      enabled: false
+    serviceMonitor:
+      enabled: false
+    dashboard:
+      enabled: false
+  rc:
+    enabled: false
+    service:
+      enabled: false
+  cache:
+    enabled: false
+  resources:
+    livenessProbe:
+      requests:
+        cpu: 10m
+        memory: 20Mi
+      limits:
+        memory: 100Mi
+    nodeDriverRegistrar:
+      requests:
+        cpu: 10m
+        memory: 20Mi
+      limits:
+        memory: 100Mi
+    rclone:
+      requests:
+        cpu: 10m
+        memory: 20Mi
+      limits:
+        memory: 300Mi
+
+storageClass:
+  create: true
+  name: rclone-csi
+  annotations: {}
+  parameters:
+    remote: pixeldrain
+    remotePath: "k8s/${pvc.metadata.namespace}/${pvc.metadata.name}"
+    csi.storage.k8s.io/provisioner-secret-name: rclone-config
+    csi.storage.k8s.io/provisioner-secret-namespace: rclone-csi
+    csi.storage.k8s.io/node-publish-secret-name: rclone-config
+    csi.storage.k8s.io/node-publish-secret-namespace: rclone-csi
+  reclaimPolicy: Retain
+  volumeBindingMode: Immediate
+  mountOptions:
+    - vfs-cache-mode=writes
+    - vfs-cache-max-size=10G
+    - dir-cache-time=1m
+
