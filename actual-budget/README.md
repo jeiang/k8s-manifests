@@ -7,7 +7,8 @@ Values for deploying Actual Budget with the upstream `community-charts/actualbud
 - Actual Budget behind Traefik at `https://budget.jeiang.dev`.
 - cert-manager TLS using the `letsencrypt-prod` `ClusterIssuer`.
 - A `ClusterIP` Service on port `5006`.
-- A persistent volume claim with `10Gi` of storage.
+- A persistent volume claim with `10Gi` of rclone-backed storage.
+- An init container that creates `/data/server-files` and `/data/user-files` before Actual starts.
 - Password-based Actual Budget login.
 - Conservative CPU and memory requests/limits.
 
@@ -17,7 +18,8 @@ Values for deploying Actual Budget with the upstream `community-charts/actualbud
 - Traefik installed with an IngressClass named `traefik`.
 - cert-manager installed with a `letsencrypt-prod` `ClusterIssuer`.
 - DNS for `budget.jeiang.dev` pointing at the Traefik load balancer.
-- Hetzner CSI installed with the RWO `hcloud-volumes` StorageClass.
+- rclone CSI driver installed with the `rclone-csi` StorageClass, RWX-capable backend configuration, and a working `rclone-config` Secret.
+- The `rclone-csi` StorageClass mount options set UID/GID `1000`; this values file runs the Actual Budget pod as UID/GID `1000`.
 
 ## Install
 

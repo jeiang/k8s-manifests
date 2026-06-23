@@ -44,7 +44,7 @@ The target cluster is k3s on Hetzner Cloud nodes running NixOS. Keep cluster-fac
 - k3s ServiceLB is disabled because Hetzner Cloud Controller Manager owns `LoadBalancer` Services.
 - k3s embedded cloud controller is disabled and kubelet uses `cloud-provider=external` for `hcloud-cloud-controller-manager`.
 - The cluster is IPv4-only for pod and service networking; public IPv6 can still be handled by Hetzner Load Balancers where needed.
-- Hetzner CSI uses a `kube-system/hcloud` Secret. Repository PVC defaults use the RWO-only `hcloud-volumes` StorageClass; never commit the live token.
+- Hetzner CSI uses a `kube-system/hcloud` Secret. Most repository PVC defaults use the RWO-only `hcloud-volumes` StorageClass; rclone-backed workloads use `rclone-csi`. Never commit live storage tokens or rclone credentials.
 - On this k3s/NixOS setup, install `hcloud-csi` with `node.kubeletDir=/var/lib/kubelet`.
 - Hetzner public IPv4s belong in node OS networking, but k3s node external addresses should generally be left to the external cloud controller.
 - Hetzner Cloud Volumes are node-attached RWO storage. Do not configure repo PVCs as RWX unless the storage backend changes.

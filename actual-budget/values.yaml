@@ -34,11 +34,11 @@ persistence:
   enabled: true
   annotations: {}
   existingClaim: ""
-  storageClass: hcloud-volumes
+  storageClass: rclone-csi
   subPath: ""
   volumeMode: ""
   accessModes:
-    - ReadWriteOnce
+    - ReadWriteMany
   size: 10Gi
 
 login:
@@ -55,8 +55,35 @@ resources:
     cpu: 500m
     memory: 512Mi
 
+initContainers:
+  - name: prepare-data-directories
+    image: busybox:1.36
+    imagePullPolicy: IfNotPresent
+    command:
+      - sh
+      - -ec
+      - mkdir -p /data/server-files /data/user-files
+    securityContext:
+      allowPrivilegeEscalation: false
+      capabilities:
+        drop:
+          - ALL
+      runAsNonRoot: true
+      runAsUser: 1000
+      runAsGroup: 1000
+    volumeMounts:
+      - name: data
+        mountPath: /data
+    resources:
+      requests:
+        cpu: 10m
+        memory: 16Mi
+      limits:
+        cpu: 50m
+        memory: 32Mi
+
 podSecurityContext:
-  fsGroup: 1001
+  fsGroup: 1000
   fsGroupChangePolicy: OnRootMismatch
 
 securityContext:
@@ -67,8 +94,8 @@ securityContext:
   readOnlyRootFilesystem: false
   runAsNonRoot: true
   privileged: false
-  runAsUser: 1001
-  runAsGroup: 1001
+  runAsUser: 1000
+  runAsGroup: 1000
 
 extraEnvVars: {}
 

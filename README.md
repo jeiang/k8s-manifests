@@ -76,12 +76,13 @@ helm upgrade --install hcloud-csi hcloud/hcloud-csi \
   --wait
 ```
 
-Repository PVC defaults use the Hetzner CSI-backed `hcloud-volumes` StorageClass. It must be treated as ReadWriteOnce-only; Hetzner Cloud Volumes are node-attached block volumes and do not support RWX.
+Most repository PVC defaults use the Hetzner CSI-backed `hcloud-volumes` StorageClass. It must be treated as ReadWriteOnce-only; Hetzner Cloud Volumes are node-attached block volumes and do not support RWX. Workloads that explicitly use rclone-backed storage set `storageClassName` or `storageClass` to `rclone-csi`.
 
 Verify the storage class before installing workloads that create PVCs:
 
 ```fish
 kubectl get storageclass hcloud-volumes
+kubectl get storageclass rclone-csi
 ```
 
 ## Chart Dependencies
@@ -90,6 +91,7 @@ kubectl get storageclass hcloud-volumes
 | --- | --- |
 | `website` | Traefik IngressClass named `traefik`; Traefik `Middleware` CRD; cert-manager CRDs/controller; existing `letsencrypt-prod` `ClusterIssuer` unless `certManager.clusterIssuer.create=true`; DNS for all `ingress.hosts`. |
 | `bitwarden-sm-operator` | Bitwarden organization with Secrets Manager enabled; machine account access token; permissions to install CRDs/RBAC/operator resources; network egress to Bitwarden Cloud or self-hosted Bitwarden URLs. |
+| `actual-budget` | Traefik IngressClass named `traefik`; cert-manager controller and `letsencrypt-prod` `ClusterIssuer`; DNS for `budget.jeiang.dev`; rclone CSI `rclone-csi` StorageClass and synced `rclone-config` Secret. |
 | `blocky-dns` | metrics-server or another resource metrics provider for the HPA; outbound DNS/HTTPS access for upstreams and blocklists; optional NetBird operator CRDs when `netbird.enabled=true`. |
 | `hath` | Hetzner CSI `hcloud-volumes` storage for cache/data directories; firewall rules for TCP `8888` to the node running the Hath pod; Prometheus Operator CRDs if ServiceMonitor output is enabled. |
 | `idp` | Traefik IngressClass named `traefik`; cert-manager controller and `letsencrypt-prod` `ClusterIssuer`; DNS for `auth.jeiang.dev`; pre-created `idp-secrets` or Bitwarden Secrets Manager operator; Hetzner CSI `hcloud-volumes` storage; optional NetBird operator CRDs when `netbird.enabled=true`. |

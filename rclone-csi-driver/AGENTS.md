@@ -12,6 +12,7 @@ This directory contains values and support manifests for the upstream `oci://ghc
 - The `rclone-csi` StorageClass reads sensitive rclone config from the `rclone-csi/rclone-config` Secret.
 - The `rclone-config` Secret is expected to be synced by Bitwarden Secrets Manager from `rclone-config-bitwardensecret.yaml`.
 - The StorageClass is not the default storage class.
+- rclone mounts are presented as UID `1000` and GID `1000`; workloads using this StorageClass should run with matching pod/container security contexts when they need write access.
 
 ## Editing Notes
 
@@ -27,4 +28,3 @@ helm template csi-rclone oci://ghcr.io/veloxpack/charts/csi-driver-rclone \
   --namespace rclone-csi \
   -f ./rclone-csi-driver/values.yaml
 ```
-

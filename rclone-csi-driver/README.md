@@ -16,6 +16,7 @@ The CSI driver name is `rclone.csi.veloxpack.io`.
 - k3s/NixOS kubelet path `/var/lib/kubelet`.
 - A non-default `StorageClass` named `rclone-csi`.
 - `StorageClass` parameters that read rclone configuration from the `rclone-csi/rclone-config` Secret.
+- rclone mount ownership set to UID `1000` and GID `1000`.
 - A `BitwardenSecret` manifest that syncs the rclone `configData` key into that Secret.
 - Conservative resource requests and limits.
 
@@ -145,11 +146,17 @@ kind: Pod
 metadata:
   name: rclone-test
 spec:
+  securityContext:
+    fsGroup: 1000
   restartPolicy: Never
   containers:
     - name: shell
       image: busybox:1.36
       command: ["sh", "-c", "echo hello > /mnt/rclone/hello.txt && cat /mnt/rclone/hello.txt && sleep 3600"]
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
       volumeMounts:
         - name: data
           mountPath: /mnt/rclone
@@ -186,6 +193,8 @@ storageClass:
     csi.storage.k8s.io/node-publish-secret-namespace: rclone-csi
   reclaimPolicy: Retain
   mountOptions:
+    - uid=1000
+    - gid=1000
     - vfs-cache-mode=writes
 ```
 
@@ -194,4 +203,3 @@ storageClass:
 - Upstream repository: https://github.com/veloxpack/csi-driver-rclone
 - Rclone config docs: https://rclone.org/docs/
 - Rclone backends: https://rclone.org/overview/
-
