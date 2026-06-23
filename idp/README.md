@@ -13,6 +13,7 @@ Default application version: Pocket ID `v2.6.2`.
 - A Kubernetes Ingress resource for Pocket ID with cert-manager annotations.
 - A Pocket ID init container that waits for LLDAP's LDAP port before startup.
 - An optional `BitwardenSecret` that syncs `idp-secrets` from Bitwarden Secrets Manager.
+- An optional NetBird `NetworkResource` for the LLDAP Service when `netbird.enabled=true`.
 - Resource limits for Pocket ID, LLDAP, and the Pocket ID wait init container.
 
 ## Dependencies
@@ -24,6 +25,7 @@ Default application version: Pocket ID `v2.6.2`.
 - A pre-created `idp-secrets` Secret with the keys listed below.
 - Bitwarden Secrets Manager operator CRDs if `bitwardenSecrets.enabled=true`.
 - Hetzner CSI installed with the RWO `hcloud-volumes` StorageClass.
+- NetBird operator CRDs if `netbird.enabled=true`.
 
 ## Generate Secrets
 
@@ -92,12 +94,27 @@ helm upgrade --install idp ./idp \
   --create-namespace
 ```
 
+The NetBird integration is disabled by default. Enable it after installing the shared NetBird router and operator resources:
+
+```fish
+helm dependency build ./idp
+
+helm upgrade --install idp ./idp \
+  --namespace idp \
+  --create-namespace \
+  --set netbird.enabled=true
+```
+
+With the default values, that creates a `NetworkResource` named `lldap` in the `idp` namespace for `lldap.idp.k8s.jeiang.vpn`.
+
 Review the persistence defaults before installing. The chart uses dynamic provisioning through the Hetzner CSI-backed `hcloud-volumes` StorageClass:
 
 ```yaml
 persistence:
   createPersistentVolumes: false
   storageClassName: hcloud-volumes
+netbird:
+  enabled: false
 ```
 
 If this replaces a previous OpenLDAP-based install, the old `idp-ldap-data` and `idp-ldap-config` PVCs are no longer used. LLDAP now uses the `idp-lldap` PVC.

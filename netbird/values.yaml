@@ -70,11 +70,19 @@ relay:
     repository: netbirdio/relay
     tag: 0.72.1
     pullPolicy: IfNotPresent
-  port: 80
+  port: 8080
+  stunHost: stun.netbird.jeiang.dev
   stunPort: 3478
   exposedAddress: rels://netbird.jeiang.dev:443
   enableStun: true
+  hostNetwork:
+    enabled: true
   logLevel: info
+  nodeSelector:
+    netbird.io/stun: "true"
+  antiAffinity:
+    enabled: true
+  affinity: {}
   resources:
     requests:
       cpu: 100m
@@ -86,7 +94,7 @@ relay:
 service:
   type: ClusterIP
   stun:
-    type: LoadBalancer
+    type: ClusterIP
     annotations: {}
     externalTrafficPolicy: Cluster
 

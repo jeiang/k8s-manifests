@@ -61,7 +61,7 @@ spec:
                 authSecret: "${NETBIRD_RELAY_AUTH_SECRET}"
                 dataDir: "{{ .Values.server.dataDir }}"
                 stuns:
-                  - uri: "stun:{{ .Values.global.host }}:{{ .Values.relay.stunPort }}"
+                  - uri: "stun:{{ .Values.relay.stunHost }}:{{ .Values.relay.stunPort }}"
                     proto: "udp"
                 relays:
                   addresses:

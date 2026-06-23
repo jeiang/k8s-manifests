@@ -1,0 +1,17 @@
+# Values for ghcr.io/netbirdio/helm-charts/netbird-operator.
+
+managementURL: https://netbird.jeiang.dev
+
+netbirdAPI:
+  keyFromSecret:
+    name: netbird-mgmt-api-key
+    key: NB_API_KEY
+
+operator:
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 250m
+      memory: 256Mi

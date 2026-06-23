@@ -12,8 +12,8 @@ Default images:
 
 - 1 NetBird management/signal server.
 - 1 NetBird dashboard.
-- 2 external relay replicas.
-- A `LoadBalancer` Service exposing STUN on UDP port `3478`.
+- 2 external relay replicas on separate nodes.
+- Direct node exposure for STUN on UDP port `3478`.
 - Traefik `IngressRoute` resources for HTTP, WebSocket, relay, and gRPC traffic at `https://netbird.jeiang.dev`.
 - A cert-manager `Certificate` using the `letsencrypt-prod` `ClusterIssuer`.
 - A PersistentVolumeClaim for NetBird server state.
@@ -29,7 +29,8 @@ Default images:
 - cert-manager CRDs/controller installed, including `cert-manager.io/v1` `Certificate`.
 - An existing `letsencrypt-prod` `ClusterIssuer`.
 - DNS for `netbird.jeiang.dev` pointing at the Traefik load balancer.
-- A load balancer path for UDP `3478` to the relay STUN Service.
+- DNS for `stun.netbird.jeiang.dev` pointing at the public IPv4 and IPv6 addresses of the two labeled STUN relay nodes.
+- Hetzner firewall rules allowing inbound UDP `3478` to those two STUN relay nodes.
 - Hetzner CSI installed with the RWO `hcloud-volumes` StorageClass.
 - A pre-created `netbird-secrets` Secret with the keys listed below.
 - Bitwarden Secrets Manager operator CRDs if `bitwardenSecrets.enabled=true`.
@@ -90,7 +91,16 @@ helm upgrade --install netbird ./netbird \
   --create-namespace
 ```
 
-Before installing, make sure `netbird.jeiang.dev` points at the Traefik load balancer and UDP `3478` reaches the relay STUN `LoadBalancer` Service. HTTP reverse proxies cannot proxy STUN traffic, so UDP `3478` must be reachable directly.
+Before installing, make sure `netbird.jeiang.dev` points at the Traefik load balancer and `stun.netbird.jeiang.dev` points at the public addresses of the two nodes labeled for STUN relay placement. HTTP reverse proxies and Hetzner Cloud Load Balancers cannot proxy UDP STUN traffic, so UDP `3478` is exposed directly on the selected nodes through host networking.
+
+Label exactly two nodes for relay placement:
+
+```fish
+kubectl label node legion-node1 netbird.io/stun=true
+kubectl label node legion-node2 netbird.io/stun=true
+```
+
+The relay Deployment uses required pod anti-affinity, so the two relay replicas cannot run on the same host. If fewer than two labeled schedulable nodes are available, one relay pod will stay Pending.
 
 After installation, open `https://netbird.jeiang.dev` and complete NetBird's first-load owner setup.
 
@@ -101,6 +111,7 @@ kubectl -n netbird get deploy,pods,svc,pvc,servicemonitor
 kubectl -n netbird rollout status deployment/netbird-server --timeout=5m
 kubectl -n netbird rollout status deployment/netbird-dashboard --timeout=5m
 kubectl -n netbird rollout status deployment/netbird-relay --timeout=5m
+kubectl -n netbird get pods -l app.kubernetes.io/component=relay -o wide
 ```
 
 ## Values To Review
@@ -108,6 +119,17 @@ kubectl -n netbird rollout status deployment/netbird-relay --timeout=5m
 ```yaml
 server:
   metricsPort: 9090
+
+relay:
+  replicaCount: 2
+  stunHost: stun.netbird.jeiang.dev
+  stunPort: 3478
+  hostNetwork:
+    enabled: true
+  nodeSelector:
+    netbird.io/stun: "true"
+  antiAffinity:
+    enabled: true
 
 metrics:
   serviceMonitor:

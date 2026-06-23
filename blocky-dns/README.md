@@ -12,6 +12,7 @@ Default application version: `v0.28.2`.
 - A ConfigMap-mounted Blocky `config.yml`.
 - DNS blocklists from StevenBlack and Hagezi.
 - Default upstreams for Cloudflare, Google, and Quad9.
+- An optional NetBird `NetworkResource` for the Blocky Service when `netbird.enabled=true`.
 - Resource limits of `500m` CPU and `350Mi` memory.
 
 ## Dependencies
@@ -20,6 +21,7 @@ Default application version: `v0.28.2`.
 - metrics-server or another Kubernetes resource metrics provider for HPA CPU scaling.
 - Outbound HTTPS access so Blocky can download remote blocklists.
 - Outbound DNS access to the configured upstream resolvers.
+- NetBird operator CRDs if `netbird.enabled=true`.
 
 ## Install
 
@@ -30,6 +32,19 @@ helm upgrade --install blocky-dns ./blocky-dns \
   --namespace dns \
   --create-namespace
 ```
+
+The NetBird integration is disabled by default. Enable it after installing the shared NetBird router and operator resources:
+
+```fish
+helm dependency build ./blocky-dns
+
+helm upgrade --install blocky-dns ./blocky-dns \
+  --namespace dns \
+  --create-namespace \
+  --set netbird.enabled=true
+```
+
+With the default values, that creates a `NetworkResource` named `blocky-dns` in the `dns` namespace for `blocky-dns.dns.k8s.jeiang.vpn`.
 
 Verify the Service and HPA:
 
@@ -50,6 +65,8 @@ autoscaling:
 service:
   type: ClusterIP
   dnsPort: 53
+netbird:
+  enabled: false
 blocky:
   config: |
     upstreams:

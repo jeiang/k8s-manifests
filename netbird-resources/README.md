@@ -5,16 +5,13 @@ Helm chart for NetBird operator routing resources.
 ## What This Chart Creates
 
 - A `NetworkRouter` named `k8s` in the `netbird` namespace.
-- A `NetworkResource` for the `blocky-dns` Service in the `dns` namespace.
-- A `NetworkResource` for the `idp-lldap` Service in the `idp` namespace.
-- A `NetworkResource` for the `monitoring-grafana` Service in the `monitoring` namespace.
 - An optional `BitwardenSecret` that syncs the NetBird operator API token Secret.
+- Optional `NetworkResource` objects when `networkResources.enabled=true`.
 
-The NetBird operator uses these resources to expose Kubernetes services to your NetBird network. With the default DNS zone, the expected service records are:
+The NetBird operator uses these resources to expose Kubernetes services to your NetBird network. The shared router and API token live in this chart. Workload-specific `NetworkResource` objects are owned by the workload charts that expose those Services:
 
-- `blocky-dns.dns.k8s.jeiang.vpn`
-- `idp-lldap.idp.k8s.jeiang.vpn`
-- `monitoring-grafana.monitoring.k8s.jeiang.vpn`
+- `blocky-dns` can create `blocky-dns.dns.k8s.jeiang.vpn` when installed with `--set netbird.enabled=true`.
+- `idp` can create `lldap.idp.k8s.jeiang.vpn` when installed with `--set netbird.enabled=true`.
 
 ## Dependencies
 
@@ -22,9 +19,6 @@ The NetBird operator uses these resources to expose Kubernetes services to your 
 - NetBird Kubernetes operator installed.
 - NetBird operator CRDs for `NetworkRouter` and `NetworkResource`.
 - A custom NetBird DNS zone matching `networkRouter.dnsZoneRef.name`.
-- Existing `blocky-dns` Service in the `dns` namespace.
-- Existing `idp-lldap` Service in the `idp` namespace.
-- Existing `monitoring-grafana` Service in the `monitoring` namespace.
 - Bitwarden Secrets Manager operator CRDs if `bitwardenSecrets.netbirdApi.enabled=true`.
 
 Before creating a `NetworkRouter`, create the DNS zone in the NetBird dashboard. The NetBird documentation requires this zone to exist before the operator can register it.
@@ -72,13 +66,9 @@ Install the upstream NetBird operator chart with the self-hosted management URL 
 helm upgrade --install netbird-operator oci://ghcr.io/netbirdio/helm-charts/netbird-operator \
   --namespace netbird \
   --create-namespace \
-  --set managementURL=https://netbird.jeiang.dev \
-  --set netbirdAPI.keyFromSecret.name=netbird-mgmt-api-key \
-  --set netbirdAPI.keyFromSecret.key=NB_API_KEY \
-  --set operator.resources.requests.cpu=50m \
-  --set operator.resources.requests.memory=64Mi \
-  --set operator.resources.limits.cpu=250m \
-  --set operator.resources.limits.memory=256Mi
+  -f ./netbird-resources/operator-values.yaml \
+  --wait \
+  --timeout=10m
 ```
 
 Verify the operator and CRDs are present:
@@ -99,8 +89,7 @@ https://docs.netbird.io/manage/integrations/kubernetes/routing-peer
 Review the DNS zone before installing:
 
 ```fish
-helm template netbird-resources ./netbird-resources --namespace netbird \
-  --set networkRouter.dnsZoneRef.name=k8s.jeiang.vpn
+helm template netbird-resources ./netbird-resources --namespace netbird
 ```
 
 Validate and install:
@@ -110,8 +99,23 @@ helm lint ./netbird-resources
 
 helm upgrade --install netbird-resources ./netbird-resources \
   --namespace netbird \
+  --create-namespace
+```
+
+Install workload-specific NetBird resources by enabling the subchart in each workload chart:
+
+```fish
+helm dependency build ./blocky-dns
+helm upgrade --install blocky-dns ./blocky-dns \
+  --namespace dns \
   --create-namespace \
-  --set networkRouter.dnsZoneRef.name=k8s.jeiang.vpn
+  --set netbird.enabled=true
+
+helm dependency build ./idp
+helm upgrade --install idp ./idp \
+  --namespace idp \
+  --create-namespace \
+  --set netbird.enabled=true
 ```
 
 ## Verify
@@ -120,15 +124,25 @@ helm upgrade --install netbird-resources ./netbird-resources \
 kubectl -n netbird get networkrouter k8s
 kubectl -n dns get networkresource blocky-dns
 kubectl -n idp get networkresource lldap
-kubectl -n monitoring get networkresource grafana
 
 kubectl -n netbird describe networkrouter k8s
 kubectl -n dns describe networkresource blocky-dns
 kubectl -n idp describe networkresource lldap
-kubectl -n monitoring describe networkresource grafana
 ```
 
 ## Values To Review
+
+Operator override for `ghcr.io/netbirdio/helm-charts/netbird-operator`:
+
+```yaml
+managementURL: https://netbird.jeiang.dev
+netbirdAPI:
+  keyFromSecret:
+    name: netbird-mgmt-api-key
+    key: NB_API_KEY
+```
+
+Shared router and API token values:
 
 ```yaml
 networkRouter:
@@ -138,25 +152,14 @@ networkRouter:
     name: k8s.jeiang.vpn
 
 networkResources:
+  enabled: false
   groups:
     - name: All
-  resources:
-    - name: blocky-dns
-      namespace: dns
-      serviceRef:
-        name: blocky-dns
-    - name: lldap
-      namespace: idp
-      serviceRef:
-        name: idp-lldap
-    - name: grafana
-      namespace: monitoring
-      serviceRef:
-        name: monitoring-grafana
+  resources: []
 
 bitwardenSecrets:
   netbirdApi:
-    enabled: false
+    enabled: true
     namespace: netbird
     secretName: netbird-mgmt-api-key
     secretKeyName: NB_API_KEY

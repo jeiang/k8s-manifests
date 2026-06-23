@@ -122,3 +122,22 @@ persistence:
 nodeSelector: {}
 tolerations: []
 affinity: {}
+
+netbird:
+  enabled: false
+  bitwardenSecrets:
+    netbirdApi:
+      enabled: false
+  networkRouter:
+    enabled: false
+    name: k8s
+    namespace: netbird
+  networkResources:
+    enabled: true
+    resources:
+      - name: lldap
+        namespace: idp
+        serviceRef:
+          name: idp-lldap
+        groups:
+          - name: lldap_admin

@@ -17,6 +17,10 @@ spec:
         {{- include "netbird.selectorLabels" . | nindent 8 }}
         app.kubernetes.io/component: relay
     spec:
+      {{- if .Values.relay.hostNetwork.enabled }}
+      hostNetwork: true
+      dnsPolicy: ClusterFirstWithHostNet
+      {{- end }}
       containers:
         - name: relay
           image: "{{ .Values.relay.image.repository }}:{{ .Values.relay.image.tag }}"
@@ -45,13 +49,32 @@ spec:
               protocol: UDP
           resources:
             {{- toYaml .Values.relay.resources | nindent 12 }}
-      {{- with .Values.nodeSelector }}
+      {{- $nodeSelector := .Values.nodeSelector }}
+      {{- if .Values.relay.nodeSelector }}
+      {{- $nodeSelector = .Values.relay.nodeSelector }}
+      {{- end }}
+      {{- with $nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      {{- with .Values.affinity }}
+      {{- if .Values.relay.antiAffinity.enabled }}
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchLabels:
+                  {{- include "netbird.selectorLabels" . | nindent 18 }}
+                  app.kubernetes.io/component: relay
+              topologyKey: kubernetes.io/hostname
+      {{- else }}
+      {{- $affinity := .Values.affinity }}
+      {{- if .Values.relay.affinity }}
+      {{- $affinity = .Values.relay.affinity }}
+      {{- end }}
+      {{- with $affinity }}
       affinity:
         {{- toYaml . | nindent 8 }}
+      {{- end }}
       {{- end }}
       {{- with .Values.tolerations }}
       tolerations:
@@ -88,7 +111,9 @@ metadata:
   {{- end }}
 spec:
   type: {{ .Values.service.stun.type }}
+  {{- if or (eq .Values.service.stun.type "LoadBalancer") (eq .Values.service.stun.type "NodePort") }}
   externalTrafficPolicy: {{ .Values.service.stun.externalTrafficPolicy }}
+  {{- end }}
   selector:
     {{- include "netbird.selectorLabels" . | nindent 4 }}
     app.kubernetes.io/component: relay

@@ -2,17 +2,15 @@
 
 ## Project Structure & Module Organization
 
-This repository contains Helm charts and Kubernetes manifests for server workloads. Each top-level chart directory owns its `Chart.yaml`, `values.yaml`, `templates/`, and chart-specific `README.md`.
-Values-only directories are used for upstream charts installed directly from external Helm repositories.
+This repository contains Helm charts, upstream chart values, and Kubernetes manifests for server workloads. Chart-specific maintenance notes live in each chart directory's `AGENTS.md`; keep this root file limited to cluster-wide conventions, external platform dependencies, and repository-wide workflow.
 
-- `website/`: static website deployment with Traefik ingress and cert-manager TLS.
-- `blocky-dns/`: Blocky DNS resolver deployment and service.
-- `idp/`: Pocket ID and LLDAP identity provider stack.
-- `netbird/`: NetBird server, dashboard, relay, ingress, and storage resources.
-- `traefik/`: k3s bundled Traefik `HelmChartConfig` with Hetzner Load Balancer annotations.
-- `rbac-access/`: namespace and cluster RBAC bindings.
+Top-level directories generally fall into one of three forms:
 
-Keep reusable Helm helpers in each chart's `templates/_helpers.tpl`. Avoid sharing hidden coupling between charts; prefer explicit values in the chart that needs them.
+- Local Helm charts with `Chart.yaml`, `values.yaml`, `templates/`, and `README.md`.
+- Values-only directories for upstream Helm charts installed from external repositories.
+- Plain Kubernetes manifest directories for cluster-owned components such as k3s bundled Traefik configuration.
+
+The `monitoring/` directory is intentionally out of scope for this guidance unless a task explicitly asks to work on it.
 
 ## Build, Test, and Development Commands
 
@@ -30,17 +28,17 @@ helm template <release-name> ./<chart-name> --namespace <namespace>
 helm upgrade --install <release-name> ./<chart-name> --namespace <namespace> --create-namespace
 ```
 
-`helm lint` catches chart and template problems. `helm template` renders manifests locally for review. Use `helm upgrade --install` only when applying to a configured cluster.
+Run `helm dependency build ./<chart-name>` before rendering or installing charts that declare local dependencies. `helm lint` catches chart and template problems. `helm template` renders manifests locally for review. Use `helm upgrade --install` only when applying to a configured cluster.
 
 ## Coding Style & Naming Conventions
 
-Use two-space YAML indentation. Keep Kubernetes resource names lowercase, DNS-safe, and stable. Prefer chart-local helper names such as `website.fullname` and `rbac-access.labels`, and use `nindent`, `quote`, `trunc 63`, and `trimSuffix "-"` where needed for valid manifests.
+Use two-space YAML indentation. Keep Kubernetes resource names lowercase, DNS-safe, and stable. Prefer chart-local helper names such as `<chart>.fullname` and `<chart>.labels`, and use `nindent`, `quote`, `trunc 63`, and `trimSuffix "-"` where needed for valid manifests.
 
 Values should be grouped by component, for example `server.image`, `ingress.tls`, and `persistence.size`. Keep environment-specific defaults visible in `values.yaml` and document risky defaults in the chart README.
 
 ## Cluster Platform Notes
 
-The target cluster is k3s on Hetzner Cloud nodes running NixOS. Keep docs and manifests compatible with this baseline:
+The target cluster is k3s on Hetzner Cloud nodes running NixOS. Keep cluster-facing docs and manifests compatible with this baseline:
 
 - k3s should use the Hetzner private network interface for Flannel.
 - k3s ServiceLB is disabled because Hetzner Cloud Controller Manager owns `LoadBalancer` Services.
@@ -60,7 +58,7 @@ helm lint ./<chart-name>
 helm template test ./<chart-name> --namespace test
 ```
 
-Inspect rendered YAML for correct namespaces, labels, selectors, secret references, PVC/PV names, ingress hosts, and conditional resources. For RBAC changes, verify generated subjects and role bindings carefully.
+Inspect rendered YAML for correct namespaces, labels, selectors, secret references, PVC/PV names, ingress hosts, and conditional resources. For values-only upstream chart directories, render the upstream chart with the local values file. For plain manifest directories, review with `kubectl diff --server-side -f <file>` when a configured cluster is available. For RBAC changes, verify generated subjects and role bindings carefully.
 
 ## Commit & Pull Request Guidelines
 
@@ -71,3 +69,15 @@ Pull requests should describe the affected chart, summarize behavior changes, li
 ## Security & Configuration Tips
 
 Do not commit live secret values. Prefer existing Kubernetes Secrets referenced from `values.yaml`. Review public hostnames, ACME issuer names, external services, hostPort exposure, and persistent storage before applying manifests to any cluster.
+
+## External Cluster Components
+
+These components are expected to exist but are not defined as local Helm charts here:
+
+- Hetzner Cloud Controller Manager from `hcloud/hcloud-cloud-controller-manager`, installed in `kube-system` with networking enabled for the cluster CIDR.
+- Hetzner CSI from `hcloud/hcloud-csi`, installed in `kube-system` with `node.kubeletDir=/var/lib/kubelet`.
+- cert-manager and a production `letsencrypt-prod` `ClusterIssuer`.
+- k3s bundled Traefik, configured by `traefik/traefik-helmchartconfig.yaml`.
+- Bitwarden Secrets Manager operator when charts render `BitwardenSecret` resources.
+- NetBird Kubernetes operator when charts render `NetworkRouter` or `NetworkResource` resources.
+- Prometheus Operator CRDs when a chart's `ServiceMonitor` output is enabled.

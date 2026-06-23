@@ -23,24 +23,6 @@ networkRouter:
   extraSpec: {}
 
 networkResources:
-  enabled: true
+  enabled: false
   groups: []
-  resources:
-    - name: blocky-dns
-      namespace: dns
-      serviceRef:
-        name: blocky-dns
-      groups:
-        - name: dns
-    - name: lldap
-      namespace: idp
-      serviceRef:
-        name: idp-lldap
-      groups:
-        - name: lldap
-    - name: grafana
-      namespace: monitoring
-      serviceRef:
-        name: monitoring-grafana
-      groups:
-        - name: monitoring
+  resources: []

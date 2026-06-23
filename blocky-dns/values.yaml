@@ -70,3 +70,22 @@ blocky:
     log:
       level: info
       format: text
+
+netbird:
+  enabled: false
+  bitwardenSecrets:
+    netbirdApi:
+      enabled: false
+  networkRouter:
+    enabled: false
+    name: k8s
+    namespace: netbird
+  networkResources:
+    enabled: true
+    resources:
+      - name: blocky-dns
+        namespace: dns
+        serviceRef:
+          name: blocky-dns
+        groups:
+          - name: All
