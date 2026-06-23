@@ -13,7 +13,6 @@ Default image: `ghcr.io/james58899/hath-rust:latest`.
 - Persistent directories for cache, login data, downloads, and logs.
 - An ephemeral `emptyDir` for temporary files at `/tmp/hath`.
 - Metrics endpoint and optional HTTP/3 UDP port.
-- A `ServiceMonitor` for Prometheus Operator when metrics are enabled.
 
 ## Dependencies
 
@@ -21,7 +20,6 @@ Default image: `ghcr.io/james58899/hath-rust:latest`.
 - rclone CSI driver installed with the `rclone-csi` StorageClass, RWX-capable backend configuration, and a working `rclone-config` Secret.
 - The `rclone-csi` StorageClass mount options set UID/GID `1000`; this chart runs the Hath pod as UID/GID `1000`.
 - Firewall rules allowing inbound TCP `8888` to the node running the Hath pod.
-- Prometheus Operator CRDs installed if `metrics.serviceMonitor.enabled=true`.
 
 ## Install
 
@@ -45,7 +43,6 @@ helm upgrade --install hath ./hath \
 
 ```fish
 kubectl -n hath get deploy,pods,svc,pvc
-kubectl -n hath get servicemonitor hath
 kubectl -n hath rollout status deployment/hath --timeout=5m
 kubectl -n hath logs deploy/hath --tail=100
 ```
@@ -86,14 +83,6 @@ resources:
   limits:
     cpu: "2"
     memory: 2Gi
-
-metrics:
-  serviceMonitor:
-    enabled: true
-    labels:
-      release: monitoring
-    interval: 30s
-    path: /metrics
 ```
 
 Set any additional `hath-rust` options through the `hath` values or `hath.extraArgs`.

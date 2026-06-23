@@ -34,8 +34,6 @@ node:
     enabled: false
     service:
       enabled: false
-    serviceMonitor:
-      enabled: false
     dashboard:
       enabled: false
   rc:

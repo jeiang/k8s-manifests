@@ -13,7 +13,6 @@ Repository-wide cluster notes live in [`AGENTS.md`](./AGENTS.md). Chart-specific
 | [`blocky-dns`](./blocky-dns) | Internal Blocky DNS resolver exposed through a `ClusterIP` Service. |
 | [`hath`](./hath) | H@H Rust client with persistent cache storage. |
 | [`idp`](./idp) | Pocket ID and LLDAP identity provider stack with persistent state. |
-| [`monitoring`](./monitoring) | Values for upstream Prometheus, Alertmanager, Grafana, Loki, and Alloy charts. |
 | [`netbird`](./netbird) | NetBird management server, dashboard, and relay stack. |
 | [`netbird-resources`](./netbird-resources) | Shared NetBird operator API token and router resources for Kubernetes Services. |
 | [`rclone-csi-driver`](./rclone-csi-driver) | Values and Bitwarden configuration for the upstream rclone CSI driver chart. |
@@ -102,10 +101,9 @@ kubectl get storageclass rclone-csi
 | `bitwarden-sm-operator` | Bitwarden organization with Secrets Manager enabled; machine account access token; permissions to install CRDs/RBAC/operator resources; network egress to Bitwarden Cloud or self-hosted Bitwarden URLs. |
 | `actual-budget` | Traefik IngressClass named `traefik`; cert-manager controller and `letsencrypt-prod` `ClusterIssuer`; DNS for `budget.jeiang.dev`; rclone CSI `rclone-csi` StorageClass and Bitwarden-synced `rclone-config` Secret. |
 | `blocky-dns` | metrics-server or another resource metrics provider for the HPA; outbound DNS/HTTPS access for upstreams and blocklists; optional NetBird operator CRDs when `netbird.enabled=true`. |
-| `hath` | rclone CSI `rclone-csi` storage for cache/data directories; firewall rules for TCP `8888` to the node running the Hath pod; Prometheus Operator CRDs if ServiceMonitor output is enabled. |
+| `hath` | rclone CSI `rclone-csi` storage for cache/data directories; firewall rules for TCP `8888` to the node running the Hath pod. |
 | `idp` | Traefik IngressClass named `traefik`; cert-manager controller and `letsencrypt-prod` `ClusterIssuer`; DNS for `auth.jeiang.dev`; Bitwarden Secrets Manager operator for `idp-secrets`; Hetzner CSI `hcloud-volumes` storage; optional NetBird operator CRDs when `netbird.enabled=true`. |
-| `monitoring` | Kubernetes `>=1.25`; permissions to install Prometheus Operator CRDs/RBAC; rclone CSI `rclone-csi` StorageClass and Bitwarden-synced `rclone-config` Secret for Prometheus, Alertmanager, Grafana, and Loki PVCs; Bitwarden-synced Discord webhook Secret for Alertmanager; optional Traefik/cert-manager/DNS for Grafana ingress. |
-| `netbird` | Traefik `IngressRoute` CRDs and `websecure` entryPoint; cert-manager `Certificate` CRD/controller and `letsencrypt-prod` `ClusterIssuer`; DNS for `netbird.jeiang.dev` to the Traefik load balancer; DNS for `stun.netbird.jeiang.dev` to the two labeled STUN relay nodes; firewall access for UDP `3478`; Bitwarden Secrets Manager operator for `netbird-secrets`; persistent storage for the server PVC; Prometheus Operator CRDs if ServiceMonitor output is enabled. |
+| `netbird` | Traefik `IngressRoute` CRDs and `websecure` entryPoint; cert-manager `Certificate` CRD/controller and `letsencrypt-prod` `ClusterIssuer`; DNS for `netbird.jeiang.dev` to the Traefik load balancer; DNS for `stun.netbird.jeiang.dev` to the two labeled STUN relay nodes; firewall access for UDP `3478`; Bitwarden Secrets Manager operator for `netbird-secrets`; persistent storage for the server PVC. |
 | `netbird-resources` | NetBird Kubernetes operator and CRDs for `NetworkRouter` and `NetworkResource`; custom NetBird DNS zone; Bitwarden Secrets Manager operator for the NetBird API token Secret. |
 | `rclone-csi-driver` | FUSE support on cluster nodes; Bitwarden Secrets Manager operator for `rclone-config`; network access from nodes to the configured rclone backend; upstream OCI Helm chart access to `ghcr.io/veloxpack/charts/csi-driver-rclone`. |
 | `rbac-access` | Installer must have permission to create `Namespace`, `RoleBinding`, and `ClusterRoleBinding` resources; configured subjects must match identities from cluster authentication. |

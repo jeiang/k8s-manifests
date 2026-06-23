@@ -19,7 +19,6 @@ This local Helm chart deploys the self-hosted NetBird management server, dashboa
 - Keep server secrets stable after first deploy.
 - Do not add a manual literal `netbird-secrets` creation path to docs unless the user explicitly asks for an emergency fallback.
 - Be careful changing relay `hostNetwork`, `stunPort`, or anti-affinity; these values control public reachability.
-- `ServiceMonitor` output requires Prometheus Operator CRDs.
 - The NetBird operator resources are not owned by this chart; use `netbird-resources/` for router and network-resource objects.
 
 ## Validation

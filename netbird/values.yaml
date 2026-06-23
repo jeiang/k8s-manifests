@@ -114,15 +114,6 @@ persistence:
   size: 10Gi
   storageClassName: hcloud-volumes
 
-metrics:
-  serviceMonitor:
-    enabled: true
-    labels:
-      release: monitoring
-    interval: 30s
-    scrapeTimeout: ""
-    path: /metrics
-
 nodeSelector: {}
 tolerations: []
 affinity: {}

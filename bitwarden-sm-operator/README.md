@@ -121,7 +121,6 @@ This repository also includes saved `BitwardenSecret` manifests for the charts t
 - `idp/templates/bitwardensecret.yaml` for `idp-secrets`.
 - `netbird/templates/bitwardensecret.yaml` for `netbird-secrets`.
 - `netbird-resources/templates/bitwardensecret-netbird-api.yaml` for `netbird-mgmt-api-key`.
-- `monitoring/alertmanager-discord-webhook-bitwardensecret.yaml` for the Alertmanager Discord webhook Secret.
 
 ## Values To Review
 

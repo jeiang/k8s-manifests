@@ -11,7 +11,6 @@ This local Helm chart deploys `hath-rust` with persistent cache storage and dire
 - Persistence uses the `rclone-csi` StorageClass with `ReadWriteMany`.
 - The pod runs as UID/GID `1000` to match the rclone CSI mount options.
 - Keep one replica while `hostPort` is enabled.
-- `ServiceMonitor` output requires Prometheus Operator CRDs.
 
 ## Editing Notes
 

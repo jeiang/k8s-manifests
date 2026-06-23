@@ -18,7 +18,6 @@ Default images:
 - A cert-manager `Certificate` using the `letsencrypt-prod` `ClusterIssuer`.
 - A PersistentVolumeClaim for NetBird server state.
 - A `BitwardenSecret` that syncs `netbird-secrets` from Bitwarden Secrets Manager.
-- A `ServiceMonitor` for NetBird server metrics.
 - Resource limits for server, dashboard, relay, and server init containers.
 
 ## Dependencies
@@ -34,7 +33,6 @@ Default images:
 - Hetzner CSI installed with the RWO `hcloud-volumes` StorageClass.
 - Bitwarden Secrets Manager operator CRDs.
 - A `bw-auth-token` Secret in the `netbird` namespace so the Bitwarden operator can sync `netbird-secrets`.
-- Prometheus Operator CRDs installed if `metrics.serviceMonitor.enabled=true`.
 
 ## Generate Bitwarden Secrets
 
@@ -103,7 +101,7 @@ After installation, open `https://netbird.jeiang.dev` and complete NetBird's fir
 ## Verify
 
 ```fish
-kubectl -n netbird get deploy,pods,svc,pvc,servicemonitor
+kubectl -n netbird get deploy,pods,svc,pvc
 kubectl -n netbird rollout status deployment/netbird-server --timeout=5m
 kubectl -n netbird rollout status deployment/netbird-dashboard --timeout=5m
 kubectl -n netbird rollout status deployment/netbird-relay --timeout=5m
@@ -126,12 +124,4 @@ relay:
     netbird.io/stun: "true"
   antiAffinity:
     enabled: true
-
-metrics:
-  serviceMonitor:
-    enabled: true
-    labels:
-      release: monitoring
-    interval: 30s
-    path: /metrics
 ```

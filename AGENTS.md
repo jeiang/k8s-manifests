@@ -78,5 +78,4 @@ These components are expected to exist but are not defined as local Helm charts 
 - k3s bundled Traefik, configured by `traefik/traefik-helmchartconfig.yaml`.
 - Bitwarden Secrets Manager operator when charts render `BitwardenSecret` resources.
 - NetBird Kubernetes operator when charts render `NetworkRouter` or `NetworkResource` resources.
-- Prometheus Operator CRDs when a chart's `ServiceMonitor` output is enabled.
 - Rclone CSI driver from `oci://ghcr.io/veloxpack/charts/csi-driver-rclone` when rclone-backed PVCs are needed; local values live in `rclone-csi-driver/`.
