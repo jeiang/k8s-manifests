@@ -79,10 +79,22 @@ spec:
             - name: http
               containerPort: {{ .Values.hath.port }}
               protocol: TCP
+              {{- if .Values.hostPort.enabled }}
+              hostPort: {{ .Values.hostPort.port }}
+              {{- with .Values.hostPort.hostIP }}
+              hostIP: {{ . | quote }}
+              {{- end }}
+              {{- end }}
             {{- if .Values.hath.enableH3 }}
             - name: http3
               containerPort: {{ .Values.hath.port }}
               protocol: UDP
+              {{- if .Values.hostPort.enabled }}
+              hostPort: {{ .Values.hostPort.port }}
+              {{- with .Values.hostPort.hostIP }}
+              hostIP: {{ . | quote }}
+              {{- end }}
+              {{- end }}
             {{- end }}
           readinessProbe:
             tcpSocket:

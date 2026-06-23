@@ -40,7 +40,7 @@ singleBinary:
       memory: 1536Mi
   persistence:
     enabled: true
-    storageClass: longhorn
+    storageClass: hcloud-volumes
     accessModes:
       - ReadWriteOnce
     size: 15Gi

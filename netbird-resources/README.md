@@ -7,8 +7,6 @@ Helm chart for NetBird operator routing resources.
 - A `NetworkRouter` named `k8s` in the `netbird` namespace.
 - A `NetworkResource` for the `blocky-dns` Service in the `dns` namespace.
 - A `NetworkResource` for the `idp-lldap` Service in the `idp` namespace.
-- A `NetworkResource` for the `longhorn-frontend` Service in the `longhorn-system` namespace.
-- A `NetworkResource` for the `longhorn-backend` Service in the `longhorn-system` namespace.
 - A `NetworkResource` for the `monitoring-grafana` Service in the `monitoring` namespace.
 - An optional `BitwardenSecret` that syncs the NetBird operator API token Secret.
 
@@ -16,8 +14,6 @@ The NetBird operator uses these resources to expose Kubernetes services to your 
 
 - `blocky-dns.dns.k8s.jeiang.vpn`
 - `idp-lldap.idp.k8s.jeiang.vpn`
-- `longhorn-frontend.longhorn-system.k8s.jeiang.vpn`
-- `longhorn-backend.longhorn-system.k8s.jeiang.vpn`
 - `monitoring-grafana.monitoring.k8s.jeiang.vpn`
 
 ## Dependencies
@@ -28,7 +24,6 @@ The NetBird operator uses these resources to expose Kubernetes services to your 
 - A custom NetBird DNS zone matching `networkRouter.dnsZoneRef.name`.
 - Existing `blocky-dns` Service in the `dns` namespace.
 - Existing `idp-lldap` Service in the `idp` namespace.
-- Existing `longhorn-frontend` and `longhorn-backend` Services in the `longhorn-system` namespace.
 - Existing `monitoring-grafana` Service in the `monitoring` namespace.
 - Bitwarden Secrets Manager operator CRDs if `bitwardenSecrets.netbirdApi.enabled=true`.
 
@@ -125,15 +120,11 @@ helm upgrade --install netbird-resources ./netbird-resources \
 kubectl -n netbird get networkrouter k8s
 kubectl -n dns get networkresource blocky-dns
 kubectl -n idp get networkresource lldap
-kubectl -n longhorn-system get networkresource longhorn-frontend
-kubectl -n longhorn-system get networkresource longhorn-backend
 kubectl -n monitoring get networkresource grafana
 
 kubectl -n netbird describe networkrouter k8s
 kubectl -n dns describe networkresource blocky-dns
 kubectl -n idp describe networkresource lldap
-kubectl -n longhorn-system describe networkresource longhorn-frontend
-kubectl -n longhorn-system describe networkresource longhorn-backend
 kubectl -n monitoring describe networkresource grafana
 ```
 
@@ -158,14 +149,6 @@ networkResources:
       namespace: idp
       serviceRef:
         name: idp-lldap
-    - name: longhorn-frontend
-      namespace: longhorn-system
-      serviceRef:
-        name: longhorn-frontend
-    - name: longhorn-backend
-      namespace: longhorn-system
-      serviceRef:
-        name: longhorn-backend
     - name: grafana
       namespace: monitoring
       serviceRef:

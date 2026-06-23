@@ -30,7 +30,7 @@ Default images:
 - An existing `letsencrypt-prod` `ClusterIssuer`.
 - DNS for `netbird.jeiang.dev` pointing at the Traefik load balancer.
 - A load balancer path for UDP `3478` to the relay STUN Service.
-- A default storage class or `persistence.storageClassName` set for the server PVC.
+- Hetzner CSI installed with the RWO `hcloud-volumes` StorageClass.
 - A pre-created `netbird-secrets` Secret with the keys listed below.
 - Bitwarden Secrets Manager operator CRDs if `bitwardenSecrets.enabled=true`.
 - Prometheus Operator CRDs installed if `metrics.serviceMonitor.enabled=true`.

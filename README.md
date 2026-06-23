@@ -11,11 +11,11 @@ Helm charts and Kubernetes manifests for my servers.
 | [`blocky-dns`](./blocky-dns) | Internal Blocky DNS resolver exposed through a `ClusterIP` Service. |
 | [`hath`](./hath) | H@H Rust client with persistent cache storage. |
 | [`idp`](./idp) | Pocket ID and LLDAP identity provider stack with persistent state. |
-| [`longhorn`](./longhorn) | Values for the upstream Longhorn storage chart. |
 | [`monitoring`](./monitoring) | Values for upstream Prometheus, Alertmanager, Grafana, Loki, and Alloy charts. |
 | [`netbird`](./netbird) | NetBird management server, dashboard, and relay stack. |
 | [`netbird-resources`](./netbird-resources) | NetBird operator routing resources for Kubernetes Services. |
 | [`rbac-access`](./rbac-access) | Cluster admin and namespace admin RBAC bindings. |
+| [`traefik`](./traefik) | k3s bundled Traefik `HelmChartConfig` with Hetzner Load Balancer annotations. |
 
 ## Global Prerequisites
 
@@ -23,7 +23,63 @@ Helm charts and Kubernetes manifests for my servers.
 - `kubectl` configured for the target cluster.
 - Optional: `devenv shell` to load `kubectl`, Helm, `helm-ls`, and `yaml-language-server`.
 - Working DNS records for public ingress hosts before installing internet-facing charts.
-- A load balancer implementation for charts that expose `LoadBalancer` Services.
+- Hetzner Cloud Controller Manager for charts that expose `LoadBalancer` Services.
+
+## Cluster Platform
+
+The current target cluster is a fresh k3s cluster on Hetzner Cloud nodes running NixOS.
+
+Expected node-level setup:
+
+- Configure each node's Hetzner public IPv4 as a `/32` address and public IPv6 as a `/64` address in NixOS/systemd-networkd.
+- Keep private cluster traffic on the Hetzner private network interface and use that interface for Flannel.
+- Use IPv4-only pod and service CIDRs for Kubernetes networking.
+- Disable k3s ServiceLB so Hetzner Cloud Controller Manager owns `LoadBalancer` Services.
+- Disable the embedded k3s cloud controller and set the kubelet cloud provider to `external` before installing `hcloud-cloud-controller-manager`.
+- Install the Hetzner CSI driver for Hetzner Cloud Volumes, backed by a `kube-system/hcloud` Secret containing a read/write Hetzner Cloud API token.
+
+Important k3s flags for this platform:
+
+```sh
+--flannel-iface=<hetzner-private-interface>
+--disable=servicelb
+--disable-cloud-controller
+--kubelet-arg=cloud-provider=external
+--cluster-cidr=10.42.0.0/16
+--service-cidr=10.43.0.0/16
+```
+
+The Hetzner Cloud Controller Manager should own node provider IDs and cloud-discovered node addresses. Do not commit live Hetzner API tokens, real secret values, or one-off cluster bootstrap tokens to this repository.
+
+Install the Hetzner components after the k3s nodes are up:
+
+```fish
+kubectl -n kube-system create secret generic hcloud \
+  --from-literal=token=REPLACE_ME_HCLOUD_TOKEN \
+  --from-literal=network=REPLACE_ME_HETZNER_NETWORK_ID_OR_NAME
+
+helm repo add hcloud https://charts.hetzner.cloud
+helm repo update hcloud
+
+helm upgrade --install hccm hcloud/hcloud-cloud-controller-manager \
+  --namespace kube-system \
+  --set networking.enabled=true \
+  --set networking.clusterCIDR=10.42.0.0/16 \
+  --wait
+
+helm upgrade --install hcloud-csi hcloud/hcloud-csi \
+  --namespace kube-system \
+  --set node.kubeletDir=/var/lib/kubelet \
+  --wait
+```
+
+Repository PVC defaults use the Hetzner CSI-backed `hcloud-volumes` StorageClass. It must be treated as ReadWriteOnce-only; Hetzner Cloud Volumes are node-attached block volumes and do not support RWX.
+
+Verify the storage class before installing workloads that create PVCs:
+
+```fish
+kubectl get storageclass hcloud-volumes
+```
 
 ## Chart Dependencies
 
@@ -32,13 +88,13 @@ Helm charts and Kubernetes manifests for my servers.
 | `website` | Traefik IngressClass named `traefik`; Traefik `Middleware` CRD; cert-manager CRDs/controller; existing `letsencrypt-prod` `ClusterIssuer` unless `certManager.clusterIssuer.create=true`; DNS for all `ingress.hosts`. |
 | `bitwarden-sm-operator` | Bitwarden organization with Secrets Manager enabled; machine account access token; permissions to install CRDs/RBAC/operator resources; network egress to Bitwarden Cloud or self-hosted Bitwarden URLs. |
 | `blocky-dns` | metrics-server or another resource metrics provider for the HPA; outbound DNS/HTTPS access for upstreams and blocklists. |
-| `hath` | Longhorn storage for cache/data directories; load balancer and firewall rules for public access to the configured H@H port; Prometheus Operator CRDs if ServiceMonitor output is enabled. |
-| `idp` | Traefik IngressClass named `traefik`; cert-manager controller and `letsencrypt-prod` `ClusterIssuer`; DNS for `auth.jeiang.dev`; pre-created `idp-secrets` or Bitwarden Secrets Manager operator; hostPath storage under `/var/lib/idp` or alternative persistence values. |
-| `longhorn` | Kubernetes `>=1.25`; node storage under `/var/lib/longhorn`; open-iscsi and mount/NFS tooling on storage nodes; privileged workloads allowed in `longhorn-system`. |
-| `monitoring` | Kubernetes `>=1.25`; permissions to install Prometheus Operator CRDs/RBAC; Longhorn storage class for Prometheus, Alertmanager, Grafana, and Loki PVCs; Discord webhook Secret for Alertmanager; optional Traefik/cert-manager/DNS for Grafana ingress. |
+| `hath` | Hetzner CSI `hcloud-volumes` storage for cache/data directories; firewall rules for TCP `8888` to the node running the Hath pod; Prometheus Operator CRDs if ServiceMonitor output is enabled. |
+| `idp` | Traefik IngressClass named `traefik`; cert-manager controller and `letsencrypt-prod` `ClusterIssuer`; DNS for `auth.jeiang.dev`; pre-created `idp-secrets` or Bitwarden Secrets Manager operator; Hetzner CSI `hcloud-volumes` storage. |
+| `monitoring` | Kubernetes `>=1.25`; permissions to install Prometheus Operator CRDs/RBAC; Hetzner CSI `hcloud-volumes` storage class for Prometheus, Alertmanager, Grafana, and Loki PVCs; Discord webhook Secret for Alertmanager; optional Traefik/cert-manager/DNS for Grafana ingress. |
 | `netbird` | Traefik `IngressRoute` CRDs and `websecure` entryPoint; cert-manager `Certificate` CRD/controller and `letsencrypt-prod` `ClusterIssuer`; load balancer access for UDP `3478`; DNS for `netbird.jeiang.dev`; pre-created `netbird-secrets` or Bitwarden Secrets Manager operator; persistent storage for the server PVC; Prometheus Operator CRDs if ServiceMonitor output is enabled. |
-| `netbird-resources` | NetBird Kubernetes operator and CRDs for `NetworkRouter` and `NetworkResource`; custom NetBird DNS zone; existing `blocky-dns`, `idp-lldap`, `longhorn-frontend`, `longhorn-backend`, and `monitoring-grafana` Services; optional Bitwarden Secrets Manager operator for the NetBird API token Secret. |
+| `netbird-resources` | NetBird Kubernetes operator and CRDs for `NetworkRouter` and `NetworkResource`; custom NetBird DNS zone; existing `blocky-dns`, `idp-lldap`, and `monitoring-grafana` Services; optional Bitwarden Secrets Manager operator for the NetBird API token Secret. |
 | `rbac-access` | Installer must have permission to create `Namespace`, `RoleBinding`, and `ClusterRoleBinding` resources; configured subjects must match identities from cluster authentication. |
+| `traefik` | k3s bundled Traefik chart enabled; Hetzner Cloud Controller Manager installed; `legion-lb1` Load Balancer in the `us-east` network zone. |
 
 ## Usage
 
@@ -48,7 +104,7 @@ Install a chart from the repository root:
 helm upgrade --install <release-name> ./<chart-name> --namespace <namespace> --create-namespace
 ```
 
-Review each chart README before installing. Several charts contain environment-specific defaults such as public hostnames, ACME issuer names, RBAC usernames, hostPath storage paths, and externally exposed services.
+Review each chart README before installing. Several charts contain environment-specific defaults such as public hostnames, ACME issuer names, RBAC usernames, hostPort exposure, and persistent storage.
 
 Render or lint a chart before applying changes:
 

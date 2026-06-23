@@ -17,7 +17,7 @@ Values for deploying Actual Budget with the upstream `community-charts/actualbud
 - Traefik installed with an IngressClass named `traefik`.
 - cert-manager installed with a `letsencrypt-prod` `ClusterIssuer`.
 - DNS for `budget.jeiang.dev` pointing at the Traefik load balancer.
-- A default storage class, or set `persistence.storageClass` in `values.yaml`.
+- Hetzner CSI installed with the RWO `hcloud-volumes` StorageClass.
 
 ## Install
 
@@ -63,17 +63,6 @@ kubectl -n actual-budget port-forward svc/actual-budget 5006:5006
 Then open `http://localhost:5006`.
 
 ## Common Overrides
-
-Use a specific storage class:
-
-```fish
-helm upgrade --install actual-budget community-charts/actualbudget \
-  --namespace actual-budget \
-  --create-namespace \
-  -f ./actual-budget/values.yaml \
-  --set persistence.storageClass=your-storage-class \
-  --wait
-```
 
 Change the public hostname:
 

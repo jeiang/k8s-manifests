@@ -10,13 +10,13 @@ This folder also includes values for `grafana/loki` and `grafana/alloy`. Alloy c
 - Prometheus, Alertmanager, and Grafana enabled.
 - kube-state-metrics and node-exporter enabled.
 - Prometheus retention set to `15d`, capped at `18GiB`.
-- Longhorn-backed PVCs for Prometheus, Alertmanager, and Grafana.
+- Hetzner CSI-backed PVCs for Prometheus, Alertmanager, and Grafana.
 - Grafana, Prometheus, and Alertmanager exposed only through `ClusterIP` Services by default.
 - Grafana Loki datasource pointing at `loki-gateway.monitoring.svc.cluster.local`.
 - Alertmanager routed to a Discord webhook stored in the `alertmanager-discord-webhook` Secret.
 - k3s-unfriendly control-plane scrapes disabled by default: etcd, kube-controller-manager, kube-scheduler, and kube-proxy.
 - CPU and memory requests/limits for the main monitoring workloads and helper containers.
-- Loki single-binary mode with Longhorn-backed storage and a `ClusterIP` gateway.
+- Loki single-binary mode with Hetzner CSI-backed storage and a `ClusterIP` gateway.
 - Alloy as a DaemonSet collecting pod logs and Kubernetes events into Loki.
 
 The upstream chart version checked while creating this file was `86.2.2`, with Prometheus Operator app version `v0.91.0`.
@@ -27,7 +27,7 @@ The upstream Loki chart version checked was `7.0.0`, and the upstream Alloy char
 - Helm 3 and `kubectl`.
 - Kubernetes `>=1.25`.
 - Permissions to install CRDs, ClusterRoles, ClusterRoleBindings, ServiceMonitors, PrometheusRules, and StatefulSets.
-- Longhorn installed with a `longhorn` StorageClass, or update storage class values before installing.
+- Hetzner CSI installed with the RWO `hcloud-volumes` StorageClass.
 - A Discord webhook URL for Alertmanager notifications.
 - metrics-server is not required by this chart, but it is useful for broader cluster operations.
 
@@ -161,7 +161,7 @@ grafana.jeiang.dev
 ```yaml
 grafana:
   persistence:
-    storageClassName: longhorn
+    storageClassName: hcloud-volumes
     size: 5Gi
 
 alertmanager:
@@ -170,7 +170,7 @@ alertmanager:
     storage:
       volumeClaimTemplate:
         spec:
-          storageClassName: longhorn
+          storageClassName: hcloud-volumes
 
 prometheus:
   prometheusSpec:
@@ -179,7 +179,7 @@ prometheus:
     storageSpec:
       volumeClaimTemplate:
         spec:
-          storageClassName: longhorn
+          storageClassName: hcloud-volumes
 ```
 
 Loki and Alloy defaults to review:
@@ -187,7 +187,7 @@ Loki and Alloy defaults to review:
 ```yaml
 singleBinary:
   persistence:
-    storageClass: longhorn
+    storageClass: hcloud-volumes
     size: 15Gi
 
 # monitoring/alloy-values.yaml

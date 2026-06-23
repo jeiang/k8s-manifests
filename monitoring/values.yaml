@@ -50,7 +50,7 @@ grafana:
   persistence:
     enabled: true
     type: pvc
-    storageClassName: longhorn
+    storageClassName: hcloud-volumes
     accessModes:
       - ReadWriteOnce
     size: 5Gi
@@ -163,7 +163,7 @@ alertmanager:
     storage:
       volumeClaimTemplate:
         spec:
-          storageClassName: longhorn
+          storageClassName: hcloud-volumes
           accessModes:
             - ReadWriteOnce
           resources:
@@ -192,7 +192,7 @@ prometheus:
     storageSpec:
       volumeClaimTemplate:
         spec:
-          storageClassName: longhorn
+          storageClassName: hcloud-volumes
           accessModes:
             - ReadWriteOnce
           resources:

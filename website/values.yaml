@@ -23,7 +23,7 @@ ingress:
 
   hosts:
     - jeiang.dev
-    # - aidanpinard.co
+    - aidanpinard.co
     - pinard.co.tt
 
   tls:

@@ -104,7 +104,7 @@ ingress:
 persistence:
   enabled: true
   size: 10Gi
-  storageClassName: ""
+  storageClassName: hcloud-volumes
 
 metrics:
   serviceMonitor:

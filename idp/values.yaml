@@ -110,8 +110,8 @@ ingress:
     enabled: false
 
 persistence:
-  createPersistentVolumes: true
-  storageClassName: ""
+  createPersistentVolumes: false
+  storageClassName: hcloud-volumes
   reclaimPolicy: Retain
   hostPathBase: /var/lib/idp
   pocketId:

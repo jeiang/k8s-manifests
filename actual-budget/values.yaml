@@ -34,7 +34,7 @@ persistence:
   enabled: true
   annotations: {}
   existingClaim: ""
-  storageClass: ""
+  storageClass: hcloud-volumes
   subPath: ""
   volumeMode: ""
   accessModes:

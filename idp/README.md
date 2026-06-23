@@ -8,7 +8,7 @@ Default application version: Pocket ID `v2.6.2`.
 
 - Pocket ID at `https://auth.jeiang.dev`.
 - Internal LDAP at `ldap://idp-lldap.idp.svc.cluster.local:3890`.
-- PersistentVolumes and PersistentVolumeClaims for Pocket ID and LLDAP state.
+- PersistentVolumeClaims for Pocket ID and LLDAP state.
 - `ClusterIP` Services for Pocket ID and LLDAP.
 - A Kubernetes Ingress resource for Pocket ID with cert-manager annotations.
 - A Pocket ID init container that waits for LLDAP's LDAP port before startup.
@@ -23,7 +23,7 @@ Default application version: Pocket ID `v2.6.2`.
 - A DNS record for `auth.jeiang.dev` pointing at the ingress load balancer.
 - A pre-created `idp-secrets` Secret with the keys listed below.
 - Bitwarden Secrets Manager operator CRDs if `bitwardenSecrets.enabled=true`.
-- Nodes that can use hostPath storage under `/var/lib/idp`, or custom persistence values that use an available storage class.
+- Hetzner CSI installed with the RWO `hcloud-volumes` StorageClass.
 
 ## Generate Secrets
 
@@ -92,14 +92,12 @@ helm upgrade --install idp ./idp \
   --create-namespace
 ```
 
-Review the persistence defaults before installing. The chart creates hostPath-backed PersistentVolumes under `/var/lib/idp` with `Retain` reclaim policy:
+Review the persistence defaults before installing. The chart uses dynamic provisioning through the Hetzner CSI-backed `hcloud-volumes` StorageClass:
 
 ```yaml
 persistence:
-  createPersistentVolumes: true
-  storageClassName: ""
-  reclaimPolicy: Retain
-  hostPathBase: /var/lib/idp
+  createPersistentVolumes: false
+  storageClassName: hcloud-volumes
 ```
 
 If this replaces a previous OpenLDAP-based install, the old `idp-ldap-data` and `idp-ldap-config` PVCs are no longer used. LLDAP now uses the `idp-lldap` PVC.

@@ -7,8 +7,9 @@ Default image: `ghcr.io/james58899/hath-rust:latest`.
 ## What This Chart Creates
 
 - A single `hath-rust` Deployment.
-- A `LoadBalancer` Service exposing the configured H@H port.
-- A Longhorn-backed RWX persistent volume claim mounted at `/hath`.
+- A `ClusterIP` Service exposing the configured H@H port inside the cluster.
+- A TCP `hostPort` on port `8888` for direct node-level exposure.
+- A Hetzner CSI-backed persistent volume claim mounted at `/hath`.
 - Persistent directories for cache, login data, downloads, and logs.
 - An ephemeral `emptyDir` for temporary files at `/tmp/hath`.
 - Metrics endpoint and optional HTTP/3 UDP port.
@@ -17,10 +18,8 @@ Default image: `ghcr.io/james58899/hath-rust:latest`.
 ## Dependencies
 
 - Helm 3 and `kubectl`.
-- Longhorn installed with a `longhorn` StorageClass, or another storage class set with `persistence.storageClassName`.
-- Longhorn RWX support available on the storage nodes.
-- A cluster load balancer implementation and firewall rules that allow public access to the configured H@H port.
-- Network/firewall rules appropriate for the configured H@H port.
+- Hetzner CSI installed with the RWO `hcloud-volumes` StorageClass.
+- Firewall rules allowing inbound TCP `8888` to the node running the Hath pod.
 - Prometheus Operator CRDs installed if `metrics.serviceMonitor.enabled=true`.
 
 ## Install
@@ -63,11 +62,20 @@ hath:
   enableMetrics: true
   enableH3: false
 
+hostPort:
+  enabled: true
+  port: 8888
+  hostIP: ""
+
+service:
+  type: ClusterIP
+  port: 8888
+
 persistence:
   enabled: true
-  storageClassName: longhorn
+  storageClassName: hcloud-volumes
   accessModes:
-    - ReadWriteMany
+    - ReadWriteOnce
   size: 15Gi
 
 resources:
