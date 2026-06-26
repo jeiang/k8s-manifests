@@ -52,7 +52,7 @@ pocketId:
     host: smtp.mail.me.com
     port: 587
     from: noreply@jeiang.dev
-    user: noreply@jeiang.dev
+    user: jeiang
     tls: starttls
     skipCertVerify: false
   email:
