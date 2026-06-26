@@ -84,4 +84,24 @@ spec:
       services:
         - name: {{ include "netbird.dashboardName" . | quote }}
           port: {{ .Values.dashboard.port }}
+{{- if .Values.proxy.enabled }}
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRouteTCP
+metadata:
+  name: {{ printf "%s-proxy" (include "netbird.fullname" .) | trunc 63 | trimSuffix "-" | quote }}
+  labels:
+    {{- include "netbird.labels" . | nindent 4 }}
+spec:
+  entryPoints:
+    - {{ .Values.ingress.entryPoint | quote }}
+  routes:
+    - match: HostSNI(`{{ .Values.proxy.domain }}`) || HostSNIRegexp(`{{ .Values.proxy.wildcardDomainRegexp }}`)
+      priority: 1
+      services:
+        - name: {{ include "netbird.proxyName" . | quote }}
+          port: {{ .Values.proxy.port }}
+  tls:
+    passthrough: true
+{{- end }}
 {{- end }}

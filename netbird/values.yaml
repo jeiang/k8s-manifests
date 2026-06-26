@@ -8,6 +8,7 @@ secrets:
     storeEncryptionKey: store-encryption-key
     relayAuthSecret: relay-auth-secret
     idpSessionCookieEncryptionKey: idp-session-cookie-encryption-key
+    proxyToken: proxy-token
 
 bitwardenSecrets:
   enabled: true
@@ -19,12 +20,13 @@ bitwardenSecrets:
     storeEncryptionKey: "9eb3d9c5-58ed-4a6a-afa4-b465002871e7"
     relayAuthSecret: "263bee8d-be56-4d26-bec4-b4650028727c"
     idpSessionCookieEncryptionKey: "0bddc1f8-cb8c-4f2f-b1c1-b465002872ff"
+    proxyToken: "dacb7eb2-4cdf-45de-9541-b47300025e5d"
 
 server:
   replicaCount: 1
   image:
     repository: netbirdio/netbird-server
-    tag: 0.72.1
+    tag: 0.73.2
     pullPolicy: IfNotPresent
   port: 80
   metricsPort: 9090
@@ -53,7 +55,7 @@ dashboard:
   replicaCount: 1
   image:
     repository: netbirdio/dashboard
-    tag: v2.39.0
+    tag: v2.80.0
     pullPolicy: IfNotPresent
   port: 80
   resources:
@@ -68,7 +70,7 @@ relay:
   replicaCount: 2
   image:
     repository: netbirdio/relay
-    tag: 0.72.1
+    tag: 0.73.2
     pullPolicy: IfNotPresent
   port: 8080
   stunHost: stun.netbird.jeiang.dev
@@ -83,6 +85,49 @@ relay:
   antiAffinity:
     enabled: true
   affinity: {}
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+proxy:
+  enabled: true
+  replicaCount: 1
+  image:
+    repository: netbirdio/reverse-proxy
+    tag: 0.73.2
+    pullPolicy: IfNotPresent
+  domain: proxy.jeiang.dev
+  wildcardDomain: "*.proxy.jeiang.dev"
+  wildcardDomainRegexp: '^.+\.proxy\.jeiang\.dev$'
+  port: 8443
+  managementAddress: ""
+  allowInsecure: true
+  acmeCertificates: true
+  acmeChallengeType: tls-alpn-01
+  certificateDirectory: /certs
+  uid: "1000"
+  gid: "1000"
+  logLevel: info
+  certsInit:
+    image:
+      repository: busybox
+      tag: "1.36"
+      pullPolicy: IfNotPresent
+    resources:
+      requests:
+        cpu: 10m
+        memory: 16Mi
+      limits:
+        cpu: 50m
+        memory: 32Mi
+  persistence:
+    enabled: true
+    size: 1Gi
+    storageClassName: hcloud-volumes
   resources:
     requests:
       cpu: 100m

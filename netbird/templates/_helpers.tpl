@@ -40,6 +40,10 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 {{- printf "%s-relay" (include "netbird.fullname" .) | trunc 63 | trimSuffix "-" }}
 {{- end }}
 
+{{- define "netbird.proxyName" -}}
+{{- printf "%s-proxy" (include "netbird.fullname" .) | trunc 63 | trimSuffix "-" }}
+{{- end }}
+
 {{- define "netbird.secretName" -}}
 {{- .Values.secrets.existingSecret | required "secrets.existingSecret is required" }}
 {{- end }}

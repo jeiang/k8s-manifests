@@ -1,0 +1,115 @@
+{{- if .Values.proxy.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "netbird.proxyName" . | quote }}
+  labels:
+    {{- include "netbird.labels" . | nindent 4 }}
+    app.kubernetes.io/component: proxy
+spec:
+  replicas: {{ .Values.proxy.replicaCount }}
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      {{- include "netbird.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: proxy
+  template:
+    metadata:
+      labels:
+        {{- include "netbird.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: proxy
+    spec:
+      serviceAccountName: {{ include "netbird.proxyName" . | quote }}
+      initContainers:
+        - name: prepare-certs
+          image: "{{ .Values.proxy.certsInit.image.repository }}:{{ .Values.proxy.certsInit.image.tag }}"
+          imagePullPolicy: {{ .Values.proxy.certsInit.image.pullPolicy }}
+          command:
+            - sh
+            - -ec
+            - |
+              chown -R {{ .Values.proxy.uid }}:{{ .Values.proxy.gid }} {{ .Values.proxy.certificateDirectory | quote }}
+              chmod 0770 {{ .Values.proxy.certificateDirectory | quote }}
+          resources:
+            {{- toYaml .Values.proxy.certsInit.resources | nindent 12 }}
+          volumeMounts:
+            - name: certs
+              mountPath: {{ .Values.proxy.certificateDirectory | quote }}
+      containers:
+        - name: proxy
+          image: "{{ .Values.proxy.image.repository }}:{{ .Values.proxy.image.tag }}"
+          imagePullPolicy: {{ .Values.proxy.image.pullPolicy }}
+          securityContext:
+            runAsUser: {{ .Values.proxy.uid }}
+            runAsGroup: {{ .Values.proxy.gid }}
+          env:
+            - name: NB_PROXY_DOMAIN
+              value: {{ .Values.proxy.domain | quote }}
+            - name: NB_PROXY_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "netbird.secretName" . | quote }}
+                  key: {{ .Values.secrets.keys.proxyToken | quote }}
+            - name: NB_PROXY_MANAGEMENT_ADDRESS
+              value: {{ default (printf "http://%s:%v" (include "netbird.serverName" .) .Values.server.port) .Values.proxy.managementAddress | quote }}
+            - name: NB_PROXY_ALLOW_INSECURE
+              value: {{ .Values.proxy.allowInsecure | quote }}
+            - name: NB_PROXY_ADDRESS
+              value: ":{{ .Values.proxy.port }}"
+            - name: NB_PROXY_ACME_CERTIFICATES
+              value: {{ .Values.proxy.acmeCertificates | quote }}
+            - name: NB_PROXY_ACME_CHALLENGE_TYPE
+              value: {{ .Values.proxy.acmeChallengeType | quote }}
+            - name: NB_PROXY_CERTIFICATE_DIRECTORY
+              value: {{ .Values.proxy.certificateDirectory | quote }}
+            - name: NB_PROXY_LOG_LEVEL
+              value: {{ .Values.proxy.logLevel | quote }}
+          ports:
+            - name: tls
+              containerPort: {{ .Values.proxy.port }}
+              protocol: TCP
+          resources:
+            {{- toYaml .Values.proxy.resources | nindent 12 }}
+          volumeMounts:
+            - name: certs
+              mountPath: {{ .Values.proxy.certificateDirectory | quote }}
+      volumes:
+        - name: certs
+          {{- if .Values.proxy.persistence.enabled }}
+          persistentVolumeClaim:
+            claimName: {{ include "netbird.proxyName" . | quote }}
+          {{- else }}
+          emptyDir: {}
+          {{- end }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "netbird.proxyName" . | quote }}
+  labels:
+    {{- include "netbird.labels" . | nindent 4 }}
+    app.kubernetes.io/component: proxy
+spec:
+  type: {{ .Values.service.type }}
+  selector:
+    {{- include "netbird.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: proxy
+  ports:
+    - name: tls
+      port: {{ .Values.proxy.port }}
+      targetPort: tls
+      protocol: TCP
+{{- end }}

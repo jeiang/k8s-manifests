@@ -7,6 +7,8 @@ metadata:
     app.kubernetes.io/component: relay
 spec:
   replicas: {{ .Values.relay.replicaCount }}
+  strategy:
+    type: Recreate
   selector:
     matchLabels:
       {{- include "netbird.selectorLabels" . | nindent 6 }}

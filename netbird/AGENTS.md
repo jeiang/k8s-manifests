@@ -2,23 +2,29 @@
 
 ## Scope
 
-This local Helm chart deploys the self-hosted NetBird management server, dashboard, relay, Traefik ingress routes, persistent state, Bitwarden secret sync, and optional metrics.
+This local Helm chart deploys the self-hosted NetBird management server, dashboard, relay, reverse proxy, Traefik routes, persistent state, Bitwarden secret sync, and optional metrics.
 
 ## Runtime Contract
 
 - Management and dashboard traffic use Traefik `IngressRoute` resources at `netbird.jeiang.dev`.
+- Reverse proxy traffic uses Traefik `IngressRouteTCP` TLS passthrough for `proxy.jeiang.dev` and `*.proxy.jeiang.dev` only.
 - STUN uses direct node exposure on UDP `3478`; Hetzner Cloud Load Balancers and Traefik do not proxy this UDP path.
 - Relay replicas default to `2` and use required pod anti-affinity so they do not share a host.
 - Relay pods use host networking and require nodes labeled `netbird.io/stun=true`.
+- Server and relay Deployments use `Recreate`; rolling updates conflict with the server's RWO PVC and the relay's host-network STUN port binding.
 - DNS for `stun.netbird.jeiang.dev` must point at the public addresses of the labeled relay nodes.
+- DNS for `proxy.jeiang.dev` and `*.proxy.jeiang.dev` must point at the Traefik load balancer.
 - Persistence uses the RWO-only `hcloud-volumes` StorageClass.
 - `netbird-secrets` is expected to be synced by the chart-managed `BitwardenSecret`; the only direct namespace Secret should be the Bitwarden bootstrap `bw-auth-token`.
 
 ## Editing Notes
 
 - Keep server secrets stable after first deploy.
+- Keep the reverse proxy token in Bitwarden Secrets Manager; do not render it as a literal environment variable.
 - Do not add a manual literal `netbird-secrets` creation path to docs unless the user explicitly asks for an emergency fallback.
 - Be careful changing relay `hostNetwork`, `stunPort`, or anti-affinity; these values control public reachability.
+- Be careful changing proxy `IngressRouteTCP`, TLS passthrough, or ACME settings; the proxy must terminate TLS itself.
+- The reverse proxy needs write access to `/certs` and namespace Lease RBAC for ACME certificate locking.
 - The NetBird operator resources are not owned by this chart; use `netbird-resources/` for router and network-resource objects.
 
 ## Validation

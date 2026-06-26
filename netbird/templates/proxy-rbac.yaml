@@ -1,0 +1,45 @@
+{{- if .Values.proxy.enabled }}
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: {{ include "netbird.proxyName" . | quote }}
+  labels:
+    {{- include "netbird.labels" . | nindent 4 }}
+    app.kubernetes.io/component: proxy
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: {{ include "netbird.proxyName" . | quote }}
+  labels:
+    {{- include "netbird.labels" . | nindent 4 }}
+    app.kubernetes.io/component: proxy
+rules:
+  - apiGroups:
+      - coordination.k8s.io
+    resources:
+      - leases
+    verbs:
+      - get
+      - list
+      - watch
+      - create
+      - update
+      - patch
+      - delete
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: {{ include "netbird.proxyName" . | quote }}
+  labels:
+    {{- include "netbird.labels" . | nindent 4 }}
+    app.kubernetes.io/component: proxy
+subjects:
+  - kind: ServiceAccount
+    name: {{ include "netbird.proxyName" . | quote }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: {{ include "netbird.proxyName" . | quote }}
+{{- end }}

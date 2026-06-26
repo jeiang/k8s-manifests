@@ -16,3 +16,22 @@ spec:
   storageClassName: {{ .Values.persistence.storageClassName | quote }}
   {{- end }}
 {{- end }}
+{{- if and .Values.proxy.enabled .Values.proxy.persistence.enabled }}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "netbird.proxyName" . | quote }}
+  labels:
+    {{- include "netbird.labels" . | nindent 4 }}
+    app.kubernetes.io/component: proxy
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ .Values.proxy.persistence.size | quote }}
+  {{- if .Values.proxy.persistence.storageClassName }}
+  storageClassName: {{ .Values.proxy.persistence.storageClassName | quote }}
+  {{- end }}
+{{- end }}
