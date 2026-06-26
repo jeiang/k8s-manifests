@@ -2,7 +2,7 @@ apiVersion: v2
 name: idp
 description: Pocket ID with LLDAP
 type: application
-version: 0.1.5
+version: 0.1.6
 appVersion: "v2.6.2"
 dependencies:
   - name: netbird-resources

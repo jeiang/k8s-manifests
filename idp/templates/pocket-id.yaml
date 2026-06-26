@@ -55,6 +55,34 @@ spec:
                 secretKeyRef:
                   name: {{ include "idp.secretName" . | quote }}
                   key: {{ .Values.secrets.keys.pocketIdStaticApiKey | quote }}
+            {{- if .Values.pocketId.smtp.enabled }}
+            - name: SMTP_HOST
+              value: {{ .Values.pocketId.smtp.host | quote }}
+            - name: SMTP_PORT
+              value: {{ .Values.pocketId.smtp.port | quote }}
+            - name: SMTP_FROM
+              value: {{ .Values.pocketId.smtp.from | quote }}
+            - name: SMTP_USER
+              value: {{ .Values.pocketId.smtp.user | quote }}
+            - name: SMTP_PASSWORD_FILE
+              value: /run/secrets/pocket-id-smtp-password
+            - name: SMTP_TLS
+              value: {{ .Values.pocketId.smtp.tls | quote }}
+            - name: SMTP_SKIP_CERT_VERIFY
+              value: {{ .Values.pocketId.smtp.skipCertVerify | quote }}
+            {{- end }}
+            - name: EMAIL_VERIFICATION_ENABLED
+              value: {{ .Values.pocketId.email.verificationEnabled | quote }}
+            - name: EMAIL_ONE_TIME_ACCESS_AS_ADMIN_ENABLED
+              value: {{ .Values.pocketId.email.oneTimeAccessAsAdminEnabled | quote }}
+            - name: EMAIL_LOGIN_NOTIFICATION_ENABLED
+              value: {{ .Values.pocketId.email.loginNotificationEnabled | quote }}
+            - name: EMAIL_API_KEY_EXPIRATION_ENABLED
+              value: {{ .Values.pocketId.email.apiKeyExpirationEnabled | quote }}
+            - name: EMAIL_ONE_TIME_ACCESS_AS_UNAUTHENTICATED_ENABLED
+              value: {{ .Values.pocketId.email.oneTimeAccessAsUnauthenticatedEnabled | quote }}
+            - name: ALLOW_USER_SIGNUPS
+              value: {{ .Values.pocketId.signups.allowUserSignups | quote }}
             - name: LDAP_ENABLED
               value: {{ .Values.pocketId.ldap.enabled | quote }}
             - name: LDAP_URL
@@ -118,6 +146,12 @@ spec:
               mountPath: /run/secrets/pocket-id-ldap-bind-password
               subPath: pocket-id-ldap-bind-password
               readOnly: true
+            {{- if .Values.pocketId.smtp.enabled }}
+            - name: secrets
+              mountPath: /run/secrets/pocket-id-smtp-password
+              subPath: pocket-id-smtp-password
+              readOnly: true
+            {{- end }}
       volumes:
         - name: data
           persistentVolumeClaim:
@@ -130,6 +164,10 @@ spec:
                 path: pocket-id-encryption-key
               - key: {{ .Values.secrets.keys.pocketIdLdapBindPassword | quote }}
                 path: pocket-id-ldap-bind-password
+              {{- if .Values.pocketId.smtp.enabled }}
+              - key: {{ .Values.secrets.keys.pocketIdSmtpPassword | quote }}
+                path: pocket-id-smtp-password
+              {{- end }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
