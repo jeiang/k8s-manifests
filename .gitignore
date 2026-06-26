@@ -9,5 +9,8 @@ devenv.local.yaml
 # pre-commit
 .pre-commit-config.yaml
 
+# Security tooling caches
+.cache_ggshield
+
 # Helm Dependencies
 *.tgz
