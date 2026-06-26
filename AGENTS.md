@@ -58,6 +58,8 @@ helm template test ./<chart-name> --namespace test
 
 Inspect rendered YAML for correct namespaces, labels, selectors, secret references, PVC/PV names, ingress hosts, and conditional resources. For values-only upstream chart directories, render the upstream chart with the local values file. For plain manifest directories, review with `kubectl diff --server-side -f <file>` when a configured cluster is available. For RBAC changes, verify generated subjects and role bindings carefully.
 
+After making chart, values, or manifest changes, include clear next-step instructions for the operator. Call out any external provider actions, secret or token values that must be created outside the repository, DNS or dashboard configuration, required dependency builds, validation commands, deploy commands, and post-deploy verification steps.
+
 ## Commit & Pull Request Guidelines
 
 Recent commits use short conventional prefixes such as `feat:`, `feature:`, and `chore:`. Keep commit messages imperative and scoped, for example `feat: add netbird chart` or `chore: update devenv tools`.
