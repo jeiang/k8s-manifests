@@ -14,3 +14,6 @@ devenv.local.yaml
 
 # Helm Dependencies
 *.tgz
+
+# Generated client kubeconfigs and private keys
+rbac-access/kubeconfigs/
