@@ -1,7 +1,6 @@
 { pkgs, lib, config, inputs, ... }:
 {
   packages = with pkgs; [
-    git
     openssl
     bws
     kubectl
