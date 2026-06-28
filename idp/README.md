@@ -4,6 +4,19 @@ Helm chart for running Pocket ID with LLDAP.
 
 Default application version: Pocket ID `v2.6.2`.
 
+## Contents
+
+- [What This Chart Creates](#what-this-chart-creates)
+- [Dependencies](#dependencies)
+- [Generate Bitwarden Secrets](#generate-bitwarden-secrets)
+- [Email Delivery](#email-delivery)
+- [Bitwarden Secrets Manager](#bitwarden-secrets-manager)
+- [Install](#install)
+- [Bootstrap LLDAP](#bootstrap-lldap)
+- [Bootstrap Pocket ID](#bootstrap-pocket-id)
+- [Create NetBird OIDC Client](#create-netbird-oidc-client)
+- [Values](#values)
+
 ## What This Chart Creates
 
 - Pocket ID at `https://auth.jeiang.dev`.
@@ -207,3 +220,7 @@ Scopes: openid profile email groups
 ```
 
 Copy the generated client ID and client secret into `netbird/values.yaml` if you configure NetBird to use this external IdP.
+
+## Values
+
+See [`VALUES.md`](./VALUES.md) for the local values documented with defaults and operational notes.

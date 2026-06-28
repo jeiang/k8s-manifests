@@ -47,42 +47,8 @@ kubectl -n hath rollout status deployment/hath --timeout=5m
 kubectl -n hath logs deploy/hath --tail=100
 ```
 
-## Values To Review
+## Values
 
-```yaml
-hath:
-  port: 8888
-  cacheDir: /hath/cache
-  dataDir: /hath/data
-  downloadDir: /hath/download
-  logDir: /hath/log
-  tempDir: /tmp/hath
-  enableMetrics: true
-  enableH3: false
-
-hostPort:
-  enabled: true
-  port: 8888
-  hostIP: ""
-
-service:
-  type: ClusterIP
-  port: 8888
-
-persistence:
-  enabled: true
-  storageClassName: rclone-csi
-  accessModes:
-    - ReadWriteMany
-  size: 15Gi
-
-resources:
-  requests:
-    cpu: 250m
-    memory: 512Mi
-  limits:
-    cpu: "2"
-    memory: 2Gi
-```
+See [`VALUES.md`](./VALUES.md) for the local values documented with defaults and operational notes.
 
 Set any additional `hath-rust` options through the `hath` values or `hath.extraArgs`.

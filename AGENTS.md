@@ -42,7 +42,7 @@ The target cluster is k3s on Hetzner Cloud nodes running NixOS. Keep cluster-fac
 - k3s ServiceLB is disabled because Hetzner Cloud Controller Manager owns `LoadBalancer` Services.
 - k3s embedded cloud controller is disabled and kubelet uses `cloud-provider=external` for `hcloud-cloud-controller-manager`.
 - The cluster is IPv4-only for pod and service networking; public IPv6 can still be handled by Hetzner Load Balancers where needed.
-- Hetzner CSI uses a `kube-system/hcloud` Secret. Most repository PVC defaults use the RWO-only `hcloud-volumes` StorageClass; rclone-backed workloads use `rclone-csi`. Never commit live storage tokens or rclone credentials.
+- Hetzner CSI uses a `kube-system/hcloud` Secret. Use the RWO-only `hcloud-volumes` StorageClass for small volumes, roughly less than `20Gi`, when the workload can run on one node at a time. Use `rclone-csi` for larger volumes, growth-prone volumes, or anything requiring RWX/multi-pod access. Never commit live storage tokens or rclone credentials.
 - On this k3s/NixOS setup, install `hcloud-csi` with `node.kubeletDir=/var/lib/kubelet`.
 - Hetzner public IPv4s belong in node OS networking, but k3s node external addresses should generally be left to the external cloud controller.
 - Hetzner Cloud Volumes are node-attached RWO storage. Do not configure repo PVCs as RWX unless the storage backend changes.
@@ -61,6 +61,8 @@ Inspect rendered YAML for correct namespaces, labels, selectors, secret referenc
 After making chart, values, or manifest changes, include clear next-step instructions for the operator. Call out any external provider actions, secret or token values that must be created outside the repository, DNS or dashboard configuration, required dependency builds, validation commands, deploy commands, and post-deploy verification steps.
 
 ## Commit & Pull Request Guidelines
+
+When implementing a change, check whether the repository already has uncommitted changes. If those changes are unrelated to the current work, meaning they are not part of the same change and do not enable it, ask whether the prior changes should be committed before adding the new changes. If the answer is yes, commit those prior changes first, then continue implementing the new change.
 
 Recent commits use short conventional prefixes such as `feat:`, `feature:`, and `chore:`. Keep commit messages imperative and scoped, for example `feat: add netbird chart` or `chore: update devenv tools`.
 

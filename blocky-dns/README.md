@@ -46,6 +46,8 @@ helm upgrade --install blocky-dns ./blocky-dns \
 
 With the default values, that creates a `NetworkResource` named `blocky-dns` in the `dns` namespace for `blocky-dns.dns.k8s.jeiang.vpn`.
 
+## Verify
+
 Verify the Service and HPA:
 
 ```fish
@@ -53,24 +55,6 @@ kubectl -n dns get svc blocky-dns
 kubectl -n dns get hpa blocky-dns
 ```
 
-Common values to review before installing:
+## Values
 
-```yaml
-replicaCount: 1
-autoscaling:
-  enabled: true
-  minReplicas: 1
-  maxReplicas: 5
-  targetCPUUtilizationPercentage: 70
-service:
-  type: ClusterIP
-  dnsPort: 53
-netbird:
-  enabled: false
-blocky:
-  config: |
-    upstreams:
-      groups:
-        default:
-        - 1.1.1.1
-```
+See [`VALUES.md`](./VALUES.md) for the local values documented with defaults and operational notes.

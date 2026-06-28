@@ -9,6 +9,17 @@ Default images:
 - `netbirdio/relay:0.73.2`
 - `netbirdio/reverse-proxy:0.73.2`
 
+## Contents
+
+- [What This Chart Creates](#what-this-chart-creates)
+- [Dependencies](#dependencies)
+- [Generate Bitwarden Secrets](#generate-bitwarden-secrets)
+- [Bitwarden Secrets Manager](#bitwarden-secrets-manager)
+- [Install](#install)
+- [Reverse Proxy](#reverse-proxy)
+- [Verify](#verify)
+- [Values](#values)
+
 ## What This Chart Creates
 
 - 1 NetBird management/signal server.
@@ -151,27 +162,6 @@ kubectl -n netbird get leases
 
 In the NetBird dashboard, open **Reverse Proxy** > **Services** and confirm `proxy.jeiang.dev` appears with a cluster badge before creating a public service.
 
-## Values To Review
+## Values
 
-```yaml
-server:
-  metricsPort: 9090
-
-relay:
-  replicaCount: 2
-  stunHost: stun.netbird.jeiang.dev
-  stunPort: 3478
-  hostNetwork:
-    enabled: true
-  nodeSelector:
-    netbird.io/stun: "true"
-  antiAffinity:
-    enabled: true
-
-proxy:
-  enabled: true
-  domain: proxy.jeiang.dev
-  persistence:
-    enabled: true
-    storageClassName: hcloud-volumes
-```
+See [`VALUES.md`](./VALUES.md) for the local values documented with defaults and operational notes.

@@ -10,6 +10,16 @@ oci://ghcr.io/veloxpack/charts/csi-driver-rclone
 
 The CSI driver name is `rclone.csi.veloxpack.io`.
 
+## Contents
+
+- [What This Directory Configures](#what-this-directory-configures)
+- [Dependencies](#dependencies)
+- [Bitwarden Configuration](#bitwarden-configuration)
+- [Install](#install)
+- [Verify](#verify)
+- [Values](#values)
+- [References](#references)
+
 ## What This Directory Configures
 
 - The upstream rclone CSI controller and node driver.
@@ -176,27 +186,9 @@ kubectl -n rclone-test delete pod rclone-test
 kubectl -n rclone-test delete pvc rclone-test
 ```
 
-## Values To Review
+## Values
 
-```yaml
-kubeletDir: /var/lib/kubelet
-
-storageClass:
-  create: true
-  name: rclone-csi
-  parameters:
-    remote: s3
-    remotePath: "k8s/${pvc.metadata.namespace}/${pvc.metadata.name}"
-    csi.storage.k8s.io/provisioner-secret-name: rclone-config
-    csi.storage.k8s.io/provisioner-secret-namespace: rclone-csi
-    csi.storage.k8s.io/node-publish-secret-name: rclone-config
-    csi.storage.k8s.io/node-publish-secret-namespace: rclone-csi
-  reclaimPolicy: Retain
-  mountOptions:
-    - uid=1000
-    - gid=1000
-    - vfs-cache-mode=writes
-```
+See [`VALUES.md`](./VALUES.md) for the local values documented with defaults and operational notes.
 
 ## References
 

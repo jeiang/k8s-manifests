@@ -2,7 +2,7 @@
 
 Values for deploying Actual Budget with the upstream `community-charts/actualbudget` Helm chart.
 
-## What This Values File Configures
+## What This Directory Configures
 
 - Actual Budget behind Traefik at `https://budget.jeiang.dev`.
 - cert-manager TLS using the `letsencrypt-prod` `ClusterIssuer`.
@@ -63,6 +63,10 @@ kubectl -n actual-budget port-forward svc/actual-budget 5006:5006
 ```
 
 Then open `http://localhost:5006`.
+
+## Values
+
+See [`VALUES.md`](./VALUES.md) for the local values documented with defaults and operational notes.
 
 ## Common Overrides
 

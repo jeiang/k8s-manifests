@@ -2,7 +2,18 @@
 
 Values for deploying the Bitwarden Secrets Manager Kubernetes Operator with the upstream `bitwarden/sm-operator` Helm chart.
 
-## What This Values File Configures
+## Contents
+
+- [What This Directory Configures](#what-this-directory-configures)
+- [Dependencies](#dependencies)
+- [Install](#install)
+- [Verify](#verify)
+- [Create An Auth Token Secret](#create-an-auth-token-secret)
+- [Deploy A BitwardenSecret](#deploy-a-bitwardensecret)
+- [Values](#values)
+- [References](#references)
+
+## What This Directory Configures
 
 - One Bitwarden Secrets Manager operator replica.
 - Secret synchronization every `300` seconds.
@@ -122,26 +133,9 @@ This repository also includes saved `BitwardenSecret` manifests for the charts t
 - `netbird/templates/bitwardensecret.yaml` for `netbird-secrets`.
 - `netbird-resources/templates/bitwardensecret-netbird-api.yaml` for `netbird-mgmt-api-key`.
 
-## Values To Review
+## Values
 
-```yaml
-settings:
-  bwSecretsManagerRefreshInterval: 300
-  cloudRegion: US
-  bwApiUrlOverride: ""
-  bwIdentityUrlOverride: ""
-  replicas: 1
-
-containers:
-  manager:
-    resources:
-      requests:
-        cpu: 10m
-        memory: 64Mi
-      limits:
-        cpu: 500m
-        memory: 128Mi
-```
+See [`VALUES.md`](./VALUES.md) for the local values documented with defaults and operational notes.
 
 For self-hosted Bitwarden, set `settings.cloudRegion` to an empty string and configure `settings.bwApiUrlOverride` and `settings.bwIdentityUrlOverride`.
 

@@ -2,6 +2,15 @@
 
 Helm chart for NetBird operator routing resources.
 
+## Contents
+
+- [What This Chart Creates](#what-this-chart-creates)
+- [Dependencies](#dependencies)
+- [Install Operator](#install-operator)
+- [Install](#install)
+- [Verify](#verify)
+- [Values](#values)
+
 ## What This Chart Creates
 
 - A `NetworkRouter` named `k8s` in the `netbird` namespace.
@@ -127,37 +136,6 @@ kubectl -n dns describe networkresource blocky-dns
 kubectl -n idp describe networkresource lldap
 ```
 
-## Values To Review
+## Values
 
-Operator override for `ghcr.io/netbirdio/helm-charts/netbird-operator`:
-
-```yaml
-managementURL: https://netbird.jeiang.dev
-netbirdAPI:
-  keyFromSecret:
-    name: netbird-mgmt-api-key
-    key: NB_API_KEY
-```
-
-Shared router and API token values:
-
-```yaml
-networkRouter:
-  name: k8s
-  namespace: netbird
-  dnsZoneRef:
-    name: k8s.jeiang.vpn
-
-networkResources:
-  enabled: false
-  groups:
-    - name: All
-  resources: []
-
-bitwardenSecrets:
-  netbirdApi:
-    enabled: true
-    namespace: netbird
-    secretName: netbird-mgmt-api-key
-    secretKeyName: NB_API_KEY
-```
+See [`VALUES.md`](./VALUES.md) for the local chart values documented with defaults and operational notes. The upstream operator override lives in [`operator-values.yaml`](./operator-values.yaml).

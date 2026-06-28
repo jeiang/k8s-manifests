@@ -33,6 +33,18 @@ helm upgrade --install website ./website \
   --create-namespace
 ```
 
+## Verify
+
+```fish
+kubectl -n website get deploy,pods,svc,ingress
+kubectl -n website rollout status deployment/website --timeout=5m
+kubectl -n website get secret website-tls
+```
+
+## Values
+
+See [`VALUES.md`](./VALUES.md) for the local values documented with defaults and operational notes.
+
 The default values expect cert-manager to use an existing `letsencrypt-prod` `ClusterIssuer`:
 
 ```yaml

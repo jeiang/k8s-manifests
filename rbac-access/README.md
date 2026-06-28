@@ -26,6 +26,18 @@ helm upgrade --install rbac-access ./rbac-access \
   --namespace kube-system
 ```
 
+## Verify
+
+```fish
+kubectl get clusterrolebinding rbac-access-admin
+kubectl get namespaces shared saeed noel gilliano
+kubectl get rolebinding --all-namespaces -l app.kubernetes.io/instance=rbac-access
+```
+
+## Values
+
+See [`VALUES.md`](./VALUES.md) for the local values documented with defaults and operational notes.
+
 If the namespaces already exist and are not managed by this chart, set:
 
 ```yaml
