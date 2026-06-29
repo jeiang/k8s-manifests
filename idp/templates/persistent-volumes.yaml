@@ -1,23 +1,20 @@
 {{- if .Values.persistence.createPersistentVolumes }}
 {{- $fullname := include "idp.fullname" . }}
 {{- $labels := include "idp.labels" . }}
-{{- range $name, $config := dict "pocket-id" .Values.persistence.pocketId "lldap" .Values.persistence.lldap }}
----
 apiVersion: v1
 kind: PersistentVolume
 metadata:
-  name: {{ printf "%s-%s" $fullname $name | trunc 63 | trimSuffix "-" | quote }}
+  name: {{ printf "%s-pocket-id" $fullname | trunc 63 | trimSuffix "-" | quote }}
   labels:
     {{- $labels | nindent 4 }}
 spec:
   capacity:
-    storage: {{ $config.size | quote }}
+    storage: {{ .Values.persistence.pocketId.size | quote }}
   accessModes:
     - ReadWriteOnce
   persistentVolumeReclaimPolicy: {{ $.Values.persistence.reclaimPolicy }}
   storageClassName: {{ $.Values.persistence.storageClassName | quote }}
   hostPath:
-    path: {{ printf "%s/%s" $.Values.persistence.hostPathBase $name | quote }}
+    path: {{ printf "%s/pocket-id" $.Values.persistence.hostPathBase | quote }}
     type: DirectoryOrCreate
-{{- end }}
 {{- end }}

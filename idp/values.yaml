@@ -1,17 +1,12 @@
 global:
   domain: jeiang.dev
   pocketIdHost: auth.jeiang.dev
-  lldapHost: ""
 
 secrets:
   existingSecret: idp-secrets
   keys:
     pocketIdEncryptionKey: pocket-id-encryption-key
     pocketIdStaticApiKey: pocket-id-static-api-key
-    lldapJwtSecret: lldap-jwt-secret
-    lldapKeySeed: lldap-key-seed
-    lldapAdminPassword: lldap-admin-password
-    pocketIdLdapBindPassword: lldap-admin-password
     pocketIdSmtpPassword: pocket-id-smtp-password
 
 bitwardenSecrets:
@@ -21,9 +16,6 @@ bitwardenSecrets:
     secretName: bw-auth-token
     secretKey: token
   secretIds:
-    lldapJwtSecret: "cc5ad9f3-ce88-4b1c-a9a5-b4650028413d"
-    lldapKeySeed: "22be0108-6075-46d7-8b5b-b465002841ca"
-    lldapAdminPassword: "384b2038-81d5-45fd-9eca-b46500284255"
     pocketIdEncryptionKey: "d617ec9e-e4b2-4be1-b2e6-b465002842e5"
     pocketIdStaticApiKey: "3c30732f-f3e3-4f68-bbbe-b46500284379"
     pocketIdSmtpPassword: "53cbe1aa-8d71-4d73-9743-b47500233cc2"
@@ -34,18 +26,6 @@ pocketId:
     repository: ghcr.io/pocket-id/pocket-id
     tag: v2.6.2
     pullPolicy: IfNotPresent
-  waitForLldap:
-    image:
-      repository: busybox
-      tag: "1.36"
-      pullPolicy: IfNotPresent
-    resources:
-      requests:
-        cpu: 10m
-        memory: 16Mi
-      limits:
-        cpu: 50m
-        memory: 32Mi
   port: 1411
   smtp:
     enabled: true
@@ -63,42 +43,6 @@ pocketId:
     oneTimeAccessAsUnauthenticatedEnabled: false
   signups:
     allowUserSignups: withToken
-  ldap:
-    enabled: true
-    bindDn: uid=admin,ou=people,dc=jeiang,dc=dev
-    baseDn: dc=jeiang,dc=dev
-    usersFilter: "(objectClass=person)"
-    groupsFilter: "(objectClass=groupOfUniqueNames)"
-    adminGroupName: _pocket_id_admins
-    attributes:
-      userUniqueIdentifier: entryUUID
-      userUsername: uid
-      userEmail: mail
-      userFirstName: givenName
-      userLastName: sn
-      groupUniqueIdentifier: entryUUID
-      groupName: cn
-      groupMember: uniqueMember
-  resources:
-    requests:
-      cpu: 100m
-      memory: 128Mi
-    limits:
-      cpu: 500m
-      memory: 512Mi
-
-lldap:
-  image:
-    repository: lldap/lldap
-    tag: stable
-    pullPolicy: IfNotPresent
-  baseDn: dc=jeiang,dc=dev
-  uid: "1000"
-  gid: "1000"
-  timezone: UTC
-  ports:
-    ldap: 3890
-    http: 17170
   resources:
     requests:
       cpu: 100m
@@ -111,10 +55,6 @@ service:
   pocketId:
     type: ClusterIP
     port: 80
-  lldap:
-    type: ClusterIP
-    ldapPort: 3890
-    httpPort: 80
 
 ingress:
   enabled: true
@@ -124,8 +64,6 @@ ingress:
   tls:
     enabled: true
     secretName: idp-tls
-  lldap:
-    enabled: false
 
 persistence:
   createPersistentVolumes: false
@@ -134,28 +72,7 @@ persistence:
   hostPathBase: /var/lib/idp
   pocketId:
     size: 5Gi
-  lldap:
-    size: 2Gi
 
 nodeSelector: {}
 tolerations: []
 affinity: {}
-
-netbird:
-  enabled: false
-  bitwardenSecrets:
-    netbirdApi:
-      enabled: false
-  networkRouter:
-    enabled: false
-    name: k8s
-    namespace: netbird
-  networkResources:
-    enabled: true
-    resources:
-      - name: lldap
-        namespace: idp
-        serviceRef:
-          name: idp-lldap
-        groups:
-          - name: lldap_admin

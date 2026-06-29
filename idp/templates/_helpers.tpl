@@ -32,10 +32,6 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 {{- printf "%s-pocket-id" (include "idp.fullname" .) | trunc 63 | trimSuffix "-" }}
 {{- end }}
 
-{{- define "idp.lldapName" -}}
-{{- printf "%s-lldap" (include "idp.fullname" .) | trunc 63 | trimSuffix "-" }}
-{{- end }}
-
 {{- define "idp.secretName" -}}
 {{- .Values.secrets.existingSecret | required "secrets.existingSecret is required" }}
 {{- end }}

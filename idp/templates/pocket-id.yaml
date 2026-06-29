@@ -19,20 +19,6 @@ spec:
         {{- include "idp.selectorLabels" . | nindent 8 }}
         app.kubernetes.io/component: pocket-id
     spec:
-      initContainers:
-        - name: wait-for-lldap
-          image: "{{ .Values.pocketId.waitForLldap.image.repository }}:{{ .Values.pocketId.waitForLldap.image.tag }}"
-          imagePullPolicy: {{ .Values.pocketId.waitForLldap.image.pullPolicy }}
-          command:
-            - sh
-            - -c
-            - |
-              until nc -z {{ include "idp.lldapName" . }} {{ .Values.service.lldap.ldapPort }}; do
-                echo "waiting for lldap"
-                sleep 2
-              done
-          resources:
-            {{- toYaml .Values.pocketId.waitForLldap.resources | nindent 12 }}
       containers:
         - name: pocket-id
           image: "{{ .Values.pocketId.image.repository }}:{{ .Values.pocketId.image.tag }}"
@@ -83,38 +69,6 @@ spec:
               value: {{ .Values.pocketId.email.oneTimeAccessAsUnauthenticatedEnabled | quote }}
             - name: ALLOW_USER_SIGNUPS
               value: {{ .Values.pocketId.signups.allowUserSignups | quote }}
-            - name: LDAP_ENABLED
-              value: {{ .Values.pocketId.ldap.enabled | quote }}
-            - name: LDAP_URL
-              value: "ldap://{{ include "idp.lldapName" . }}:{{ .Values.service.lldap.ldapPort }}"
-            - name: LDAP_BIND_DN
-              value: {{ .Values.pocketId.ldap.bindDn | quote }}
-            - name: LDAP_BIND_PASSWORD_FILE
-              value: /run/secrets/pocket-id-ldap-bind-password
-            - name: LDAP_BASE
-              value: {{ .Values.pocketId.ldap.baseDn | quote }}
-            - name: LDAP_USER_SEARCH_FILTER
-              value: {{ .Values.pocketId.ldap.usersFilter | quote }}
-            - name: LDAP_USER_GROUP_SEARCH_FILTER
-              value: {{ .Values.pocketId.ldap.groupsFilter | quote }}
-            - name: LDAP_ADMIN_GROUP_NAME
-              value: {{ .Values.pocketId.ldap.adminGroupName | quote }}
-            - name: LDAP_ATTRIBUTE_USER_UNIQUE_IDENTIFIER
-              value: {{ .Values.pocketId.ldap.attributes.userUniqueIdentifier | quote }}
-            - name: LDAP_ATTRIBUTE_USER_USERNAME
-              value: {{ .Values.pocketId.ldap.attributes.userUsername | quote }}
-            - name: LDAP_ATTRIBUTE_USER_EMAIL
-              value: {{ .Values.pocketId.ldap.attributes.userEmail | quote }}
-            - name: LDAP_ATTRIBUTE_USER_FIRST_NAME
-              value: {{ .Values.pocketId.ldap.attributes.userFirstName | quote }}
-            - name: LDAP_ATTRIBUTE_USER_LAST_NAME
-              value: {{ .Values.pocketId.ldap.attributes.userLastName | quote }}
-            - name: LDAP_ATTRIBUTE_GROUP_UNIQUE_IDENTIFIER
-              value: {{ .Values.pocketId.ldap.attributes.groupUniqueIdentifier | quote }}
-            - name: LDAP_ATTRIBUTE_GROUP_NAME
-              value: {{ .Values.pocketId.ldap.attributes.groupName | quote }}
-            - name: LDAP_ATTRIBUTE_GROUP_MEMBER
-              value: {{ .Values.pocketId.ldap.attributes.groupMember | quote }}
           ports:
             - name: http
               containerPort: {{ .Values.pocketId.port }}
@@ -142,10 +96,6 @@ spec:
               mountPath: /run/secrets/pocket-id-encryption-key
               subPath: pocket-id-encryption-key
               readOnly: true
-            - name: secrets
-              mountPath: /run/secrets/pocket-id-ldap-bind-password
-              subPath: pocket-id-ldap-bind-password
-              readOnly: true
             {{- if .Values.pocketId.smtp.enabled }}
             - name: secrets
               mountPath: /run/secrets/pocket-id-smtp-password
@@ -162,8 +112,6 @@ spec:
             items:
               - key: {{ .Values.secrets.keys.pocketIdEncryptionKey | quote }}
                 path: pocket-id-encryption-key
-              - key: {{ .Values.secrets.keys.pocketIdLdapBindPassword | quote }}
-                path: pocket-id-ldap-bind-password
               {{- if .Values.pocketId.smtp.enabled }}
               - key: {{ .Values.secrets.keys.pocketIdSmtpPassword | quote }}
                 path: pocket-id-smtp-password

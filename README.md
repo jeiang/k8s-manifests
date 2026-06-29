@@ -21,7 +21,7 @@ Chart-specific maintenance guidance lives in each chart directory's `AGENTS.md` 
 | [`bitwarden-sm-operator`](./bitwarden-sm-operator) | Values for the upstream Bitwarden Secrets Manager Kubernetes Operator chart. |
 | [`blocky-dns`](./blocky-dns) | Internal Blocky DNS resolver exposed through a `ClusterIP` Service. |
 | [`hath`](./hath) | H@H Rust client with persistent cache storage. |
-| [`idp`](./idp) | Pocket ID and LLDAP identity provider stack with persistent state. |
+| [`idp`](./idp) | Pocket ID identity provider with persistent state. |
 | [`netbird`](./netbird) | NetBird management server, dashboard, and relay stack. |
 | [`netbird-resources`](./netbird-resources) | Shared NetBird operator API token and router resources for Kubernetes Services. |
 | [`rclone-csi-driver`](./rclone-csi-driver) | Values and Bitwarden configuration for the upstream rclone CSI driver chart. |
@@ -47,7 +47,7 @@ Install a chart from the repository root:
 helm upgrade --install <release-name> ./<chart-name> --namespace <namespace> --create-namespace
 ```
 
-Run `helm dependency build ./<chart-name>` before rendering or installing charts with local dependencies, such as `blocky-dns` or `idp` when using their optional NetBird subchart.
+Run `helm dependency build ./<chart-name>` before rendering or installing charts with local dependencies, such as `blocky-dns` when using its optional NetBird subchart.
 
 Review each chart README before installing. Several charts contain environment-specific defaults such as public hostnames, ACME issuer names, RBAC usernames, hostPort exposure, and persistent storage.
 
@@ -77,7 +77,7 @@ Application and workload secrets should live in Bitwarden Secrets Manager and be
 | `actual-budget` | Traefik IngressClass named `traefik`; cert-manager controller and `letsencrypt-prod` `ClusterIssuer`; DNS for `budget.jeiang.dev`; rclone CSI `rclone-csi` StorageClass and Bitwarden-synced `rclone-config` Secret. |
 | `blocky-dns` | metrics-server or another resource metrics provider for the HPA; outbound DNS/HTTPS access for upstreams and blocklists; optional NetBird operator CRDs when `netbird.enabled=true`. |
 | `hath` | rclone CSI `rclone-csi` storage for cache/data directories; firewall rules for TCP `8888` to the node running the Hath pod. |
-| `idp` | Traefik IngressClass named `traefik`; cert-manager controller and `letsencrypt-prod` `ClusterIssuer`; DNS for `auth.jeiang.dev`; Bitwarden Secrets Manager operator for `idp-secrets`; Hetzner CSI `hcloud-volumes` storage; optional NetBird operator CRDs when `netbird.enabled=true`. |
+| `idp` | Traefik IngressClass named `traefik`; cert-manager controller and `letsencrypt-prod` `ClusterIssuer`; DNS for `auth.jeiang.dev`; Bitwarden Secrets Manager operator for `idp-secrets`; Hetzner CSI `hcloud-volumes` storage. |
 | `netbird` | Traefik `IngressRoute` CRDs and `websecure` entryPoint; cert-manager `Certificate` CRD/controller and `letsencrypt-prod` `ClusterIssuer`; DNS for `netbird.jeiang.dev` to the Traefik load balancer; DNS for `stun.netbird.jeiang.dev` to the two labeled STUN relay nodes; firewall access for UDP `3478`; Bitwarden Secrets Manager operator for `netbird-secrets`; persistent storage for the server PVC. |
 | `netbird-resources` | NetBird Kubernetes operator and CRDs for `NetworkRouter` and `NetworkResource`; custom NetBird DNS zone; Bitwarden Secrets Manager operator for the NetBird API token Secret. |
 | `rclone-csi-driver` | FUSE support on cluster nodes; Bitwarden Secrets Manager operator for `rclone-config`; network access from nodes to the configured rclone backend; upstream OCI Helm chart access to `ghcr.io/veloxpack/charts/csi-driver-rclone`. |

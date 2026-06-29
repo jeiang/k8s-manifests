@@ -20,7 +20,6 @@ Helm chart for NetBird operator routing resources.
 The NetBird operator uses these resources to expose Kubernetes services to your NetBird network. The shared router and API token live in this chart. Workload-specific `NetworkResource` objects are owned by the workload charts that expose those Services:
 
 - `blocky-dns` can create `blocky-dns.dns.k8s.jeiang.vpn` when installed with `--set netbird.enabled=true`.
-- `idp` can create `lldap.idp.k8s.jeiang.vpn` when installed with `--set netbird.enabled=true`.
 
 ## Dependencies
 
@@ -116,12 +115,6 @@ helm upgrade --install blocky-dns ./blocky-dns \
   --namespace dns \
   --create-namespace \
   --set netbird.enabled=true
-
-helm dependency build ./idp
-helm upgrade --install idp ./idp \
-  --namespace idp \
-  --create-namespace \
-  --set netbird.enabled=true
 ```
 
 ## Verify
@@ -129,11 +122,9 @@ helm upgrade --install idp ./idp \
 ```fish
 kubectl -n netbird get networkrouter k8s
 kubectl -n dns get networkresource blocky-dns
-kubectl -n idp get networkresource lldap
 
 kubectl -n netbird describe networkrouter k8s
 kubectl -n dns describe networkresource blocky-dns
-kubectl -n idp describe networkresource lldap
 ```
 
 ## Values
