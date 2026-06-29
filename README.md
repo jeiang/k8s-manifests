@@ -4,9 +4,11 @@ Helm charts, upstream chart values, and Kubernetes manifests for my servers.
 
 Repository-wide operational notes live in:
 
-- [`CLUSTER.md`](./CLUSTER.md) for k3s, Hetzner, networking, storage, and external platform dependencies.
-- [`AUTHENTICATION.md`](./AUTHENTICATION.md) for Pocket ID/OIDC kubectl authentication on macOS, Linux, and Windows.
-- [`SECRETS.md`](./SECRETS.md) for repository secret handling and Bitwarden Secrets Manager policy.
+- [`docs/CLUSTER.md`](./docs/CLUSTER.md) for k3s, Hetzner, networking, storage, and external platform dependencies.
+- [`docs/AUTHENTICATION.md`](./docs/AUTHENTICATION.md) for Pocket ID/OIDC kubectl authentication on macOS, Linux, and Windows.
+- [`docs/SETUP_INSTRUCTIONS.md`](./docs/SETUP_INSTRUCTIONS.md) for user setup, namespace access, and delegation commands.
+- [`docs/AGENT_INSTRUCTIONS.md`](./docs/AGENT_INSTRUCTIONS.md) for cloud agents or other users creating namespace-scoped Helm charts.
+- [`docs/SECRETS.md`](./docs/SECRETS.md) for repository secret handling and Bitwarden Secrets Manager policy.
 - [`AGENTS.md`](./AGENTS.md) for contributor and automation guidance.
 
 Chart-specific maintenance guidance lives in each chart directory's `AGENTS.md` when present.
@@ -30,12 +32,12 @@ Chart-specific maintenance guidance lives in each chart directory's `AGENTS.md` 
 
 - Helm 3.
 - `kubectl` configured for the target cluster.
-- `kubectl oidc-login` for normal user authentication; see [`AUTHENTICATION.md`](./AUTHENTICATION.md).
+- `kubectl oidc-login` for normal user authentication; see [`docs/AUTHENTICATION.md`](./docs/AUTHENTICATION.md).
 - Optional: `devenv shell` to load `kubectl`, Helm, `helm-ls`, and `yaml-language-server`.
 - Working DNS records for public ingress hosts before installing internet-facing charts.
 - Hetzner Cloud Controller Manager for charts that expose `LoadBalancer` Services.
-- Storage classes expected by the workload being installed; see [`CLUSTER.md`](./CLUSTER.md#storage-policy).
-- Bootstrap/operator Secrets required by the workload; see [`SECRETS.md`](./SECRETS.md).
+- Storage classes expected by the workload being installed; see [`docs/CLUSTER.md`](./docs/CLUSTER.md#storage-policy).
+- Bootstrap/operator Secrets required by the workload; see [`docs/SECRETS.md`](./docs/SECRETS.md).
 
 ## Usage
 
@@ -60,11 +62,11 @@ For values-only upstream chart directories, render the upstream chart with the l
 
 ## Cluster Platform
 
-The target platform is a k3s cluster on Hetzner Cloud nodes running NixOS. See [`CLUSTER.md`](./CLUSTER.md) for networking flags, OIDC authentication, Hetzner component installation, storage class policy, and expected external cluster components.
+The target platform is a k3s cluster on Hetzner Cloud nodes running NixOS. See [`docs/CLUSTER.md`](./docs/CLUSTER.md) for networking flags, OIDC authentication, Hetzner component installation, storage class policy, and expected external cluster components.
 
 ## Secrets Policy
 
-Application and workload secrets should live in Bitwarden Secrets Manager and be synced through `BitwardenSecret` resources. See [`SECRETS.md`](./SECRETS.md) for allowed bootstrap Secrets and repository handling rules.
+Application and workload secrets should live in Bitwarden Secrets Manager and be synced through `BitwardenSecret` resources. See [`docs/SECRETS.md`](./docs/SECRETS.md) for allowed bootstrap Secrets and repository handling rules.
 
 ## Chart Dependencies
 

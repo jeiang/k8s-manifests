@@ -82,7 +82,7 @@ Users may delegate access only from prefixed namespaces, not from their personal
 
 Emergency access uses the built-in k3s admin kubeconfig, normally authenticated as `system:admin` in `system:masters`.
 
-See [`../AUTHENTICATION.md`](../AUTHENTICATION.md) for workstation kubeconfig setup.
+See [`../docs/AUTHENTICATION.md`](../docs/AUTHENTICATION.md) for workstation kubeconfig setup.
 
 ## Migration Notes
 
