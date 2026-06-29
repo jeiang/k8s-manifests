@@ -62,7 +62,7 @@ After making chart, values, or manifest changes, include clear next-step instruc
 
 ## Commit & Pull Request Guidelines
 
-When implementing a change, check whether the repository already has uncommitted changes. If those changes are unrelated to the current work, meaning they are not part of the same change and do not enable it, ask whether the prior changes should be committed before adding the new changes. If the answer is yes, commit those prior changes first, then continue implementing the new change.
+When implementing a change, check whether the repository already has uncommitted changes. Unless the user explicitly says not to commit existing changes, always ask whether those changes should be committed before adding new changes. If the answer is yes, commit the existing changes first, then continue implementing the new change. If the user confirms continuing without committing, and a new edit would edit, delete, or overwrite an uncommitted change, ask for confirmation before making that edit.
 
 Recent commits use short conventional prefixes such as `feat:`, `feature:`, and `chore:`. Keep commit messages imperative and scoped, for example `feat: add netbird chart` or `chore: update devenv tools`.
 
