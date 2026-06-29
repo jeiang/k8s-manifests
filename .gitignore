@@ -17,3 +17,6 @@ devenv.local.yaml
 
 # Generated client kubeconfigs and private keys
 rbac-access/kubeconfigs/
+
+# MacOS
+.DS_Store
