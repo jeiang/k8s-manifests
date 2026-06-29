@@ -1,8 +1,4 @@
-namespaces:
-  create: true
-  additional: []
-
-admin:
+globalAdmins:
   create: true
   clusterRole: cluster-admin
   subjects:
@@ -10,33 +6,71 @@ admin:
       name: aidan
       apiGroup: rbac.authorization.k8s.io
 
-namespaceAccess:
+users:
+  - name: saeed
+    groups: []
+    subjects:
+      - kind: User
+        name: saeed
+        apiGroup: rbac.authorization.k8s.io
+  - name: noel
+    groups: []
+    subjects:
+      - kind: User
+        name: noel
+        apiGroup: rbac.authorization.k8s.io
+  - name: gilliano
+    groups: []
+    subjects:
+      - kind: User
+        name: gilliano
+        apiGroup: rbac.authorization.k8s.io
+  - name: anari
+    groups: []
+    subjects:
+      - kind: User
+        name: anari
+        apiGroup: rbac.authorization.k8s.io
+
+delegation:
+  allowedGroups: []
+  allowedClusterRoles:
+    - admin
+    - view
+
+namespaceLifecycle:
   create: true
-  clusterRole: admin
-  includeUserNamePrefix: true
-  userNamePrefixSeparator: "-"
-  users:
-    - name: saeed
-      subjects:
-        - kind: User
-          name: saeed
-          apiGroup: rbac.authorization.k8s.io
-      namespaces:
-        - shared
-        - saeed
-    - name: noel
-      subjects:
-        - kind: User
-          name: noel
-          apiGroup: rbac.authorization.k8s.io
-      namespaces:
-        - shared
-        - noel
-    - name: gilliano
-      subjects:
-        - kind: User
-          name: gilliano
-          apiGroup: rbac.authorization.k8s.io
-      namespaces:
-        - shared
-        - gilliano
+  clusterRoleName: namespace-lifecycle
+  allowDeletePrefixed: true
+  prefixSeparator: "-"
+
+kubeSystem:
+  admin:
+    create: true
+    clusterRole: admin
+    subjects:
+      - kind: User
+        name: aidan
+        apiGroup: rbac.authorization.k8s.io
+  reader:
+    create: true
+    clusterRole: view
+    subjects:
+      - kind: User
+        name: gilliano
+        apiGroup: rbac.authorization.k8s.io
+
+kyverno:
+  policies:
+    create: true
+    failureAction: Enforce
+  backgroundController:
+    createClusterRoleBindings: true
+    namespace: kyverno
+    subjects:
+      - kind: ServiceAccount
+        name: kyverno-background-controller
+        namespace: kyverno
+
+credentials:
+  renderUserList: false

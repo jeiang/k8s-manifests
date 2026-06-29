@@ -1,0 +1,294 @@
+{{- if .Values.kyverno.policies.create }}
+{{- $fullname := include "rbac-access.fullname" . }}
+{{- $labels := include "rbac-access.labels" . }}
+{{- $userNames := list }}
+{{- range .Values.users }}
+{{- $userNames = append $userNames .name }}
+{{- end }}
+{{- $userNames = $userNames | uniq | sortAlpha }}
+{{- $allowedGroups := .Values.delegation.allowedGroups | default list | uniq | sortAlpha }}
+{{- $allowedClusterRoles := .Values.delegation.allowedClusterRoles | default list | uniq | sortAlpha }}
+{{- $failureAction := .Values.kyverno.policies.failureAction | default "Enforce" }}
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: {{ printf "%s-namespace-ownership" $fullname | trunc 63 | trimSuffix "-" | quote }}
+  labels:
+    {{- $labels | nindent 4 }}
+spec:
+  validationFailureAction: {{ $failureAction | quote }}
+  background: false
+  rules:
+    - name: require-configured-namespace-user
+      match:
+        any:
+          - resources:
+              kinds:
+                - Namespace
+              operations:
+                - CREATE
+                - DELETE
+      exclude:
+        any:
+          - subjects:
+{{- toYaml .Values.globalAdmins.subjects | nindent 14 }}
+      validate:
+        message: "Only configured users may self-manage namespaces."
+        deny:
+          conditions:
+            all:
+              - key: {{ "{{ request.userInfo.username }}" | quote }}
+                operator: AnyNotIn
+                value:
+{{- toYaml $userNames | nindent 18 }}
+    - name: create-owned-namespaces
+      match:
+        any:
+          - resources:
+              kinds:
+                - Namespace
+              operations:
+                - CREATE
+      exclude:
+        any:
+          - subjects:
+{{- toYaml .Values.globalAdmins.subjects | nindent 14 }}
+      validate:
+        message: "Users may create only their personal namespace or namespaces prefixed by their username."
+        anyPattern:
+          - metadata:
+              name: {{ "{{ request.userInfo.username }}" | quote }}
+          - metadata:
+              name: {{ printf "{{ request.userInfo.username }}%s*" .Values.namespaceLifecycle.prefixSeparator | quote }}
+    - name: delete-owned-prefixed-namespaces
+      match:
+        any:
+          - resources:
+              kinds:
+                - Namespace
+              operations:
+                - DELETE
+      exclude:
+        any:
+          - subjects:
+{{- toYaml .Values.globalAdmins.subjects | nindent 14 }}
+      validate:
+{{- if .Values.namespaceLifecycle.allowDeletePrefixed }}
+        message: "Users may delete only prefixed namespaces they own; personal namespaces require a global admin."
+        deny:
+          conditions:
+            all:
+              - key: {{ "{{ request.name }}" | quote }}
+                operator: NotEquals
+                value: {{ printf "{{ request.userInfo.username }}%s*" .Values.namespaceLifecycle.prefixSeparator | quote }}
+{{- else }}
+        message: "Namespace deletion requires a global admin."
+        deny:
+          conditions:
+            all:
+              - key: "true"
+                operator: Equals
+                value: "true"
+{{- end }}
+---
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: {{ printf "%s-generate-namespace-owner" $fullname | trunc 63 | trimSuffix "-" | quote }}
+  labels:
+    {{- $labels | nindent 4 }}
+spec:
+  generateExisting: false
+  background: false
+  rules:
+    - name: generate-owner-admin-rolebinding
+      match:
+        any:
+          - resources:
+              kinds:
+                - Namespace
+              operations:
+                - CREATE
+      exclude:
+        any:
+          - subjects:
+{{- toYaml .Values.globalAdmins.subjects | nindent 14 }}
+      preconditions:
+        all:
+          - key: {{ "{{ request.userInfo.username }}" | quote }}
+            operator: AnyIn
+            value:
+{{- toYaml $userNames | nindent 14 }}
+          - key: {{ "{{ request.object.metadata.name }}" | quote }}
+            operator: AnyIn
+            value:
+              - {{ "{{ request.userInfo.username }}" | quote }}
+              - {{ printf "{{ request.userInfo.username }}%s*" .Values.namespaceLifecycle.prefixSeparator | quote }}
+      generate:
+        apiVersion: rbac.authorization.k8s.io/v1
+        kind: RoleBinding
+        name: rbac-access-owner-admin
+        namespace: {{ "{{ request.object.metadata.name }}" | quote }}
+        synchronize: true
+        data:
+          metadata:
+            labels:
+              app.kubernetes.io/managed-by: kyverno
+              app.kubernetes.io/name: {{ include "rbac-access.name" . | quote }}
+              app.kubernetes.io/instance: {{ .Release.Name | quote }}
+              rbac-access/owner: {{ "{{ request.userInfo.username }}" | quote }}
+            annotations:
+              rbac-access.jeiang.com/generated: "true"
+          roleRef:
+            apiGroup: rbac.authorization.k8s.io
+            kind: ClusterRole
+            name: admin
+          subjects:
+            - kind: User
+              name: {{ "{{ request.userInfo.username }}" | quote }}
+              apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: {{ printf "%s-rolebinding-sharing" $fullname | trunc 63 | trimSuffix "-" | quote }}
+  labels:
+    {{- $labels | nindent 4 }}
+spec:
+  validationFailureAction: {{ $failureAction | quote }}
+  background: false
+  rules:
+    - name: protect-generated-owner-rolebinding
+      match:
+        any:
+          - resources:
+              kinds:
+                - RoleBinding
+              names:
+                - rbac-access-owner-admin
+              operations:
+                - UPDATE
+                - DELETE
+      exclude:
+        any:
+          - subjects:
+{{- toYaml .Values.globalAdmins.subjects | nindent 14 }}
+          - subjects:
+{{- toYaml .Values.kyverno.backgroundController.subjects | nindent 14 }}
+      validate:
+        message: "Generated owner RoleBindings are managed by Kyverno and global admins."
+        deny:
+          conditions:
+            all:
+              - key: "true"
+                operator: Equals
+                value: "true"
+    - name: require-owner-prefixed-namespace-for-sharing
+      match:
+        any:
+          - resources:
+              kinds:
+                - RoleBinding
+              operations:
+                - CREATE
+                - UPDATE
+                - DELETE
+      exclude:
+        any:
+          - subjects:
+{{- toYaml .Values.globalAdmins.subjects | nindent 14 }}
+          - subjects:
+{{- toYaml .Values.kyverno.backgroundController.subjects | nindent 14 }}
+      validate:
+        message: "Users may share access only from namespaces prefixed by their username."
+        deny:
+          conditions:
+            all:
+              - key: {{ "{{ request.namespace }}" | quote }}
+                operator: NotEquals
+                value: {{ printf "{{ request.userInfo.username }}%s*" .Values.namespaceLifecycle.prefixSeparator | quote }}
+    - name: allow-only-delegation-roles
+      match:
+        any:
+          - resources:
+              kinds:
+                - RoleBinding
+              operations:
+                - CREATE
+                - UPDATE
+      exclude:
+        any:
+          - subjects:
+{{- toYaml .Values.globalAdmins.subjects | nindent 14 }}
+          - subjects:
+{{- toYaml .Values.kyverno.backgroundController.subjects | nindent 14 }}
+      validate:
+        message: "Delegated RoleBindings may grant only configured ClusterRoles."
+        deny:
+          conditions:
+            any:
+              - key: {{ "{{ request.object.roleRef.kind }}" | quote }}
+                operator: NotEquals
+                value: ClusterRole
+              - key: {{ "{{ request.object.roleRef.name }}" | quote }}
+                operator: AnyNotIn
+                value:
+{{- toYaml $allowedClusterRoles | nindent 18 }}
+    - name: allow-only-configured-subjects
+      match:
+        any:
+          - resources:
+              kinds:
+                - RoleBinding
+              operations:
+                - CREATE
+                - UPDATE
+      exclude:
+        any:
+          - subjects:
+{{- toYaml .Values.globalAdmins.subjects | nindent 14 }}
+          - subjects:
+{{- toYaml .Values.kyverno.backgroundController.subjects | nindent 14 }}
+      validate:
+        message: "Delegated RoleBindings may reference only configured User or Group subjects."
+        foreach:
+          - list: request.object.subjects[]
+            deny:
+              conditions:
+                any:
+                  - key: {{ "{{ element.kind }}" | quote }}
+                    operator: AnyNotIn
+                    value:
+                      - User
+                      - Group
+          - list: request.object.subjects[]
+            preconditions:
+              all:
+                - key: {{ "{{ element.kind }}" | quote }}
+                  operator: Equals
+                  value: User
+            deny:
+              conditions:
+                all:
+                  - key: {{ "{{ element.name }}" | quote }}
+                    operator: AnyNotIn
+                    value:
+{{- toYaml $userNames | nindent 22 }}
+          - list: request.object.subjects[]
+            preconditions:
+              all:
+                - key: {{ "{{ element.kind }}" | quote }}
+                  operator: Equals
+                  value: Group
+            deny:
+              conditions:
+                all:
+                  - key: {{ "{{ element.name }}" | quote }}
+                    operator: AnyNotIn
+{{- if $allowedGroups }}
+                    value:
+{{- toYaml $allowedGroups | nindent 22 }}
+{{- else }}
+                    value: []
+{{- end }}
+{{- end }}

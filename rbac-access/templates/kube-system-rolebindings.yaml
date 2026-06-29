@@ -1,0 +1,31 @@
+{{- if .Values.kubeSystem.admin.create }}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: kube-system-admin
+  namespace: kube-system
+  labels:
+    {{- include "rbac-access.labels" . | nindent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: {{ .Values.kubeSystem.admin.clusterRole | quote }}
+subjects:
+{{- toYaml .Values.kubeSystem.admin.subjects | nindent 2 }}
+{{- end }}
+{{- if .Values.kubeSystem.reader.create }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: kube-system-reader
+  namespace: kube-system
+  labels:
+    {{- include "rbac-access.labels" . | nindent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: {{ .Values.kubeSystem.reader.clusterRole | quote }}
+subjects:
+{{- toYaml .Values.kubeSystem.reader.subjects | nindent 2 }}
+{{- end }}

@@ -1,0 +1,84 @@
+{{- if .Values.globalAdmins.create }}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: {{ printf "%s-global-admins" (include "rbac-access.fullname" .) | trunc 63 | trimSuffix "-" | quote }}
+  labels:
+    {{- include "rbac-access.labels" . | nindent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: {{ .Values.globalAdmins.clusterRole | quote }}
+subjects:
+{{- toYaml .Values.globalAdmins.subjects | nindent 2 }}
+{{- end }}
+{{- if .Values.namespaceLifecycle.create }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: {{ printf "%s-%s" (include "rbac-access.fullname" .) .Values.namespaceLifecycle.clusterRoleName | trunc 63 | trimSuffix "-" | quote }}
+  labels:
+    {{- include "rbac-access.labels" . | nindent 4 }}
+rules:
+  - apiGroups:
+      - ""
+    resources:
+      - namespaces
+    verbs:
+      - get
+      - list
+      - watch
+      - create
+      - delete
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: {{ printf "%s-%s" (include "rbac-access.fullname" .) .Values.namespaceLifecycle.clusterRoleName | trunc 63 | trimSuffix "-" | quote }}
+  labels:
+    {{- include "rbac-access.labels" . | nindent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: {{ printf "%s-%s" (include "rbac-access.fullname" .) .Values.namespaceLifecycle.clusterRoleName | trunc 63 | trimSuffix "-" | quote }}
+subjects:
+{{- range .Values.users }}
+{{- toYaml .subjects | nindent 2 }}
+{{- end }}
+{{- end }}
+{{- if and .Values.kyverno.policies.create .Values.kyverno.backgroundController.createClusterRoleBindings }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: {{ printf "%s-kyverno-generate-rbac" (include "rbac-access.fullname" .) | trunc 63 | trimSuffix "-" | quote }}
+  labels:
+    {{- include "rbac-access.labels" . | nindent 4 }}
+rules:
+  - apiGroups:
+      - rbac.authorization.k8s.io
+    resources:
+      - rolebindings
+    verbs:
+      - get
+      - list
+      - watch
+      - create
+      - update
+      - patch
+      - delete
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: {{ printf "%s-kyverno-generate-rbac" (include "rbac-access.fullname" .) | trunc 63 | trimSuffix "-" | quote }}
+  labels:
+    {{- include "rbac-access.labels" . | nindent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: {{ printf "%s-kyverno-generate-rbac" (include "rbac-access.fullname" .) | trunc 63 | trimSuffix "-" | quote }}
+subjects:
+{{- toYaml .Values.kyverno.backgroundController.subjects | nindent 2 }}
+{{- end }}

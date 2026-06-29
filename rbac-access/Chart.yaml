@@ -1,6 +1,6 @@
 apiVersion: v2
 name: rbac-access
-description: User and namespace RBAC bindings
+description: Kyverno-backed user namespace access control
 type: application
-version: 0.1.0
-appVersion: "0.1.0"
+version: 0.2.0
+appVersion: "0.2.0"

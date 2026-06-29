@@ -4,7 +4,7 @@ function usage
     set script_name (basename (status --current-filename))
     echo "Usage: $script_name [options]"
     echo
-    echo "Generate client-certificate kubeconfigs for User subjects rendered by this chart."
+    echo "Generate client-certificate kubeconfigs for users configured in this chart."
     echo
     echo "Options:"
     echo "  -o, --output-dir DIR       Directory for kubeconfigs, keys, and certificates"
@@ -41,21 +41,21 @@ function sanitize_name --argument-names raw_name
     string sub --length 180 -- "$safe_name"
 end
 
-function subject_to_openssl_cn --argument-names subject_name
-    if string match -q '*/*' -- "$subject_name"
-        fail "username '$subject_name' contains '/', which this script cannot safely encode as an OpenSSL subject"
+function subject_to_openssl_part --argument-names raw_value
+    if string match -q '*/*' -- "$raw_value"
+        fail "certificate subject value '$raw_value' contains '/', which this script cannot safely encode"
     end
 
-    set escaped_subject (string replace -a "\\" "\\\\" -- "$subject_name")
-    set escaped_subject (string replace -a "," "\\," -- "$escaped_subject")
-    set escaped_subject (string replace -a "+" "\\+" -- "$escaped_subject")
-    set escaped_subject (string replace -a '"' '\"' -- "$escaped_subject")
-    set escaped_subject (string replace -a "<" "\\<" -- "$escaped_subject")
-    set escaped_subject (string replace -a ">" "\\>" -- "$escaped_subject")
-    set escaped_subject (string replace -a ";" "\\;" -- "$escaped_subject")
-    set escaped_subject (string replace -a "=" "\\=" -- "$escaped_subject")
+    set escaped_value (string replace -a "\\" "\\\\" -- "$raw_value")
+    set escaped_value (string replace -a "," "\\," -- "$escaped_value")
+    set escaped_value (string replace -a "+" "\\+" -- "$escaped_value")
+    set escaped_value (string replace -a '"' '\"' -- "$escaped_value")
+    set escaped_value (string replace -a "<" "\\<" -- "$escaped_value")
+    set escaped_value (string replace -a ">" "\\>" -- "$escaped_value")
+    set escaped_value (string replace -a ";" "\\;" -- "$escaped_value")
+    set escaped_value (string replace -a "=" "\\=" -- "$escaped_value")
 
-    printf '%s\n' "$escaped_subject"
+    printf '%s\n' "$escaped_value"
 end
 
 argparse h/help 'o/output-dir=' 'r/release=' 'n/namespace=' 'f/values=' 'context=' 'expiration-days=' 'csr-prefix=' -- $argv
@@ -69,7 +69,7 @@ if set -q _flag_help
     exit 0
 end
 
-for required_command in helm kubectl openssl awk sort cut base64 date mktemp
+for required_command in helm kubectl openssl awk cut date mktemp sort
     require_command "$required_command"
 end
 
@@ -124,10 +124,10 @@ end
 mkdir -p "$output_dir"
 or fail "failed to create output directory: $output_dir"
 
-set rendered_file "$temp_dir/rendered.yaml"
+set rendered_file "$temp_dir/credential-users.yaml"
 set users_file "$temp_dir/users.tsv"
 
-set helm_args template "$release_name" "$chart_dir" --namespace "$release_namespace"
+set helm_args template "$release_name" "$chart_dir" --namespace "$release_namespace" --show-only templates/credential-users.yaml --set credentials.renderUserList=true
 if set -q _flag_values
     for values_file in $_flag_values
         set -a helm_args --values "$values_file"
@@ -138,86 +138,25 @@ helm $helm_args >"$rendered_file"
 or fail "helm template failed"
 
 awk '
-function clean(value) {
-  sub(/^[[:space:]]+/, "", value)
-  sub(/[[:space:]]+$/, "", value)
-  sub(/^"/, "", value)
-  sub(/"$/, "", value)
-  return value
+$0 ~ /^  users.tsv: \|-$/ {
+  in_users = 1
+  next
 }
-function value_after_colon(line) {
-  return clean(substr(line, index(line, ":") + 1))
-}
-function reset_doc() {
-  kind = ""
-  namespace = ""
-  in_subjects = 0
-  subject_kind = ""
-  subject_name = ""
-}
-function maybe_print_subject() {
-  if (subject_kind == "User" && subject_name != "") {
-    print subject_name "\t" namespace
-    subject_name = ""
+in_users && /^    / {
+  sub(/^    /, "")
+  if ($0 != "") {
+    print
   }
-}
-BEGIN {
-  reset_doc()
-}
-/^---[[:space:]]*$/ {
-  reset_doc()
   next
 }
-/^kind:[[:space:]]*/ {
-  kind = value_after_colon($0)
-  next
-}
-kind == "RoleBinding" && /^  namespace:[[:space:]]*/ {
-  namespace = value_after_colon($0)
-  next
-}
-/^subjects:[[:space:]]*$/ {
-  in_subjects = 1
-  subject_kind = ""
-  next
-}
-in_subjects && /^[^[:space:]-]/ {
-  maybe_print_subject()
-  in_subjects = 0
-  subject_kind = ""
-  subject_name = ""
-}
-in_subjects && /^  -[[:space:]]*/ {
-  maybe_print_subject()
-  subject_kind = ""
-  subject_name = ""
-
-  if ($0 ~ /kind:[[:space:]]*/) {
-    subject_kind = value_after_colon($0)
-  }
-
-  if ($0 ~ /name:[[:space:]]*/) {
-    subject_name = value_after_colon($0)
-  }
-
-  maybe_print_subject()
-  next
-}
-in_subjects && /^    kind:[[:space:]]*/ {
-  subject_kind = value_after_colon($0)
-  maybe_print_subject()
-  next
-}
-in_subjects && /^    name:[[:space:]]*/ {
-  subject_name = value_after_colon($0)
-  maybe_print_subject()
-  next
+in_users {
+  in_users = 0
 }
 ' "$rendered_file" | sort -u >"$users_file"
-or fail "failed to extract User subjects from rendered RBAC"
+or fail "failed to extract configured users from rendered chart values"
 
 if not test -s "$users_file"
-    fail "no User subjects were rendered by the chart"
+    fail "no users are configured under values.users"
 end
 
 set current_context (kubectl $kubectl_args config current-context)
@@ -245,17 +184,28 @@ if test -z "$ca_data"
 end
 
 set ca_file "$temp_dir/ca.crt"
-printf '%s' "$ca_data" | base64 --decode >"$ca_file"
+printf '%s' "$ca_data" | openssl base64 -d -A >"$ca_file"
 or fail "failed to decode cluster certificate authority data"
-
-set users (cut -f 1 "$users_file" | sort -u)
 
 echo "Using kubectl context: $current_context"
 echo "Rendered chart: $chart_dir"
 echo "Writing kubeconfigs to: $output_dir"
 echo
 
-for user_name in $users
+for user_line in (cat "$users_file")
+    set fields (string split \t -- "$user_line")
+    set user_name "$fields[1]"
+    set group_csv ""
+
+    if test (count $fields) -gt 1
+        set group_csv "$fields[2]"
+    end
+
+    set user_groups
+    if test -n "$group_csv"
+        set user_groups (string split , -- "$group_csv")
+    end
+
     set safe_name (sanitize_name "$user_name")
     set key_file "$output_dir/$safe_name.key"
     set cert_file "$output_dir/$safe_name.crt"
@@ -263,7 +213,13 @@ for user_name in $users
     set csr_file "$temp_dir/$safe_name.csr"
     set csr_manifest "$temp_dir/$safe_name-csr.yaml"
     set csr_name (string sub --length 253 -- "$csr_prefix-$safe_name-"(date +%Y%m%d%H%M%S))
-    set openssl_cn (subject_to_openssl_cn "$user_name")
+    set openssl_subject "/CN="(subject_to_openssl_part "$user_name")
+
+    for group_name in $user_groups
+        if test -n "$group_name"
+            set openssl_subject "$openssl_subject/O="(subject_to_openssl_part "$group_name")
+        end
+    end
 
     echo "Generating kubeconfig for $user_name"
 
@@ -273,10 +229,10 @@ for user_name in $users
     chmod 0600 "$key_file"
     or fail "failed to secure private key permissions for $user_name"
 
-    openssl req -new -key "$key_file" -out "$csr_file" -subj "/CN=$openssl_cn" >/dev/null 2>&1
+    openssl req -new -key "$key_file" -out "$csr_file" -subj "$openssl_subject" >/dev/null 2>&1
     or fail "failed to generate CSR for $user_name"
 
-    set csr_request (base64 --wrap=0 "$csr_file")
+    set csr_request (openssl base64 -A -in "$csr_file")
     or fail "failed to encode CSR for $user_name"
 
     printf '%s\n' \
@@ -313,7 +269,7 @@ for user_name in $users
         fail "timed out waiting for signed certificate on CSR $csr_name"
     end
 
-    printf '%s' "$cert_data" | base64 --decode >"$cert_file"
+    printf '%s' "$cert_data" | openssl base64 -d -A >"$cert_file"
     or fail "failed to decode signed certificate for $user_name"
 
     kubectl $kubectl_args delete csr "$csr_name" --ignore-not-found >/dev/null
@@ -325,31 +281,12 @@ for user_name in $users
     kubectl config --kubeconfig "$kubeconfig_file" set-credentials "$user_name" --client-certificate "$cert_file" --client-key "$key_file" --embed-certs=true >/dev/null
     or fail "failed to write user credentials for $user_name"
 
-    set namespaces (awk -F '\t' -v user="$user_name" '$1 == user && $2 != "" { print $2 }' "$users_file" | sort -u)
+    set context_name "$user_name@$cluster_name:$user_name"
+    kubectl config --kubeconfig "$kubeconfig_file" set-context "$context_name" --cluster "$cluster_name" --user "$user_name" --namespace "$user_name" >/dev/null
+    or fail "failed to write context $context_name"
 
-    if test (count $namespaces) -gt 0
-        set first_context ""
-
-        for namespace_name in $namespaces
-            set context_name "$user_name@$cluster_name:$namespace_name"
-            kubectl config --kubeconfig "$kubeconfig_file" set-context "$context_name" --cluster "$cluster_name" --user "$user_name" --namespace "$namespace_name" >/dev/null
-            or fail "failed to write namespace context $context_name"
-
-            if test -z "$first_context"
-                set first_context "$context_name"
-            end
-        end
-
-        kubectl config --kubeconfig "$kubeconfig_file" use-context "$first_context" >/dev/null
-        or fail "failed to select default context for $user_name"
-    else
-        set context_name "$user_name@$cluster_name"
-        kubectl config --kubeconfig "$kubeconfig_file" set-context "$context_name" --cluster "$cluster_name" --user "$user_name" >/dev/null
-        or fail "failed to write context $context_name"
-
-        kubectl config --kubeconfig "$kubeconfig_file" use-context "$context_name" >/dev/null
-        or fail "failed to select default context for $user_name"
-    end
+    kubectl config --kubeconfig "$kubeconfig_file" use-context "$context_name" >/dev/null
+    or fail "failed to select default context for $user_name"
 
     chmod 0600 "$kubeconfig_file"
     or fail "failed to secure kubeconfig permissions for $user_name"
