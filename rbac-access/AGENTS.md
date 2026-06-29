@@ -2,24 +2,25 @@
 
 ## Scope
 
-This local Helm chart creates bootstrap RBAC and Kyverno policies for user namespace access.
+This local Helm chart creates Pocket ID/OIDC group-based bootstrap RBAC and Kyverno policies for user namespace access.
 
 ## Runtime Contract
 
-- `aidan` is bound to `cluster-admin`.
-- Configured users can create their personal namespace and username-prefixed namespaces.
-- Kyverno generates an owner `admin` RoleBinding named `rbac-access-owner-admin` when a user creates an allowed namespace.
-- Users may delegate only `admin` or `view` RoleBindings, only in their prefixed namespaces, and only to configured User or Group subjects.
-- Personal namespaces cannot be shared by non-global users.
-- `gilliano` has `view` access in `kube-system` through `kube-system-reader`.
+- `kubernetes-admin` is bound to `cluster-admin`.
+- `kubernetes-access` users can create their personal namespace and username-prefixed namespaces.
+- Kyverno generates an owner `admin` RoleBinding named `rbac-access-owner-admin` when an OIDC user creates an allowed namespace.
+- Users may delegate only `admin` or `view` RoleBindings, only in their prefixed namespaces.
+- Delegated User subjects are not validated against the IdP; delegated Group subjects must be explicitly allowed.
+- Personal namespaces cannot be shared by non-admin users.
+- The built-in k3s emergency identity `system:admin` / `system:masters` bypasses Kyverno restrictions.
 
 ## Editing Notes
 
-- Kyverno must exist before this chart is installed.
-- Do not reintroduce static prefixed namespace RoleBinding generation.
+- Kyverno and Kubernetes OIDC auth must exist before normal users can use this chart.
+- Do not reintroduce chart-managed per-user certificate RBAC or kubeconfig generation.
 - Keep namespace lifecycle RBAC broad enough for Kubernetes authorization and keep Kyverno policies strict enough to enforce ownership.
-- Verify all subjects match exact authenticated usernames, groups, or service accounts.
-- Treat new global admin subjects, kube-system subjects, delegated roles, and allowed groups as high risk.
+- Verify all group subjects match exact Pocket ID group names emitted in the Kubernetes OIDC groups claim.
+- Treat new global admin subjects, break-glass subjects, kube-system subjects, delegated roles, and allowed groups as high risk.
 
 ## Validation
 

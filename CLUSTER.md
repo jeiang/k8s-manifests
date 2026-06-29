@@ -26,6 +26,38 @@ Important k3s flags for this platform:
 
 The Hetzner Cloud Controller Manager should own node provider IDs and cloud-discovered node addresses. Hetzner public IPv4s belong in node OS networking, but k3s node external addresses should generally be left to the external cloud controller.
 
+## Authentication
+
+Normal user access is through Pocket ID as the Kubernetes OIDC issuer. Emergency access remains the built-in k3s admin kubeconfig, normally authenticated as `system:admin` in `system:masters`.
+
+The k3s API server must receive OIDC settings through `kube-apiserver-arg` on every server node:
+
+```yaml
+kube-apiserver-arg:
+  - oidc-issuer-url=https://auth.jeiang.dev
+  - oidc-client-id=<kubernetes-oidc-client-id>
+  - oidc-username-claim=preferred_username
+  - oidc-username-prefix=-
+  - oidc-groups-claim=groups
+  - oidc-groups-prefix=
+```
+
+Important details:
+
+- `oidc-username-claim=preferred_username` makes Kubernetes usernames match Pocket ID usernames such as `saeed`.
+- `oidc-username-prefix=-` keeps usernames unprefixed.
+- `oidc-groups-claim=groups` reads Pocket ID group names.
+- `oidc-groups-prefix=` keeps group names unprefixed. Do not use `oidc-groups-prefix=-`; that produces groups such as `-kubernetes-admin`, which do not match RBAC bindings.
+- The Pocket ID Kubernetes OIDC client must allow `openid profile email groups` scopes so ID tokens contain `preferred_username` and `groups`.
+
+After changing k3s config, restart k3s on every server node:
+
+```sh
+sudo systemctl restart k3s
+```
+
+See [`AUTHENTICATION.md`](./AUTHENTICATION.md) for user-side kubeconfig setup.
+
 ## Hetzner Components
 
 Install the Hetzner components after the k3s nodes are up:
@@ -75,4 +107,6 @@ These components are expected to exist but are not defined as local Helm charts 
 - k3s bundled Traefik, configured by `traefik/traefik-helmchartconfig.yaml`.
 - Bitwarden Secrets Manager operator when charts render `BitwardenSecret` resources.
 - NetBird Kubernetes operator when charts render `NetworkRouter` or `NetworkResource` resources.
+- Pocket ID at `https://auth.jeiang.dev` for normal Kubernetes user authentication.
+- Kyverno for `rbac-access` namespace ownership and delegation policies.
 - Rclone CSI driver from `oci://ghcr.io/veloxpack/charts/csi-driver-rclone` when rclone-backed PVCs are needed; local values live in `rclone-csi-driver/`.

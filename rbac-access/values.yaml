@@ -2,35 +2,25 @@ globalAdmins:
   create: true
   clusterRole: cluster-admin
   subjects:
-    - kind: User
-      name: aidan
+    - kind: Group
+      name: kubernetes-admin
       apiGroup: rbac.authorization.k8s.io
 
-users:
-  - name: saeed
-    groups: []
-    subjects:
-      - kind: User
-        name: saeed
-        apiGroup: rbac.authorization.k8s.io
-  - name: noel
-    groups: []
-    subjects:
-      - kind: User
-        name: noel
-        apiGroup: rbac.authorization.k8s.io
-  - name: gilliano
-    groups: []
-    subjects:
-      - kind: User
-        name: gilliano
-        apiGroup: rbac.authorization.k8s.io
-  - name: anari
-    groups: []
-    subjects:
-      - kind: User
-        name: anari
-        apiGroup: rbac.authorization.k8s.io
+breakGlass:
+  subjects:
+    - kind: User
+      name: system:admin
+      apiGroup: rbac.authorization.k8s.io
+    - kind: Group
+      name: system:masters
+      apiGroup: rbac.authorization.k8s.io
+
+oidc:
+  groups:
+    access: kubernetes-access
+    admin: kubernetes-admin
+    kubeSystemAdmin: kubernetes-kube-system-admin
+    kubeSystemReader: kubernetes-kube-system-reader
 
 delegation:
   allowedGroups: []
@@ -43,21 +33,25 @@ namespaceLifecycle:
   clusterRoleName: namespace-lifecycle
   allowDeletePrefixed: true
   prefixSeparator: "-"
+  subjects:
+    - kind: Group
+      name: kubernetes-access
+      apiGroup: rbac.authorization.k8s.io
 
 kubeSystem:
   admin:
     create: true
     clusterRole: admin
     subjects:
-      - kind: User
-        name: aidan
+      - kind: Group
+        name: kubernetes-kube-system-admin
         apiGroup: rbac.authorization.k8s.io
   reader:
     create: true
     clusterRole: view
     subjects:
-      - kind: User
-        name: gilliano
+      - kind: Group
+        name: kubernetes-kube-system-reader
         apiGroup: rbac.authorization.k8s.io
 
 kyverno:
@@ -71,6 +65,3 @@ kyverno:
       - kind: ServiceAccount
         name: kyverno-background-controller
         namespace: kyverno
-
-credentials:
-  renderUserList: false

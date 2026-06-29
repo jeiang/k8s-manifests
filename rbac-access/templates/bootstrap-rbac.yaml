@@ -43,9 +43,7 @@ roleRef:
   kind: ClusterRole
   name: {{ printf "%s-%s" (include "rbac-access.fullname" .) .Values.namespaceLifecycle.clusterRoleName | trunc 63 | trimSuffix "-" | quote }}
 subjects:
-{{- range .Values.users }}
-{{- toYaml .subjects | nindent 2 }}
-{{- end }}
+{{- toYaml .Values.namespaceLifecycle.subjects | nindent 2 }}
 {{- end }}
 {{- if and .Values.kyverno.policies.create .Values.kyverno.backgroundController.createClusterRoleBindings }}
 ---

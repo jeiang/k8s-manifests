@@ -1,13 +1,10 @@
 {{- if .Values.kyverno.policies.create }}
 {{- $fullname := include "rbac-access.fullname" . }}
 {{- $labels := include "rbac-access.labels" . }}
-{{- $userNames := list }}
-{{- range .Values.users }}
-{{- $userNames = append $userNames .name }}
-{{- end }}
-{{- $userNames = $userNames | uniq | sortAlpha }}
 {{- $allowedGroups := .Values.delegation.allowedGroups | default list | uniq | sortAlpha }}
 {{- $allowedClusterRoles := .Values.delegation.allowedClusterRoles | default list | uniq | sortAlpha }}
+{{- $bypassSubjects := concat .Values.globalAdmins.subjects .Values.breakGlass.subjects }}
+{{- $controllerSubjects := .Values.kyverno.backgroundController.subjects }}
 {{- $failureAction := .Values.kyverno.policies.failureAction | default "Enforce" }}
 apiVersion: kyverno.io/v1
 kind: ClusterPolicy
@@ -19,7 +16,7 @@ spec:
   validationFailureAction: {{ $failureAction | quote }}
   background: false
   rules:
-    - name: require-configured-namespace-user
+    - name: require-kubernetes-access-group
       match:
         any:
           - resources:
@@ -31,16 +28,15 @@ spec:
       exclude:
         any:
           - subjects:
-{{- toYaml .Values.globalAdmins.subjects | nindent 14 }}
+{{- toYaml $bypassSubjects | nindent 14 }}
       validate:
-        message: "Only configured users may self-manage namespaces."
+        message: "Namespace self-service requires the kubernetes-access group."
         deny:
           conditions:
             all:
-              - key: {{ "{{ request.userInfo.username }}" | quote }}
-                operator: AnyNotIn
-                value:
-{{- toYaml $userNames | nindent 18 }}
+              - key: {{ printf "{{ contains(request.userInfo.groups || `[]`, '%s') }}" .Values.oidc.groups.access | quote }}
+                operator: Equals
+                value: false
     - name: create-owned-namespaces
       match:
         any:
@@ -52,7 +48,7 @@ spec:
       exclude:
         any:
           - subjects:
-{{- toYaml .Values.globalAdmins.subjects | nindent 14 }}
+{{- toYaml $bypassSubjects | nindent 14 }}
       validate:
         message: "Users may create only their personal namespace or namespaces prefixed by their username."
         anyPattern:
@@ -71,10 +67,10 @@ spec:
       exclude:
         any:
           - subjects:
-{{- toYaml .Values.globalAdmins.subjects | nindent 14 }}
+{{- toYaml $bypassSubjects | nindent 14 }}
       validate:
 {{- if .Values.namespaceLifecycle.allowDeletePrefixed }}
-        message: "Users may delete only prefixed namespaces they own; personal namespaces require a global admin."
+        message: "Users may delete only prefixed namespaces they own; personal namespaces require a Kubernetes admin."
         deny:
           conditions:
             all:
@@ -82,7 +78,7 @@ spec:
                 operator: NotEquals
                 value: {{ printf "{{ request.userInfo.username }}%s*" .Values.namespaceLifecycle.prefixSeparator | quote }}
 {{- else }}
-        message: "Namespace deletion requires a global admin."
+        message: "Namespace deletion requires a Kubernetes admin."
         deny:
           conditions:
             all:
@@ -112,13 +108,12 @@ spec:
       exclude:
         any:
           - subjects:
-{{- toYaml .Values.globalAdmins.subjects | nindent 14 }}
+{{- toYaml $bypassSubjects | nindent 14 }}
       preconditions:
         all:
-          - key: {{ "{{ request.userInfo.username }}" | quote }}
-            operator: AnyIn
-            value:
-{{- toYaml $userNames | nindent 14 }}
+          - key: {{ printf "{{ contains(request.userInfo.groups || `[]`, '%s') }}" .Values.oidc.groups.access | quote }}
+            operator: Equals
+            value: true
           - key: {{ "{{ request.object.metadata.name }}" | quote }}
             operator: AnyIn
             value:
@@ -172,17 +167,41 @@ spec:
       exclude:
         any:
           - subjects:
-{{- toYaml .Values.globalAdmins.subjects | nindent 14 }}
+{{- toYaml $bypassSubjects | nindent 14 }}
           - subjects:
-{{- toYaml .Values.kyverno.backgroundController.subjects | nindent 14 }}
+{{- toYaml $controllerSubjects | nindent 14 }}
       validate:
-        message: "Generated owner RoleBindings are managed by Kyverno and global admins."
+        message: "Generated owner RoleBindings are managed by Kyverno and Kubernetes admins."
         deny:
           conditions:
             all:
               - key: "true"
                 operator: Equals
                 value: "true"
+    - name: require-access-group-for-sharing
+      match:
+        any:
+          - resources:
+              kinds:
+                - RoleBinding
+              operations:
+                - CREATE
+                - UPDATE
+                - DELETE
+      exclude:
+        any:
+          - subjects:
+{{- toYaml $bypassSubjects | nindent 14 }}
+          - subjects:
+{{- toYaml $controllerSubjects | nindent 14 }}
+      validate:
+        message: "Namespace access delegation requires the kubernetes-access group."
+        deny:
+          conditions:
+            all:
+              - key: {{ printf "{{ contains(request.userInfo.groups || `[]`, '%s') }}" .Values.oidc.groups.access | quote }}
+                operator: Equals
+                value: false
     - name: require-owner-prefixed-namespace-for-sharing
       match:
         any:
@@ -196,9 +215,9 @@ spec:
       exclude:
         any:
           - subjects:
-{{- toYaml .Values.globalAdmins.subjects | nindent 14 }}
+{{- toYaml $bypassSubjects | nindent 14 }}
           - subjects:
-{{- toYaml .Values.kyverno.backgroundController.subjects | nindent 14 }}
+{{- toYaml $controllerSubjects | nindent 14 }}
       validate:
         message: "Users may share access only from namespaces prefixed by their username."
         deny:
@@ -219,9 +238,9 @@ spec:
       exclude:
         any:
           - subjects:
-{{- toYaml .Values.globalAdmins.subjects | nindent 14 }}
+{{- toYaml $bypassSubjects | nindent 14 }}
           - subjects:
-{{- toYaml .Values.kyverno.backgroundController.subjects | nindent 14 }}
+{{- toYaml $controllerSubjects | nindent 14 }}
       validate:
         message: "Delegated RoleBindings may grant only configured ClusterRoles."
         deny:
@@ -234,7 +253,7 @@ spec:
                 operator: AnyNotIn
                 value:
 {{- toYaml $allowedClusterRoles | nindent 18 }}
-    - name: allow-only-configured-subjects
+    - name: allow-only-configured-group-subjects
       match:
         any:
           - resources:
@@ -246,11 +265,11 @@ spec:
       exclude:
         any:
           - subjects:
-{{- toYaml .Values.globalAdmins.subjects | nindent 14 }}
+{{- toYaml $bypassSubjects | nindent 14 }}
           - subjects:
-{{- toYaml .Values.kyverno.backgroundController.subjects | nindent 14 }}
+{{- toYaml $controllerSubjects | nindent 14 }}
       validate:
-        message: "Delegated RoleBindings may reference only configured User or Group subjects."
+        message: "Delegated RoleBindings may reference User subjects or explicitly allowed Group subjects only."
         foreach:
           - list: request.object.subjects[]
             deny:
@@ -261,19 +280,6 @@ spec:
                     value:
                       - User
                       - Group
-          - list: request.object.subjects[]
-            preconditions:
-              all:
-                - key: {{ "{{ element.kind }}" | quote }}
-                  operator: Equals
-                  value: User
-            deny:
-              conditions:
-                all:
-                  - key: {{ "{{ element.name }}" | quote }}
-                    operator: AnyNotIn
-                    value:
-{{- toYaml $userNames | nindent 22 }}
           - list: request.object.subjects[]
             preconditions:
               all:
