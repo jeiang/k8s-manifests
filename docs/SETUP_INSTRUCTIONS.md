@@ -15,7 +15,7 @@ You also need:
 - A browser for Pocket ID login.
 - The Kubernetes API server URL from the cluster operator.
 - The Kubernetes cluster CA data or CA certificate file from the cluster operator.
-- The Kubernetes OIDC client ID and client secret from the cluster operator.
+- The Kubernetes OIDC client ID: `44213aa3-11eb-401d-922c-c7f81c3a9e37`. The client is public and uses PKCE, so no client secret is required.
 
 ## Create A kubeconfig
 

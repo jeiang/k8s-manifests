@@ -16,8 +16,9 @@ The cluster operator must provide:
 - Kubernetes API server URL.
 - Kubernetes cluster CA data or CA certificate file.
 - Pocket ID issuer URL: `https://auth.jeiang.dev`.
-- Kubernetes OIDC client ID.
-- Kubernetes OIDC client secret.
+- Kubernetes OIDC client ID: `44213aa3-11eb-401d-922c-c7f81c3a9e37`.
+
+The Kubernetes OIDC client is configured as a public client. `kubectl oidc-login` uses PKCE for the browser flow, so no client secret is required.
 
 ## Install Tools
 
@@ -90,7 +91,7 @@ clusters:
   - name: legion
     cluster:
       server: https://<kubernetes-api-server>:6443
-      certificate-authority-data: <cluster-ca-data>
+      certificate-authority-data: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUJlRENDQVIyZ0F3SUJBZ0lCQURBS0JnZ3Foa2pPUFFRREFqQWpNU0V3SHdZRFZRUUREQmhyTTNNdGMyVnkKZG1WeUxXTmhRREUzT0RJeE9UQTNPRE13SGhjTk1qWXdOakl6TURNMU9UUXpXaGNOTXpZd05qSXdNRE0xT1RRegpXakFqTVNFd0h3WURWUVFEREJock0zTXRjMlZ5ZG1WeUxXTmhRREUzT0RJeE9UQTNPRE13V1RBVEJnY3Foa2pPClBRSUJCZ2dxaGtqT1BRTUJCd05DQUFRTWhadHlYdXZ0V1l5UlVVaGNWWlhqNjhqalRwRGJSNklkTlRLNDJKRGMKaDYxWVZ3eEJPRHRZdGx6WjY3aG1CTktsNkx4NUdocnQ0dmJLbnBpcEUrMkNvMEl3UURBT0JnTlZIUThCQWY4RQpCQU1DQXFRd0R3WURWUjBUQVFIL0JBVXdBd0VCL3pBZEJnTlZIUTRFRmdRVTE0eDM0ZkFSeXVZbjcyLzlQZkIwCnV0NUNoNkF3Q2dZSUtvWkl6ajBFQXdJRFNRQXdSZ0loQU4vb2pWcnFtcDRrckpSVVJIWGNRczNvcTlzOXdONnIKaVFabEdpVW9RTDl2QWlFQXFLYllaYSt0bC9TRDdMdTd5Z2Vpb3h3NnA0RitkSC82N2VvOE81SlRuNEU9Ci0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0K
 users:
   - name: pocket-id
     user:
@@ -101,8 +102,7 @@ users:
           - oidc-login
           - get-token
           - --oidc-issuer-url=https://auth.jeiang.dev
-          - --oidc-client-id=<kubernetes-oidc-client-id>
-          - --oidc-client-secret=<kubernetes-oidc-client-secret>
+          - --oidc-client-id=44213aa3-11eb-401d-922c-c7f81c3a9e37
           - --oidc-extra-scope=profile
           - --oidc-extra-scope=email
           - --oidc-extra-scope=groups
@@ -125,7 +125,7 @@ clusters:
   - name: legion
     cluster:
       server: https://<kubernetes-api-server>:6443
-      certificate-authority-data: <cluster-ca-data>
+      certificate-authority-data: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUJlRENDQVIyZ0F3SUJBZ0lCQURBS0JnZ3Foa2pPUFFRREFqQWpNU0V3SHdZRFZRUUREQmhyTTNNdGMyVnkKZG1WeUxXTmhRREUzT0RJeE9UQTNPRE13SGhjTk1qWXdOakl6TURNMU9UUXpXaGNOTXpZd05qSXdNRE0xT1RRegpXakFqTVNFd0h3WURWUVFEREJock0zTXRjMlZ5ZG1WeUxXTmhRREUzT0RJeE9UQTNPRE13V1RBVEJnY3Foa2pPClBRSUJCZ2dxaGtqT1BRTUJCd05DQUFRTWhadHlYdXZ0V1l5UlVVaGNWWlhqNjhqalRwRGJSNklkTlRLNDJKRGMKaDYxWVZ3eEJPRHRZdGx6WjY3aG1CTktsNkx4NUdocnQ0dmJLbnBpcEUrMkNvMEl3UURBT0JnTlZIUThCQWY4RQpCQU1DQXFRd0R3WURWUjBUQVFIL0JBVXdBd0VCL3pBZEJnTlZIUTRFRmdRVTE0eDM0ZkFSeXVZbjcyLzlQZkIwCnV0NUNoNkF3Q2dZSUtvWkl6ajBFQXdJRFNRQXdSZ0loQU4vb2pWcnFtcDRrckpSVVJIWGNRczNvcTlzOXdONnIKaVFabEdpVW9RTDl2QWlFQXFLYllaYSt0bC9TRDdMdTd5Z2Vpb3h3NnA0RitkSC82N2VvOE81SlRuNEU9Ci0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0K
 users:
   - name: pocket-id
     user:
@@ -136,8 +136,7 @@ users:
           - oidc-login
           - get-token
           - --oidc-issuer-url=https://auth.jeiang.dev
-          - --oidc-client-id=<kubernetes-oidc-client-id>
-          - --oidc-client-secret=<kubernetes-oidc-client-secret>
+          - --oidc-client-id=44213aa3-11eb-401d-922c-c7f81c3a9e37
           - --oidc-extra-scope=profile
           - --oidc-extra-scope=email
           - --oidc-extra-scope=groups

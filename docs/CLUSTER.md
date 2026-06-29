@@ -35,7 +35,7 @@ The k3s API server must receive OIDC settings through `kube-apiserver-arg` on ev
 ```yaml
 kube-apiserver-arg:
   - oidc-issuer-url=https://auth.jeiang.dev
-  - oidc-client-id=<kubernetes-oidc-client-id>
+  - oidc-client-id=44213aa3-11eb-401d-922c-c7f81c3a9e37
   - oidc-username-claim=preferred_username
   - oidc-username-prefix=-
   - oidc-groups-claim=groups
