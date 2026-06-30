@@ -1,0 +1,94 @@
+global:
+  cluster:
+    dnsDomain: cluster.local.
+
+vmsingle:
+  enabled: true
+  spec:
+    retentionPeriod: "1"
+    replicaCount: 1
+    storage:
+      accessModes:
+        - ReadWriteOnce
+      storageClassName: hcloud-volumes
+      resources:
+        requests:
+          storage: 20Gi
+  ingress:
+    enabled: false
+
+vlsingle:
+  enabled: true
+  spec:
+    retentionPeriod: "1"
+    replicaCount: 1
+    storage:
+      accessModes:
+        - ReadWriteOnce
+      storageClassName: hcloud-volumes
+      resources:
+        requests:
+          storage: 20Gi
+  ingress:
+    enabled: false
+
+vlagent:
+  enabled: true
+  spec:
+    k8sCollector:
+      enabled: true
+  ingress:
+    enabled: false
+
+grafana:
+  enabled: true
+  resources:
+    requests:
+      cpu: 100m
+      memory: 768Mi
+    limits:
+      cpu: "1"
+      memory: 2Gi
+  persistence:
+    enabled: true
+    storageClassName: hcloud-volumes
+    accessModes:
+      - ReadWriteOnce
+    size: 5Gi
+  plugins:
+    - victoriametrics-metrics-datasource
+    - victoriametrics-logs-datasource
+  envFromSecret: grafana-oauth
+  grafana.ini:
+    server:
+      domain: grafana.jeiang.dev
+      root_url: https://grafana.jeiang.dev
+    auth:
+      disable_login_form: true
+      oauth_auto_login: true
+    auth.generic_oauth:
+      enabled: true
+      name: Pocket ID
+      allow_sign_up: true
+      client_id: a70e6d0d-360c-415f-b154-85ec7a6bc352
+      client_secret: $__env{GF_AUTH_GENERIC_OAUTH_CLIENT_SECRET}
+      scopes: openid profile email groups
+      auth_url: https://auth.jeiang.dev/authorize
+      token_url: https://auth.jeiang.dev/api/oidc/token
+      api_url: https://auth.jeiang.dev/api/oidc/userinfo
+      login_attribute_path: preferred_username
+      name_attribute_path: name
+      email_attribute_path: email
+      role_attribute_path: contains(groups[*], 'monitoring_admin') && 'Admin' || contains(groups[*], 'monitoring_editor') && 'Editor' || contains(groups[*], 'monitoring_reader') && 'Viewer'
+      role_attribute_strict: true
+  ingress:
+    enabled: true
+    ingressClassName: traefik
+    annotations:
+      cert-manager.io/cluster-issuer: letsencrypt-prod
+    hosts:
+      - grafana.jeiang.dev
+    tls:
+      - secretName: grafana-tls
+        hosts:
+          - grafana.jeiang.dev
