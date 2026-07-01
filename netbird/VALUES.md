@@ -23,11 +23,11 @@ These values configure the local self-hosted NetBird Helm chart.
 | `server.dnsDomain` | `jeiang.vpn` | NetBird private DNS domain. |
 | `server.credentialsTTL` | `24h` | Peer credential lifetime. |
 | `server.renderConfig.resources` | `10m/16Mi` request, `50m/64Mi` limit | Config-render init container resources. |
-| `server.resources` | `100m/256Mi` request, `750m/768Mi` limit | Server resource settings. |
+| `server.resources` | `50m/128Mi` request, `500m/384Mi` limit | Server resource settings. |
 | `dashboard.replicaCount` | `1` | Runs one dashboard pod. |
-| `dashboard.image` | `netbirdio/dashboard:v2.80.0`, `IfNotPresent` | Dashboard image settings. |
+| `dashboard.image` | `netbirdio/dashboard:v2.90.2`, `IfNotPresent` | Dashboard image settings. |
 | `dashboard.port` | `80` | Dashboard HTTP port. |
-| `dashboard.resources` | `50m/64Mi` request, `250m/256Mi` limit | Dashboard resource settings. |
+| `dashboard.resources` | `25m/32Mi` request, `100m/128Mi` limit | Dashboard resource settings. |
 | `relay.replicaCount` | `1` | Runs one relay pod for the single advertised relay address. |
 | `relay.image` | `netbirdio/relay:0.73.2`, `IfNotPresent` | Relay image settings. |
 | `relay.port` | `8080` | Relay service port. |
@@ -40,7 +40,7 @@ These values configure the local self-hosted NetBird Helm chart.
 | `relay.nodeSelector` | `netbird.io/stun: "true"` | Schedules relay pods on labeled nodes. |
 | `relay.antiAffinity.enabled` | `true` | Keeps relay replicas on separate nodes. |
 | `relay.affinity` | `{}` | Optional additional affinity. |
-| `relay.resources` | `100m/128Mi` request, `500m/512Mi` limit | Relay resource settings. |
+| `relay.resources` | `50m/64Mi` request, `250m/256Mi` limit | Relay resource settings. |
 | `proxy.enabled` | `true` | Enables NetBird reverse proxy. |
 | `proxy.replicaCount` | `1` | Runs one proxy pod. |
 | `proxy.image` | `netbirdio/reverse-proxy:0.73.2`, `IfNotPresent` | Proxy image settings. |
@@ -66,7 +66,7 @@ These values configure the local self-hosted NetBird Helm chart.
 | `proxy.persistence.enabled` | `true` | Persists proxy ACME certificates. |
 | `proxy.persistence.size` | `1Gi` | Proxy certificate PVC size. |
 | `proxy.persistence.storageClassName` | `hcloud-volumes` | Uses Hetzner RWO storage. |
-| `proxy.resources` | `100m/128Mi` request, `500m/512Mi` limit | Proxy resource settings. |
+| `proxy.resources` | `50m/64Mi` request, `250m/256Mi` limit | Proxy resource settings. |
 | `service.type` | `ClusterIP` | Keeps main services internal behind Traefik. |
 | `service.stun.type` | `ClusterIP` | Keeps STUN service internal; relay uses host networking for public UDP. |
 | `service.stun.annotations` | `{}` | Optional STUN Service annotations. |

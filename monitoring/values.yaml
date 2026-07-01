@@ -7,6 +7,13 @@ vmsingle:
   spec:
     retentionPeriod: "1"
     replicaCount: 1
+    resources:
+      requests:
+        cpu: 150m
+        memory: 500Mi
+      limits:
+        cpu: 1000m
+        memory: 1Gi
     storage:
       accessModes:
         - ReadWriteOnce
@@ -22,6 +29,13 @@ vlsingle:
   spec:
     retentionPeriod: "1"
     replicaCount: 1
+    resources:
+      requests:
+        cpu: 75m
+        memory: 128Mi
+      limits:
+        cpu: 500m
+        memory: 512Mi
     storage:
       accessModes:
         - ReadWriteOnce
@@ -35,20 +49,68 @@ vlsingle:
 vlagent:
   enabled: true
   spec:
+    resources:
+      requests:
+        cpu: 50m
+        memory: 128Mi
+      limits:
+        cpu: 200m
+        memory: 384Mi
     k8sCollector:
       enabled: true
   ingress:
     enabled: false
+
+vmagent:
+  spec:
+    resources:
+      requests:
+        cpu: 50m
+        memory: 128Mi
+      limits:
+        cpu: 200m
+        memory: 384Mi
+
+vmalert:
+  spec:
+    resources:
+      requests:
+        cpu: 50m
+        memory: 128Mi
+      limits:
+        cpu: 200m
+        memory: 384Mi
+
+alertmanager:
+  spec:
+    resources:
+      requests:
+        cpu: 30m
+        memory: 64Mi
+      limits:
+        cpu: 100m
+        memory: 256Mi
+
+internal:
+  vmauth:
+    spec:
+      resources:
+        requests:
+          cpu: 50m
+          memory: 100Mi
+        limits:
+          cpu: 200m
+          memory: 300Mi
 
 grafana:
   enabled: true
   resources:
     requests:
       cpu: 100m
-      memory: 768Mi
+      memory: 512Mi
     limits:
-      cpu: "1"
-      memory: 2Gi
+      cpu: 500m
+      memory: 1Gi
   persistence:
     enabled: true
     storageClassName: hcloud-volumes

@@ -29,8 +29,8 @@ These values override the upstream `community-charts/actualbudget` chart for thi
 | `login.method` | `password` | Enables password login. |
 | `login.skipSSLVerification` | `false` | Keeps TLS verification enabled for login flows. |
 | `login.allowedLoginMethods` | `password` | Restricts login methods to password. |
-| `resources.requests` | `cpu: 100m`, `memory: 256Mi` | Baseline scheduling request. |
-| `resources.limits` | `cpu: 500m`, `memory: 512Mi` | Runtime resource cap. |
+| `resources.requests` | `cpu: 50m`, `memory: 128Mi` | Baseline scheduling request. |
+| `resources.limits` | `cpu: 250m`, `memory: 256Mi` | Runtime resource cap. |
 | `initContainers` | `prepare-data-directories` busybox container | Creates `/data/server-files` and `/data/user-files` on empty volumes. |
 | `podSecurityContext` | `fsGroup: 1000`, `fsGroupChangePolicy: OnRootMismatch` | Matches rclone mount ownership. |
 | `securityContext` | non-root UID/GID `1000`, drops all capabilities | Runs the application without privilege escalation. |

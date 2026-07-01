@@ -15,7 +15,7 @@ These values override the upstream `bitwarden/sm-operator` chart for this cluste
 | `containers.manager.image.repository` | `ghcr.io/bitwarden/sm-operator` | Operator image repository. |
 | `containers.manager.image.tag` | `""` | Uses the upstream chart default image tag. |
 | `containers.manager.resources.requests` | `cpu: 10m`, `memory: 64Mi` | Baseline scheduling request for the manager. |
-| `containers.manager.resources.limits` | `cpu: 500m`, `memory: 128Mi` | Runtime resource cap for the manager. |
+| `containers.manager.resources.limits` | `cpu: 100m`, `memory: 128Mi` | Runtime resource cap for the manager. |
 | `containers.manager.terminationGracePeriodSeconds` | `10` | Grace period for manager shutdown. |
 | `containers.serviceAccount.annotations` | `{}` | Optional service account annotations. |
 | `containers.enableSeccompProfileRuntimeDefault` | `true` | Enables the runtime default seccomp profile. |

@@ -36,7 +36,7 @@ These values override the upstream `ghcr.io/netbirdio/helm-charts/netbird-operat
 | `netbirdAPI.keyFromSecret.name` | `netbird-mgmt-api-key` | Kubernetes Secret containing the NetBird API key. |
 | `netbirdAPI.keyFromSecret.key` | `NB_API_KEY` | Secret key read by the operator. |
 | `operator.resources.requests` | `cpu: 50m`, `memory: 64Mi` | Operator scheduling request. |
-| `operator.resources.limits` | `cpu: 250m`, `memory: 256Mi` | Operator resource cap. |
+| `operator.resources.limits` | `cpu: 150m`, `memory: 128Mi` | Operator resource cap. |
 
 ## Notes
 

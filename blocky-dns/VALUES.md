@@ -12,8 +12,8 @@ These values configure the local Blocky DNS Helm chart.
 | `service.annotations` | `{}` | Optional Service annotations. |
 | `service.externalTrafficPolicy` | `Cluster` | Service traffic policy if the type is changed. |
 | `service.dnsPort` | `53` | DNS TCP/UDP service port. |
-| `resources.requests` | `cpu: 100m`, `memory: 128Mi` | Baseline scheduling request. |
-| `resources.limits` | `cpu: 500m`, `memory: 350Mi` | Runtime resource cap. |
+| `resources.requests` | `cpu: 50m`, `memory: 64Mi` | Baseline scheduling request. |
+| `resources.limits` | `cpu: 250m`, `memory: 192Mi` | Runtime resource cap. |
 | `autoscaling.enabled` | `true` | Creates an HPA. |
 | `autoscaling.minReplicas` | `1` | Minimum HPA replica count. |
 | `autoscaling.maxReplicas` | `5` | Maximum HPA replica count. |

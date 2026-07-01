@@ -10,8 +10,8 @@ These values configure the local website Helm chart.
 | `image.pullPolicy` | `IfNotPresent` | Image pull policy. |
 | `service.type` | `ClusterIP` | Keeps the service internal behind ingress. |
 | `service.port` | `80` | HTTP service port. |
-| `resources.requests` | `cpu: 50m`, `memory: 64Mi` | Baseline scheduling request. |
-| `resources.limits` | `cpu: 250m`, `memory: 128Mi` | Runtime resource cap. |
+| `resources.requests` | `cpu: 25m`, `memory: 32Mi` | Baseline scheduling request. |
+| `resources.limits` | `cpu: 100m`, `memory: 128Mi` | Runtime resource cap. |
 | `ingress.enabled` | `true` | Creates public ingress. |
 | `ingress.className` | `traefik` | Uses Traefik ingress. |
 | `ingress.hosts` | `jeiang.dev`, `aidanpinard.co`, `pinard.co.tt` | Public hostnames. |

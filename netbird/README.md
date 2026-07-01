@@ -5,7 +5,7 @@ Helm chart for running a self-hosted NetBird management server on k3s.
 Default images:
 
 - `netbirdio/netbird-server:0.73.2`
-- `netbirdio/dashboard:v2.80.0`
+- `netbirdio/dashboard:v2.90.2`
 - `netbirdio/relay:0.73.2`
 - `netbirdio/reverse-proxy:0.73.2`
 

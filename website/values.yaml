@@ -11,10 +11,10 @@ service:
 
 resources:
   requests:
-    cpu: 50m
-    memory: 64Mi
+    cpu: 25m
+    memory: 32Mi
   limits:
-    cpu: 250m
+    cpu: 100m
     memory: 128Mi
 
 ingress:

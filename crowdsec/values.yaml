@@ -24,11 +24,11 @@ lapi:
   replicas: 1
   resources:
     requests:
-      cpu: 100m
-      memory: 256Mi
+      cpu: 50m
+      memory: 128Mi
     limits:
-      cpu: 500m
-      memory: 768Mi
+      cpu: 250m
+      memory: 384Mi
   persistentVolume:
     data:
       enabled: true
@@ -64,11 +64,11 @@ agent:
       value: crowdsecurity/traefik
   resources:
     requests:
-      cpu: 50m
-      memory: 128Mi
+      cpu: 25m
+      memory: 64Mi
     limits:
-      cpu: 500m
-      memory: 384Mi
+      cpu: 250m
+      memory: 192Mi
   metrics:
     enabled: true
     serviceMonitor:
@@ -104,11 +104,11 @@ appsec:
       value: crowdsecurity/appsec-virtual-patching crowdsecurity/appsec-crs
   resources:
     requests:
-      cpu: 50m
-      memory: 128Mi
+      cpu: 25m
+      memory: 96Mi
     limits:
-      cpu: 500m
-      memory: 384Mi
+      cpu: 250m
+      memory: 256Mi
   service:
     type: ClusterIP
     labels:

@@ -23,7 +23,7 @@ These values configure the local Pocket ID Helm chart.
 | `pocketId.smtp` | iCloud SMTP at `smtp.mail.me.com:587`, from `noreply@jeiang.dev`, user `jeiang`, `starttls` | Email delivery settings. |
 | `pocketId.email` | verification and admin one-time access enabled; login notifications and unauthenticated codes disabled | Email feature switches. |
 | `pocketId.signups.allowUserSignups` | `withToken` | Allows admin-issued signup tokens. |
-| `pocketId.resources` | `100m/128Mi` request, `500m/512Mi` limit | Pocket ID resource settings. |
+| `pocketId.resources` | `50m/64Mi` request, `250m/256Mi` limit | Pocket ID resource settings. |
 | `service.pocketId` | `ClusterIP` port `80` | Internal Pocket ID service. |
 | `ingress.enabled` | `true` | Creates Pocket ID ingress. |
 | `ingress.className` | `traefik` | Uses Traefik ingress. |

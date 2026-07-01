@@ -41,8 +41,8 @@ These values configure the local `hath-rust` Helm chart.
 | `persistence.size` | `15Gi` | Requested persistent volume size. |
 | `persistence.mountPath` | `/hath` | Persistent volume mount path. |
 | `temp.sizeLimit` | `""` | Uses default `emptyDir` size behavior. |
-| `resources.requests` | `cpu: 250m`, `memory: 512Mi` | Baseline scheduling request. |
-| `resources.limits` | `cpu: "2"`, `memory: 2Gi` | Runtime resource cap. |
+| `resources.requests` | `cpu: 100m`, `memory: 256Mi` | Baseline scheduling request. |
+| `resources.limits` | `cpu: "1"`, `memory: 1Gi` | Runtime resource cap. |
 | `podSecurityContext` | `fsGroup: 1000`, `fsGroupChangePolicy: OnRootMismatch` | Matches rclone mount ownership. |
 | `securityContext` | non-root UID/GID `1000`, drops all capabilities | Runs without privilege escalation. |
 | `nodeSelector` | `{}` | Optional node placement constraints. |
