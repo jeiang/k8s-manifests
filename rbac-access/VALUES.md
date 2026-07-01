@@ -7,7 +7,7 @@ These values configure the local OIDC RBAC and Kyverno access-control chart.
 | `globalAdmins.create` | `true` | Creates the global admin ClusterRoleBinding. |
 | `globalAdmins.clusterRole` | `cluster-admin` | ClusterRole granted to global admin subjects. |
 | `globalAdmins.subjects` | Group `kubernetes-admin` | OIDC subjects with full cluster access and Kyverno bypass. |
-| `breakGlass.subjects` | User `system:admin`, Group `system:masters` | Built-in k3s emergency subjects that bypass Kyverno restrictions. |
+| `breakGlass.subjects` | User `system:admin`, User `system:kube-controller-manager`, User `system:serviceaccount:kube-system:namespace-controller`, Group `system:masters` | Built-in k3s emergency and Kubernetes namespace cleanup subjects that bypass Kyverno restrictions. |
 | `oidc.groups.access` | `kubernetes-access` | Required group for normal namespace self-service and delegation. |
 | `oidc.groups.admin` | `kubernetes-admin` | Documented admin group name; rendered through `globalAdmins.subjects`. |
 | `oidc.groups.kubeSystemAdmin` | `kubernetes-kube-system-admin` | Documented kube-system admin group name. |
@@ -27,7 +27,7 @@ These values configure the local OIDC RBAC and Kyverno access-control chart.
 | `kubeSystem.reader.subjects` | Group `kubernetes-kube-system-reader` | Subjects with read-only access to `kube-system`. |
 | `kyverno.policies.create` | `true` | Creates Kyverno ClusterPolicies. |
 | `kyverno.policies.failureAction` | `Enforce` | Kyverno validation failure action. |
-| `kyverno.backgroundController.createClusterRoleBindings` | `true` | Grants Kyverno background controller permission to manage generated RoleBindings. |
+| `kyverno.backgroundController.createClusterRoleBindings` | `true` | Grants Kyverno background controller permission to manage generated RoleBindings and bind the built-in `admin` ClusterRole. |
 | `kyverno.backgroundController.subjects` | `kyverno/kyverno-background-controller` | Kyverno background controller service accounts. |
 
 ## Notes

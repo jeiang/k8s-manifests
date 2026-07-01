@@ -78,6 +78,8 @@ Examples:
 
 When a user creates an allowed namespace, Kyverno generates a RoleBinding named `rbac-access-owner-admin` that grants that user the built-in `admin` ClusterRole in the namespace.
 
+The Kyverno background controller must be allowed to manage generated RoleBindings and bind the built-in `admin` ClusterRole. Without that `bind` permission, Kubernetes RBAC escalation protection denies the generated owner RoleBinding and the namespace owner will have no access inside the namespace.
+
 Users may delegate access only from prefixed namespaces, not from their personal namespace. Delegation is done with normal Kubernetes RoleBindings. User subjects are allowed without IdP lookup; Group subjects must be listed under `delegation.allowedGroups`.
 
 Emergency access uses the built-in k3s admin kubeconfig, normally authenticated as `system:admin` in `system:masters`.
