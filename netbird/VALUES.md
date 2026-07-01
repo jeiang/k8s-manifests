@@ -28,7 +28,7 @@ These values configure the local self-hosted NetBird Helm chart.
 | `dashboard.image` | `netbirdio/dashboard:v2.80.0`, `IfNotPresent` | Dashboard image settings. |
 | `dashboard.port` | `80` | Dashboard HTTP port. |
 | `dashboard.resources` | `50m/64Mi` request, `250m/256Mi` limit | Dashboard resource settings. |
-| `relay.replicaCount` | `2` | Runs two relay pods. |
+| `relay.replicaCount` | `1` | Runs one relay pod for the single advertised relay address. |
 | `relay.image` | `netbirdio/relay:0.73.2`, `IfNotPresent` | Relay image settings. |
 | `relay.port` | `8080` | Relay service port. |
 | `relay.stunHost` | `stun.netbird.jeiang.dev` | Public STUN hostname. |
@@ -87,6 +87,7 @@ These values configure the local self-hosted NetBird Helm chart.
 
 ## Notes
 
-- DNS and firewall settings for STUN are outside the chart and must match `relay.stunHost`, `relay.stunPort`, and the relay node labels.
+- DNS and firewall settings for STUN are outside the chart and must match `relay.stunHost`, `relay.stunPort`, and the relay node label.
+- Do not scale relay behind the same advertised `relay.exposedAddress` without relay-aware stickiness or distinct advertised relay addresses. Relay peer availability is local to each relay process, so split peers can see `peer not available` timeouts.
 - Server and proxy storage stay on `hcloud-volumes` because the default volumes are small RWO volumes.
 - Secret values must remain in Bitwarden Secrets Manager.
