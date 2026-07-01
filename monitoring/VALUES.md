@@ -23,6 +23,7 @@ These values override the upstream `vm/victoria-metrics-k8s-stack` chart for thi
 | `grafana.persistence` | `5Gi` `hcloud-volumes` RWO PVC | Persists Grafana state, plugins, sessions, and the SQLite database across restarts. |
 | `grafana.plugins` | VictoriaMetrics metrics and logs datasource plugins | Installs plugins needed by the default datasource definitions. |
 | `grafana.envFromSecret` | `grafana-oauth` | Reads the OAuth client secret from the Bitwarden-synced Secret. |
+| `crowdsec-dashboard-configmap.yaml` | `grafana_dashboard=1` ConfigMap | Loads the CrowdSec dashboard through Grafana's dashboard sidecar. |
 | `grafana.grafana.ini.server.root_url` | `https://grafana.jeiang.dev` | Public Grafana URL and OAuth callback base. |
 | `grafana.grafana.ini.auth.generic_oauth.client_id` | `a70e6d0d-360c-415f-b154-85ec7a6bc352` | Pocket ID Grafana OIDC client ID. |
 | `grafana.grafana.ini.auth.generic_oauth.role_attribute_strict` | `true` | Denies users without an explicit monitoring role group. |

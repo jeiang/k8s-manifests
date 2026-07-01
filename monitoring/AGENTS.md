@@ -11,6 +11,7 @@ This directory contains values and support manifests for the upstream `victoria-
 - Grafana authenticates through Pocket ID using the OIDC client ID `a70e6d0d-360c-415f-b154-85ec7a6bc352`.
 - Grafana OAuth roles come from Pocket ID groups: `monitoring_admin`, `monitoring_editor`, and `monitoring_reader`.
 - The `grafana-oauth` Secret is expected to be synced by Bitwarden Secrets Manager from `grafana-oauth-bitwardensecret.yaml`.
+- The CrowdSec dashboard is loaded by Grafana's dashboard sidecar from `crowdsec-dashboard-configmap.yaml`.
 - VictoriaMetrics and VictoriaLogs raw HTTP endpoints must not be exposed through public ingress. Expose them through NetBird resources in a later change.
 - VMSingle and VLSingle use the RWO-only `hcloud-volumes` StorageClass.
 
@@ -29,4 +30,5 @@ helm template monitoring vm/victoria-metrics-k8s-stack \
   -f ./monitoring/values.yaml
 
 kubectl apply --dry-run=client -f ./monitoring/grafana-oauth-bitwardensecret.yaml
+kubectl apply --dry-run=client -f ./monitoring/crowdsec-dashboard-configmap.yaml
 ```

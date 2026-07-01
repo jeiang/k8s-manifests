@@ -8,6 +8,7 @@ Values and support manifests for deploying the upstream `vm/victoria-metrics-k8s
 - [Dependencies](#dependencies)
 - [Pocket ID Authentication](#pocket-id-authentication)
 - [Bitwarden Secret](#bitwarden-secret)
+- [CrowdSec Dashboard](#crowdsec-dashboard)
 - [Install](#install)
 - [Verify](#verify)
 - [Future NetBird Exposure](#future-netbird-exposure)
@@ -20,6 +21,7 @@ Values and support manifests for deploying the upstream `vm/victoria-metrics-k8s
 - VictoriaLogs single-node storage with a `20Gi` `hcloud-volumes` PVC and one month retention.
 - VLAgent Kubernetes log collection.
 - Bundled Grafana with VictoriaMetrics and VictoriaLogs datasources and dashboards.
+- A CrowdSec Grafana dashboard loaded from a sidecar-discovered ConfigMap.
 - A `5Gi` `hcloud-volumes` PVC and explicit resources for Grafana.
 - Public Grafana ingress at `https://grafana.jeiang.dev` through Traefik and cert-manager.
 - Pocket ID generic OAuth for Grafana.
@@ -37,6 +39,7 @@ The raw VictoriaMetrics and VictoriaLogs HTTP endpoints are not exposed publicly
 - Bitwarden Secrets Manager operator installed.
 - A Bitwarden machine-account token Secret named `bw-auth-token` in the `monitoring` namespace.
 - Network egress from Grafana to `auth.jeiang.dev` and from Grafana to the Grafana plugin catalog.
+- CrowdSec metrics scraped into VictoriaMetrics for the CrowdSec dashboard to show data.
 
 ## Pocket ID Authentication
 
@@ -91,6 +94,16 @@ kubectl -n monitoring get bitwardensecret grafana-oauth
 kubectl -n monitoring get secret grafana-oauth
 ```
 
+## CrowdSec Dashboard
+
+Apply the dashboard ConfigMap after Grafana is installed:
+
+```fish
+kubectl apply -f ./monitoring/crowdsec-dashboard-configmap.yaml
+```
+
+The dashboard uses the existing `VictoriaMetrics` datasource and documented CrowdSec metric names such as `cs_info`, `cs_active_decisions`, `cs_lapi_*`, and `cs_appsec_*`. Panels will be empty until `crowdsec/crowdsec-vmservicescrape.yaml` is active and CrowdSec has emitted matching metrics.
+
 ## Install
 
 Add the VictoriaMetrics chart repository:
@@ -125,9 +138,11 @@ Check workloads, storage, and ingress:
 ```fish
 kubectl -n monitoring get pods,pvc,ingress
 kubectl -n monitoring rollout status deploy/monitoring-grafana
+kubectl -n monitoring get configmap crowdsec-dashboard
 ```
 
 Confirm that Grafana is reachable at `https://grafana.jeiang.dev` and redirects to Pocket ID. Test users in `monitoring_admin`, `monitoring_editor`, and `monitoring_reader` should receive the matching Grafana role. A user without those groups should be denied.
+Open the `CrowdSec` dashboard and confirm panels populate after CrowdSec metrics are scraped.
 
 Inspect the rendered chart before deployment for:
 
@@ -136,6 +151,7 @@ Inspect the rendered chart before deployment for:
 - No public ingress for VictoriaMetrics, VictoriaLogs, or VLAgent.
 - Grafana OAuth secret reference.
 - Generated VictoriaMetrics and VictoriaLogs datasources.
+- CrowdSec dashboard ConfigMap label `grafana_dashboard: "1"`.
 
 If Grafana resets the connection after returning from Pocket ID, check for OOM kills first:
 
