@@ -5,6 +5,21 @@ metadata:
   namespace: kube-system
 spec:
   valuesContent: |-
+    experimental:
+      plugins:
+        crowdsec-bouncer:
+          moduleName: github.com/maxlerebourg/crowdsec-bouncer-traefik-plugin
+          version: v1.3.3
+    accessLog:
+      enabled: true
+    additionalArguments:
+      - --providers.file.filename=/config/crowdsec-dynamic.yaml
+      - --entrypoints.web.http.middlewares=crowdsec-bouncer@file
+      - --entrypoints.websecure.http.middlewares=crowdsec-bouncer@file
+    volumes:
+      - name: traefik-crowdsec-dynamic
+        mountPath: /config
+        type: secret
     service:
       annotations:
         load-balancer.hetzner.cloud/name: legion-lb1

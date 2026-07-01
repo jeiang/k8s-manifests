@@ -71,6 +71,15 @@ spec:
             - name: NB_PROXY_TRUSTED_PROXIES
               value: {{ .Values.proxy.proxyProtocol.trustedProxies | quote }}
             {{- end }}
+            {{- if .Values.proxy.crowdsec.enabled }}
+            - name: NB_PROXY_CROWDSEC_API_URL
+              value: {{ required "proxy.crowdsec.apiUrl is required when proxy.crowdsec.enabled=true" .Values.proxy.crowdsec.apiUrl | quote }}
+            - name: NB_PROXY_CROWDSEC_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "netbird.secretName" . | quote }}
+                  key: {{ .Values.proxy.crowdsec.apiKeySecretKey | default .Values.secrets.keys.crowdsecBouncerKey | quote }}
+            {{- end }}
           ports:
             - name: tls
               containerPort: {{ .Values.proxy.port }}

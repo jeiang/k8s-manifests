@@ -83,3 +83,4 @@ These components are expected to exist but are not defined as local Helm charts 
 - Bitwarden Secrets Manager operator when charts render `BitwardenSecret` resources.
 - NetBird Kubernetes operator when charts render `NetworkRouter` or `NetworkResource` resources.
 - Rclone CSI driver from `oci://ghcr.io/veloxpack/charts/csi-driver-rclone` when rclone-backed PVCs are needed; local values live in `rclone-csi-driver/`.
+- CrowdSec from `https://crowdsecurity.github.io/helm-charts` when WAF, Traefik AppSec, or NetBird reverse proxy IP reputation is enabled; local values and support manifests live in `crowdsec/`.

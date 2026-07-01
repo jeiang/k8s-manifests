@@ -9,6 +9,7 @@ secrets:
     relayAuthSecret: relay-auth-secret
     idpSessionCookieEncryptionKey: idp-session-cookie-encryption-key
     proxyToken: proxy-token
+    crowdsecBouncerKey: crowdsec-bouncer-key
 
 bitwardenSecrets:
   enabled: true
@@ -21,6 +22,7 @@ bitwardenSecrets:
     relayAuthSecret: "263bee8d-be56-4d26-bec4-b4650028727c"
     idpSessionCookieEncryptionKey: "0bddc1f8-cb8c-4f2f-b1c1-b465002872ff"
     proxyToken: "dacb7eb2-4cdf-45de-9541-b47300025e5d"
+    crowdsecBouncerKey: "0ed93d41-e38e-44de-9f87-b47a00f76710"
 
 server:
   replicaCount: 1
@@ -113,6 +115,10 @@ proxy:
     enabled: true
     version: 2
     trustedProxies: 10.42.0.0/16
+  crowdsec:
+    enabled: true
+    apiUrl: http://crowdsec-service.crowdsec.svc.cluster.local:8080
+    apiKeySecretKey: crowdsec-bouncer-key
   uid: "1000"
   gid: "1000"
   logLevel: info

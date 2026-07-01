@@ -16,11 +16,13 @@ This local Helm chart deploys the self-hosted NetBird management server, dashboa
 - DNS for `proxy.jeiang.dev` and `*.proxy.jeiang.dev` must point at the Traefik load balancer.
 - Persistence uses the RWO-only `hcloud-volumes` StorageClass.
 - `netbird-secrets` is expected to be synced by the chart-managed `BitwardenSecret`; the only direct namespace Secret should be the Bitwarden bootstrap `bw-auth-token`.
+- CrowdSec IP reputation is optional and requires `proxy.crowdsec.enabled=true`, CrowdSec LAPI reachability, and a Bitwarden-synced bouncer key.
 
 ## Editing Notes
 
 - Keep server secrets stable after first deploy.
 - Keep the reverse proxy token in Bitwarden Secrets Manager; do not render it as a literal environment variable.
+- Keep the CrowdSec bouncer key in Bitwarden Secrets Manager; do not render it as a literal environment variable.
 - Do not add a manual literal `netbird-secrets` creation path to docs unless the user explicitly asks for an emergency fallback.
 - Be careful changing relay `hostNetwork`, `stunPort`, or anti-affinity; these values control public reachability.
 - Be careful changing proxy `IngressRouteTCP`, TLS passthrough, or ACME settings; the proxy must terminate TLS itself.

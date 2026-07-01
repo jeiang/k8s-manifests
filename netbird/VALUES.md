@@ -7,7 +7,7 @@ These values configure the local self-hosted NetBird Helm chart.
 | `global.host` | `netbird.jeiang.dev` | Public management hostname. |
 | `global.publicUrl` | `https://netbird.jeiang.dev` | Public management URL. |
 | `secrets.existingSecret` | `netbird-secrets` | Kubernetes Secret consumed by NetBird workloads. |
-| `secrets.keys` | store encryption, relay auth, IdP cookie, and proxy token key names | Maps Secret keys to application settings. |
+| `secrets.keys` | store encryption, relay auth, IdP cookie, proxy token, and CrowdSec bouncer key names | Maps Secret keys to application settings. |
 | `bitwardenSecrets.enabled` | `true` | Renders a `BitwardenSecret` for `netbird-secrets`. |
 | `bitwardenSecrets.organizationId` | `af918704-c223-4f10-a245-b4640144f2d9` | Bitwarden organization ID. |
 | `bitwardenSecrets.authToken.secretName` | `bw-auth-token` | Namespace-local Bitwarden machine account token Secret. |
@@ -56,6 +56,9 @@ These values configure the local self-hosted NetBird Helm chart.
 | `proxy.proxyProtocol.enabled` | `true` | Accepts PROXY protocol from Traefik so proxy logs and access policy see the original client IP. |
 | `proxy.proxyProtocol.version` | `2` | PROXY protocol version Traefik sends to the NetBird proxy backend. |
 | `proxy.proxyProtocol.trustedProxies` | `10.42.0.0/16` | Upstream proxy CIDRs trusted by NetBird; this should include Traefik pod IPs. |
+| `proxy.crowdsec.enabled` | `false` | Enables CrowdSec IP reputation checks for the reverse proxy. |
+| `proxy.crowdsec.apiUrl` | `http://crowdsec-service.crowdsec.svc.cluster.local:8080` | CrowdSec LAPI URL used by the NetBird proxy. |
+| `proxy.crowdsec.apiKeySecretKey` | `crowdsec-bouncer-key` | Secret key containing the CrowdSec bouncer API key. |
 | `proxy.uid` | `"1000"` | Proxy process UID. |
 | `proxy.gid` | `"1000"` | Proxy process GID. |
 | `proxy.logLevel` | `info` | Proxy log level. |

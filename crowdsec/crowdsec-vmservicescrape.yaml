@@ -1,0 +1,16 @@
+apiVersion: operator.victoriametrics.com/v1beta1
+kind: VMServiceScrape
+metadata:
+  name: crowdsec
+  namespace: crowdsec
+  labels:
+    app.kubernetes.io/name: crowdsec
+    app.kubernetes.io/component: monitoring
+spec:
+  selector:
+    matchLabels:
+      victoria-metrics-scrape: crowdsec
+  endpoints:
+    - port: metrics
+      path: /metrics
+      interval: 30s

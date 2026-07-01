@@ -1,0 +1,121 @@
+container_runtime: containerd
+
+config:
+  config.yaml.local: |
+    api:
+      server:
+        auto_registration:
+          enabled: true
+          token: "${REGISTRATION_TOKEN}"
+          allowed_ranges:
+            - "127.0.0.1/32"
+            - "10.0.0.0/8"
+            - "10.42.0.0/16"
+            - "172.16.0.0/12"
+            - "192.168.0.0/16"
+    prometheus:
+      enabled: true
+      level: full
+      listen_addr: 0.0.0.0
+      listen_port: 6060
+
+lapi:
+  enabled: true
+  replicas: 1
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 768Mi
+  persistentVolume:
+    data:
+      enabled: true
+      accessModes:
+        - ReadWriteOnce
+      storageClassName: hcloud-volumes
+      size: 1Gi
+    config:
+      enabled: true
+      accessModes:
+        - ReadWriteOnce
+      storageClassName: hcloud-volumes
+      size: 100Mi
+  service:
+    type: ClusterIP
+    labels:
+      victoria-metrics-scrape: crowdsec
+  metrics:
+    enabled: true
+    serviceMonitor:
+      enabled: false
+    podMonitor:
+      enabled: false
+
+agent:
+  enabled: true
+  acquisition:
+    - namespace: kube-system
+      podName: traefik-*
+      program: traefik
+  env:
+    - name: COLLECTIONS
+      value: crowdsecurity/traefik
+  resources:
+    requests:
+      cpu: 50m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 384Mi
+  metrics:
+    enabled: true
+    serviceMonitor:
+      enabled: false
+    podMonitor:
+      enabled: false
+  service:
+    type: ClusterIP
+    labels:
+      victoria-metrics-scrape: crowdsec
+
+appsec:
+  enabled: true
+  replicas: 1
+  acquisitions:
+    - source: appsec
+      listen_addr: "0.0.0.0:7422"
+      path: /
+      appsec_config: crowdsecurity/crs-vpatch
+      labels:
+        type: appsec
+  configs:
+    crs-vpatch.yaml: |
+      name: crowdsecurity/crs-vpatch
+      default_remediation: ban
+      outofband_rules:
+        - crowdsecurity/crs
+      inband_rules:
+        - crowdsecurity/base-config
+        - crowdsecurity/vpatch-*
+  env:
+    - name: COLLECTIONS
+      value: crowdsecurity/appsec-virtual-patching crowdsecurity/appsec-crs
+  resources:
+    requests:
+      cpu: 50m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 384Mi
+  service:
+    type: ClusterIP
+    labels:
+      victoria-metrics-scrape: crowdsec
+  metrics:
+    enabled: true
+    serviceMonitor:
+      enabled: false
+    podMonitor:
+      enabled: false
