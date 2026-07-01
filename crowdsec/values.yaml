@@ -94,11 +94,15 @@ appsec:
     crs-vpatch.yaml: |
       name: crowdsecurity/crs-vpatch
       default_remediation: ban
-      outofband_rules:
-        - crowdsecurity/crs
       inband_rules:
         - crowdsecurity/base-config
         - crowdsecurity/vpatch-*
+      on_match:
+        - filter: req.Host == "netbird.jeiang.dev" && (req.URL.Path startsWith "/signalexchange.SignalExchange/" || req.URL.Path startsWith "/management.ManagementService/" || req.URL.Path startsWith "/management.ProxyService/" || req.URL.Path startsWith "/ws-proxy/")
+          apply:
+            - CancelEvent()
+            - CancelAlert()
+            - SetRemediation("allow")
   env:
     - name: COLLECTIONS
       value: crowdsecurity/appsec-virtual-patching crowdsecurity/appsec-crs

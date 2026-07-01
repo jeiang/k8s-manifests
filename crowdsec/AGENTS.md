@@ -10,7 +10,7 @@ This directory contains values and support manifests for the upstream `crowdsec/
 - LAPI stays internal at `crowdsec-service.crowdsec.svc.cluster.local:8080`.
 - AppSec stays internal at `crowdsec-appsec-service.crowdsec.svc.cluster.local:7422`.
 - LAPI and AppSec metrics stay internal on port `6060` and are scraped with VictoriaMetrics `VMServiceScrape`.
-- Traefik WAF integration uses a bouncer key generated from CrowdSec and stored in Bitwarden Secrets Manager.
+- Traefik WAF integration uses separate LAPI and AppSec bouncer keys generated from CrowdSec and stored in Bitwarden Secrets Manager.
 - NetBird reverse proxy IP reputation uses a separate bouncer key generated from CrowdSec and stored in Bitwarden Secrets Manager.
 - Do not commit bouncer keys, CrowdSec console enrollment keys, or API credentials.
 

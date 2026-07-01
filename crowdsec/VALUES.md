@@ -25,7 +25,7 @@ These values override the upstream `crowdsec/crowdsec` chart for this cluster.
 | `agent.service.labels.victoria-metrics-scrape` | `crowdsec` | Selects the agent metrics service for `VMServiceScrape`. |
 | `appsec.enabled` | `true` | Runs CrowdSec AppSec/WAF. |
 | `appsec.acquisitions` | AppSec listener on `0.0.0.0:7422` | Provides the WAF endpoint used by Traefik. |
-| `appsec.configs.crs-vpatch.yaml` | CRS plus virtual patching config | Enables request inspection with default ban remediation. |
+| `appsec.configs.crs-vpatch.yaml` | Virtual patching config with a NetBird allow hook | Enables in-band request inspection with default ban remediation, disables broad CRS out-of-band rules, and allows NetBird signal, management, and WebSocket endpoints. |
 | `appsec.env.COLLECTIONS` | `crowdsecurity/appsec-virtual-patching crowdsecurity/appsec-crs` | Installs AppSec WAF collections. |
 | `appsec.service.type` | `ClusterIP` | Keeps AppSec internal. |
 | `appsec.service.labels.victoria-metrics-scrape` | `crowdsec` | Selects the service for `VMServiceScrape`. |
@@ -35,4 +35,7 @@ These values override the upstream `crowdsec/crowdsec` chart for this cluster.
 
 - LAPI and AppSec endpoints are intentionally not exposed through public ingress.
 - Bouncer keys must be generated with `cscli bouncers add` after LAPI is running and then stored in Bitwarden Secrets Manager.
+- The Traefik dynamic config uses separate `crowdsecLapiKey` and `crowdsecAppsecKey` values. Keep both explicit; relying on the plugin's AppSec key fallback caused AppSec reachability failures in this cluster.
 - The Traefik dynamic config Secret must exist before applying the Traefik `HelmChartConfig` that mounts it.
+- Broad `crowdsecurity/crs` out-of-band rules are intentionally disabled after false-positive AppSec decisions on legitimate NetBird traffic.
+- The NetBird AppSec allow hook is host/path scoped so it works for roaming laptop IPs and in-cluster peers without static IP allowlisting.

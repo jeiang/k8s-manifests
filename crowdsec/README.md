@@ -57,19 +57,22 @@ kubectl apply -f ./crowdsec/crowdsec-vmservicescrape.yaml
 
 ## Bouncer Keys
 
-Generate separate bouncer keys for NetBird and Traefik:
+Generate separate bouncer keys for NetBird, Traefik LAPI decisions, and Traefik AppSec inspection:
 
 ```fish
 kubectl -n crowdsec exec deploy/crowdsec-lapi -- \
   cscli bouncers add netbird-proxy -o raw
 
 kubectl -n crowdsec exec deploy/crowdsec-lapi -- \
-  cscli bouncers add traefik-waf -o raw
+  cscli bouncers add traefik-lapi -o raw
+
+kubectl -n crowdsec exec deploy/crowdsec-lapi -- \
+  cscli bouncers add traefik-appsec -o raw
 ```
 
 Each command prints the key once. Store the NetBird key in Bitwarden Secrets Manager and set `netbird/values.yaml` `bitwardenSecrets.secretIds.crowdsecBouncerKey` to that Bitwarden secret ID before enabling `proxy.crowdsec.enabled`.
 
-Store the Traefik key in Bitwarden as a full dynamic config file value named `crowdsec-dynamic.yaml`:
+Store the Traefik keys in Bitwarden as a full dynamic config file value named `crowdsec-dynamic.yaml`. Keep `crowdsecLapiKey` and `crowdsecAppsecKey` explicit; the plugin can default the AppSec key from the LAPI key, but this cluster has required separate AppSec credentials in practice.
 
 ```yaml
 http:
@@ -82,11 +85,13 @@ http:
           crowdsecAppsecEnabled: true
           crowdsecAppsecScheme: http
           crowdsecAppsecHost: crowdsec-appsec-service.crowdsec.svc.cluster.local:7422
+          crowdsecAppsecPath: /
+          crowdsecAppsecKey: replace-with-traefik-appsec-bouncer-key
           crowdsecAppsecFailureBlock: true
           crowdsecAppsecUnreachableBlock: true
           crowdsecLapiScheme: http
           crowdsecLapiHost: crowdsec-service.crowdsec.svc.cluster.local:8080
-          crowdsecLapiKey: replace-with-traefik-bouncer-key
+          crowdsecLapiKey: replace-with-traefik-lapi-bouncer-key
           forwardedHeadersTrustedIPs:
             - 10.0.0.0/8
 ```
@@ -99,6 +104,21 @@ kubectl -n kube-system get secret traefik-crowdsec-dynamic
 ```
 
 Apply the Traefik `HelmChartConfig` only after this Secret exists; the Traefik pod mounts it at startup.
+
+## NetBird AppSec Allow Hook
+
+The AppSec config disables the broad CRS out-of-band ruleset and allows NetBird's high-churn management, signal, and WebSocket endpoints when they are inspected by the global Traefik middleware:
+
+```yaml
+on_match:
+  - filter: req.Host == "netbird.jeiang.dev" && (req.URL.Path startsWith "/signalexchange.SignalExchange/" || req.URL.Path startsWith "/management.ManagementService/" || req.URL.Path startsWith "/management.ProxyService/" || req.URL.Path startsWith "/ws-proxy/")
+    apply:
+      - CancelEvent()
+      - CancelAlert()
+      - SetRemediation("allow")
+```
+
+The `crowdsecurity/crs` out-of-band ruleset is intentionally not loaded because it produced false-positive `crowdsecurity/crowdsec-appsec-outofband` decisions for legitimate NetBird control-plane traffic. In-band virtual patching remains enabled. Keep the NetBird hook path-scoped rather than IP-scoped so roaming clients and in-cluster peers do not depend on static allowlisted addresses.
 
 ## Verify
 
