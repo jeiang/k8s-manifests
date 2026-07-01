@@ -53,6 +53,9 @@ These values configure the local self-hosted NetBird Helm chart.
 | `proxy.acmeCertificates` | `true` | Lets the proxy manage certificates. |
 | `proxy.acmeChallengeType` | `tls-alpn-01` | ACME challenge type. |
 | `proxy.certificateDirectory` | `/certs` | Proxy certificate storage path. |
+| `proxy.proxyProtocol.enabled` | `true` | Accepts PROXY protocol from Traefik so proxy logs and access policy see the original client IP. |
+| `proxy.proxyProtocol.version` | `2` | PROXY protocol version Traefik sends to the NetBird proxy backend. |
+| `proxy.proxyProtocol.trustedProxies` | `10.42.0.0/16` | Upstream proxy CIDRs trusted by NetBird; this should include Traefik pod IPs. |
 | `proxy.uid` | `"1000"` | Proxy process UID. |
 | `proxy.gid` | `"1000"` | Proxy process GID. |
 | `proxy.logLevel` | `info` | Proxy log level. |

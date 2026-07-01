@@ -10,5 +10,16 @@ spec:
         load-balancer.hetzner.cloud/name: legion-lb1
         load-balancer.hetzner.cloud/network-zone: us-east
         load-balancer.hetzner.cloud/type: lb11
+        load-balancer.hetzner.cloud/use-private-ip: "true"
         load-balancer.hetzner.cloud/protocol: tcp
+        load-balancer.hetzner.cloud/uses-proxyprotocol: "true"
         load-balancer.hetzner.cloud/health-check-protocol: tcp
+    ports:
+      web:
+        proxyProtocol:
+          trustedIPs:
+            - 10.0.0.0/8
+      websecure:
+        proxyProtocol:
+          trustedIPs:
+            - 10.0.0.0/8

@@ -101,6 +101,10 @@ spec:
       services:
         - name: {{ include "netbird.proxyName" . | quote }}
           port: {{ .Values.proxy.port }}
+          {{- if .Values.proxy.proxyProtocol.enabled }}
+          proxyProtocol:
+            version: {{ .Values.proxy.proxyProtocol.version }}
+          {{- end }}
   tls:
     passthrough: true
 {{- end }}

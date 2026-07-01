@@ -147,6 +147,8 @@ The proxy connects directly to the in-cluster management server Service over HTT
 
 `proxy.jeiang.dev` and `*.proxy.jeiang.dev` must both resolve to the Traefik load balancer. The TCP route forwards the exact `proxy.jeiang.dev` SNI name plus subdomains matched by `proxy.wildcardDomainRegexp`; unrelated hostnames on the same entryPoint are not routed to the proxy. The default values assume these DNS records already exist.
 
+The proxy route uses PROXY protocol v2 from Traefik to preserve the original client IP across Traefik's TCP passthrough connection. Keep `proxy.proxyProtocol.trustedProxies` aligned with the cluster pod CIDR used by Traefik pods; the default matches this cluster's `10.42.0.0/16` pod CIDR. The Traefik load balancer also needs Hetzner PROXY protocol enabled so Traefik receives the real client IP from the Hetzner Load Balancer before forwarding it to the NetBird proxy.
+
 ## Verify
 
 ```fish

@@ -109,6 +109,10 @@ proxy:
   acmeCertificates: true
   acmeChallengeType: tls-alpn-01
   certificateDirectory: /certs
+  proxyProtocol:
+    enabled: true
+    version: 2
+    trustedProxies: 10.42.0.0/16
   uid: "1000"
   gid: "1000"
   logLevel: info

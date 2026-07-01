@@ -65,6 +65,12 @@ spec:
               value: {{ .Values.proxy.certificateDirectory | quote }}
             - name: NB_PROXY_LOG_LEVEL
               value: {{ .Values.proxy.logLevel | quote }}
+            - name: NB_PROXY_PROXY_PROTOCOL
+              value: {{ .Values.proxy.proxyProtocol.enabled | quote }}
+            {{- if .Values.proxy.proxyProtocol.trustedProxies }}
+            - name: NB_PROXY_TRUSTED_PROXIES
+              value: {{ .Values.proxy.proxyProtocol.trustedProxies | quote }}
+            {{- end }}
           ports:
             - name: tls
               containerPort: {{ .Values.proxy.port }}
