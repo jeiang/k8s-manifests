@@ -13,7 +13,7 @@ Install these on your workstation:
 
 The cluster operator must provide:
 
-- Kubernetes API server URL.
+- Kubernetes API server URL: `https://node1.jeiang.dev:6443`.
 - Kubernetes cluster CA data or CA certificate file.
 - Pocket ID issuer URL: `https://auth.jeiang.dev`.
 - Kubernetes OIDC client ID: `44213aa3-11eb-401d-922c-c7f81c3a9e37`.
@@ -81,6 +81,8 @@ kubectl oidc-login --help
 
 Create a kubeconfig file with your cluster details and Pocket ID exec login.
 
+Kubernetes uses your Pocket ID username as your Kubernetes username. That username is also your namespace ownership prefix. For example, user `john` means someone whose Pocket ID username is exactly `john`; that user owns the namespace `john` and namespaces prefixed with `john-`, such as `john-website`.
+
 macOS/Linux:
 
 ```sh
@@ -90,7 +92,7 @@ kind: Config
 clusters:
   - name: legion
     cluster:
-      server: https://<kubernetes-api-server>:6443
+      server: https://node1.jeiang.dev:6443
       certificate-authority-data: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUJlRENDQVIyZ0F3SUJBZ0lCQURBS0JnZ3Foa2pPUFFRREFqQWpNU0V3SHdZRFZRUUREQmhyTTNNdGMyVnkKZG1WeUxXTmhRREUzT0RJeE9UQTNPRE13SGhjTk1qWXdOakl6TURNMU9UUXpXaGNOTXpZd05qSXdNRE0xT1RRegpXakFqTVNFd0h3WURWUVFEREJock0zTXRjMlZ5ZG1WeUxXTmhRREUzT0RJeE9UQTNPRE13V1RBVEJnY3Foa2pPClBRSUJCZ2dxaGtqT1BRTUJCd05DQUFRTWhadHlYdXZ0V1l5UlVVaGNWWlhqNjhqalRwRGJSNklkTlRLNDJKRGMKaDYxWVZ3eEJPRHRZdGx6WjY3aG1CTktsNkx4NUdocnQ0dmJLbnBpcEUrMkNvMEl3UURBT0JnTlZIUThCQWY4RQpCQU1DQXFRd0R3WURWUjBUQVFIL0JBVXdBd0VCL3pBZEJnTlZIUTRFRmdRVTE0eDM0ZkFSeXVZbjcyLzlQZkIwCnV0NUNoNkF3Q2dZSUtvWkl6ajBFQXdJRFNRQXdSZ0loQU4vb2pWcnFtcDRrckpSVVJIWGNRczNvcTlzOXdONnIKaVFabEdpVW9RTDl2QWlFQXFLYllaYSt0bC9TRDdMdTd5Z2Vpb3h3NnA0RitkSC82N2VvOE81SlRuNEU9Ci0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0K
 users:
   - name: pocket-id
@@ -124,7 +126,7 @@ kind: Config
 clusters:
   - name: legion
     cluster:
-      server: https://<kubernetes-api-server>:6443
+      server: https://node1.jeiang.dev:6443
       certificate-authority-data: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUJlRENDQVIyZ0F3SUJBZ0lCQURBS0JnZ3Foa2pPUFFRREFqQWpNU0V3SHdZRFZRUUREQmhyTTNNdGMyVnkKZG1WeUxXTmhRREUzT0RJeE9UQTNPRE13SGhjTk1qWXdOakl6TURNMU9UUXpXaGNOTXpZd05qSXdNRE0xT1RRegpXakFqTVNFd0h3WURWUVFEREJock0zTXRjMlZ5ZG1WeUxXTmhRREUzT0RJeE9UQTNPRE13V1RBVEJnY3Foa2pPClBRSUJCZ2dxaGtqT1BRTUJCd05DQUFRTWhadHlYdXZ0V1l5UlVVaGNWWlhqNjhqalRwRGJSNklkTlRLNDJKRGMKaDYxWVZ3eEJPRHRZdGx6WjY3aG1CTktsNkx4NUdocnQ0dmJLbnBpcEUrMkNvMEl3UURBT0JnTlZIUThCQWY4RQpCQU1DQXFRd0R3WURWUjBUQVFIL0JBVXdBd0VCL3pBZEJnTlZIUTRFRmdRVTE0eDM0ZkFSeXVZbjcyLzlQZkIwCnV0NUNoNkF3Q2dZSUtvWkl6ajBFQXdJRFNRQXdSZ0loQU4vb2pWcnFtcDRrckpSVVJIWGNRczNvcTlzOXdONnIKaVFabEdpVW9RTDl2QWlFQXFLYllaYSt0bC9TRDdMdTd5Z2Vpb3h3NnA0RitkSC82N2VvOE81SlRuNEU9Ci0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0K
 users:
   - name: pocket-id
@@ -151,18 +153,59 @@ current-context: pocket-id@legion
 
 The `profile` and `groups` scopes are required. Without `profile`, the ID token may not contain `preferred_username`. Without `groups`, Kubernetes will not see `kubernetes-access` or `kubernetes-admin`.
 
-## Log In
+## Install the kubeconfig
+
+If this is your only Kubernetes cluster, move the generated kubeconfig to the default location.
 
 macOS/Linux:
 
 ```sh
-KUBECONFIG=./pocket-id.kubeconfig kubectl auth whoami
+mkdir -p ~/.kube
+mv pocket-id.kubeconfig ~/.kube/config
+chmod 600 ~/.kube/config
 ```
 
 Windows PowerShell:
 
 ```powershell
-$env:KUBECONFIG = ".\pocket-id.kubeconfig"
+New-Item -ItemType Directory -Force "$env:USERPROFILE\.kube"
+Move-Item .\pocket-id.kubeconfig "$env:USERPROFILE\.kube\config"
+```
+
+If you already have clusters, users, or contexts in your kubeconfig, merge this kubeconfig into the existing default file instead of replacing it.
+
+macOS/Linux:
+
+```sh
+mkdir -p ~/.kube
+KUBECONFIG="$HOME/.kube/config:./pocket-id.kubeconfig" kubectl config view --flatten > /tmp/merged-kubeconfig
+mv /tmp/merged-kubeconfig ~/.kube/config
+chmod 600 ~/.kube/config
+kubectl config use-context pocket-id@legion
+```
+
+Windows PowerShell:
+
+```powershell
+New-Item -ItemType Directory -Force "$env:USERPROFILE\.kube"
+$env:KUBECONFIG = "$env:USERPROFILE\.kube\config;.\pocket-id.kubeconfig"
+kubectl config view --flatten | Set-Content -Encoding utf8 "$env:TEMP\merged-kubeconfig"
+Move-Item -Force "$env:TEMP\merged-kubeconfig" "$env:USERPROFILE\.kube\config"
+Remove-Item Env:\KUBECONFIG
+kubectl config use-context pocket-id@legion
+```
+
+## Log In
+
+macOS/Linux:
+
+```sh
+kubectl auth whoami
+```
+
+Windows PowerShell:
+
+```powershell
 kubectl auth whoami
 ```
 
@@ -182,6 +225,8 @@ Username   saeed
 Groups     [kubernetes-access ... system:authenticated]
 ```
 
+The `Username` value is the namespace prefix Kubernetes and Kyverno use. If the output says `Username john`, create `john` and `john-*` namespaces. Do not use your email address, display name, or Pocket ID subject UUID as the namespace prefix.
+
 ## Verify Access
 
 Admin users:
@@ -198,6 +243,8 @@ kubectl auth can-i create namespaces
 kubectl create namespace <username>
 kubectl create namespace <username>-website
 ```
+
+Replace `<username>` with the exact value from `kubectl auth whoami`. For example, if `kubectl auth whoami` shows `Username john`, run `kubectl create namespace john` and `kubectl create namespace john-website`.
 
 Kyverno should deny namespaces owned by another username:
 
