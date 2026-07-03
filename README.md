@@ -39,6 +39,7 @@ Chart-specific maintenance guidance lives in each chart directory's `AGENTS.md` 
 - Working DNS records for public ingress hosts before installing internet-facing charts.
 - Hetzner Cloud Controller Manager for charts that expose `LoadBalancer` Services.
 - Storage classes expected by the workload being installed; see [`docs/CLUSTER.md`](./docs/CLUSTER.md#storage-policy).
+- Deployments that mount Hetzner `hcloud-volumes` PVCs must use `Recreate`, not rolling updates, to avoid RWO multi-attach failures during upgrades.
 - Bootstrap/operator Secrets required by the workload; see [`docs/SECRETS.md`](./docs/SECRETS.md).
 
 ## Usage

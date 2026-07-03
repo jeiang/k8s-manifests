@@ -87,6 +87,7 @@ Avoid unless explicitly approved:
 - Privileged containers or broad Linux capabilities.
 - Literal passwords, tokens, private keys, cookies, or storage credentials in chart files.
 - `ReadWriteMany` claims on `hcloud-volumes`.
+- Rolling-update Deployments that mount `hcloud-volumes` PVCs.
 
 ## Available Workload Resources
 
@@ -129,6 +130,8 @@ spec:
 Use `hcloud-volumes` for small `ReadWriteOnce` volumes:
 
 ```yaml
+strategy:
+  type: Recreate
 persistence:
   enabled: true
   storageClassName: hcloud-volumes
@@ -136,6 +139,8 @@ persistence:
     - ReadWriteOnce
   size: 5Gi
 ```
+
+Every Deployment that mounts an `hcloud-volumes` PVC must use `Recreate`. Hetzner Cloud Volumes are node-attached RWO block devices, so rolling updates can start the replacement pod before the old pod releases the volume, causing multi-attach failures. When migrating an existing Deployment to `Recreate`, explicitly clear previous rolling update settings, for example with `rollingUpdate: null` in upstream chart values when supported.
 
 Use `rclone-csi` for `ReadWriteMany`, multi-pod, larger than `20Gi`, or growth-prone volumes:
 

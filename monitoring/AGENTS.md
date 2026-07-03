@@ -13,7 +13,8 @@ This directory contains values and support manifests for the upstream `victoria-
 - The `grafana-oauth` Secret is expected to be synced by Bitwarden Secrets Manager from `grafana-oauth-bitwardensecret.yaml`.
 - The CrowdSec dashboard is loaded by Grafana's dashboard sidecar from `crowdsec-dashboard-configmap.yaml`.
 - VictoriaMetrics and VictoriaLogs raw HTTP endpoints must not be exposed through public ingress. Expose them through NetBird resources in a later change.
-- VMSingle and VLSingle use the RWO-only `hcloud-volumes` StorageClass.
+- VMSingle, VLSingle, and Grafana use the RWO-only `hcloud-volumes` StorageClass.
+- Grafana must keep `grafana.deploymentStrategy.type: Recreate` and `grafana.deploymentStrategy.rollingUpdate: null`; rolling updates can leave replacement pods stuck on multi-attach errors with Hetzner RWO volumes.
 
 ## Editing Notes
 

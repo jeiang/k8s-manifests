@@ -88,6 +88,8 @@ Most small repository PVCs should use the Hetzner CSI-backed `hcloud-volumes` St
 
 Use `hcloud-volumes` for small RWO volumes, roughly less than `20Gi`, when the workload can run safely on one node at a time.
 
+Any Deployment that mounts an `hcloud-volumes` PVC must use `strategy.type: Recreate`. Do not use the default rolling update strategy with Hetzner Cloud Volumes: Kubernetes can create the replacement pod before the old pod releases the RWO volume, leaving the new pod stuck with a multi-attach error and unable to start. When changing an existing Deployment from `RollingUpdate` to `Recreate`, clear the old `rollingUpdate` field as part of the same apply, for example by rendering `rollingUpdate: null`.
+
 Use `rclone-csi` for volumes that are larger than `20Gi`, expected to grow beyond `20Gi`, or require `ReadWriteMany`/multi-pod access. Workloads that explicitly use rclone-backed storage set `storageClassName` or `storageClass` to `rclone-csi`.
 
 Verify storage classes before installing workloads that create PVCs:

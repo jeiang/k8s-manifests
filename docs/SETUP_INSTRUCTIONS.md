@@ -111,7 +111,7 @@ kubectl delete rolebinding tony-admin --namespace john-website
 - Use Traefik `Ingress` for public HTTP/HTTPS when approved.
 - Use cert-manager `letsencrypt-prod` for public TLS.
 - Store application secrets in Bitwarden Secrets Manager; do not commit literal secret values.
-- Use `hcloud-volumes` for small `ReadWriteOnce` volumes.
+- Use `hcloud-volumes` for small `ReadWriteOnce` volumes, and set any Deployment mounting those volumes to `Recreate`.
 - Use `rclone-csi` for larger, growth-prone, or `ReadWriteMany` volumes.
 - Do not create cluster-scoped resources such as `ClusterRole`, `ClusterRoleBinding`, CRDs, or controllers unless a cluster administrator explicitly approves them.
 
