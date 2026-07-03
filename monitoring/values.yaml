@@ -104,6 +104,8 @@ internal:
 
 grafana:
   enabled: true
+  deploymentStrategy:
+    type: Recreate
   resources:
     requests:
       cpu: 100m

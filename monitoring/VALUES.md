@@ -19,6 +19,7 @@ These values override the upstream `vm/victoria-metrics-k8s-stack` chart for thi
 | `vlagent.spec.k8sCollector.enabled` | `true` | Collects Kubernetes container logs. |
 | `vlagent.ingress.enabled` | `false` | Keeps the log agent endpoint off public ingress. |
 | `grafana.enabled` | `true` | Deploys bundled Grafana. |
+| `grafana.deploymentStrategy.type` | `Recreate` | Avoids rolling-update multi-attach conflicts with the RWO Hetzner volume. |
 | `grafana.resources` | `100m/768Mi` request, `1 CPU/2Gi` limit | Avoids BestEffort eviction/OOM during startup, plugin loading, and first login. |
 | `grafana.persistence` | `5Gi` `hcloud-volumes` RWO PVC | Persists Grafana state, plugins, sessions, and the SQLite database across restarts. |
 | `grafana.plugins` | VictoriaMetrics metrics and logs datasource plugins | Installs plugins needed by the default datasource definitions. |
@@ -36,5 +37,6 @@ These values override the upstream `vm/victoria-metrics-k8s-stack` chart for thi
 ## Notes
 
 - The Grafana OAuth client secret must not be placed in `values.yaml`. It should be synced to `grafana-oauth` with key `GF_AUTH_GENERIC_OAUTH_CLIENT_SECRET`.
+- Grafana uses `Recreate` because `hcloud-volumes` is RWO block storage; rolling updates can leave a replacement pod waiting on a multi-attach error until the old pod releases the volume.
 - The raw VictoriaMetrics and VictoriaLogs HTTP endpoints are intentionally internal for now. A later change should expose them through NetBird resources, not public ingress.
 - If metrics or logs grow beyond the small RWO profile, revisit retention and storage before increasing write volume.

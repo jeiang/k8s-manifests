@@ -152,6 +152,7 @@ Inspect the rendered chart before deployment for:
 - Grafana OAuth secret reference.
 - Generated VictoriaMetrics and VictoriaLogs datasources.
 - CrowdSec dashboard ConfigMap label `grafana_dashboard: "1"`.
+- Grafana Deployment strategy `Recreate`, so the RWO Hetzner volume is detached before the replacement pod starts.
 
 If Grafana resets the connection after returning from Pocket ID, check for OOM kills first:
 
