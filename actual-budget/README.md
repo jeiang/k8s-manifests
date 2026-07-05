@@ -7,7 +7,8 @@ Values for deploying Actual Budget with the upstream `community-charts/actualbud
 - Actual Budget behind Traefik at `https://budget.jeiang.dev`.
 - cert-manager TLS using the `letsencrypt-prod` `ClusterIssuer`.
 - A `ClusterIP` Service on port `5006`.
-- A persistent volume claim with `10Gi` of rclone-backed storage.
+- A pre-created Hetzner CSI-backed persistent volume claim named `actual-budget-hcloud`.
+- A `Recreate` Deployment strategy for the RWO Hetzner volume.
 - An init container that creates `/data/server-files` and `/data/user-files` before Actual starts.
 - Password-based Actual Budget login.
 - Conservative CPU and memory requests/limits.
@@ -18,8 +19,15 @@ Values for deploying Actual Budget with the upstream `community-charts/actualbud
 - Traefik installed with an IngressClass named `traefik`.
 - cert-manager installed with a `letsencrypt-prod` `ClusterIssuer`.
 - DNS for `budget.jeiang.dev` pointing at the Traefik load balancer.
-- rclone CSI driver installed with the `rclone-csi` StorageClass, RWX-capable backend configuration, and a working `rclone-config` Secret.
-- The `rclone-csi` StorageClass mount options set UID/GID `1000`; this values file runs the Actual Budget pod as UID/GID `1000`.
+- Hetzner CSI installed with the RWO `hcloud-volumes` StorageClass.
+- A `10Gi` PVC named `actual-budget-hcloud` in the `actual-budget` namespace, populated with the existing Actual Budget data before the Deployment starts.
+- Copied files must be writable by UID/GID `1000`; this values file runs the Actual Budget pod as UID/GID `1000`.
+
+## Existing Data Migration
+
+Existing installs cannot mutate the old `actual-budget-data` PVC from `rclone-csi` to `hcloud-volumes`. Create `actual-budget-hcloud` outside these values, stop Actual Budget, copy the old PVC contents into the new PVC, and verify `server-files` and `user-files` are present before upgrading this release.
+
+Do not commit one-off copy Jobs, copy pod manifests, or live storage credentials to this repository.
 
 ## Install
 
@@ -55,6 +63,8 @@ kubectl -n actual-budget get deploy,pods,svc,ingress,pvc
 kubectl -n actual-budget rollout status deployment/actual-budget --timeout=5m
 kubectl -n actual-budget get ingress actual-budget
 ```
+
+Confirm the Deployment mounts `actual-budget-hcloud` and uses the `Recreate` strategy before starting it against migrated data.
 
 If ingress is not ready yet, use a port-forward:
 

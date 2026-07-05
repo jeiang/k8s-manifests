@@ -4,6 +4,10 @@ replicaCount: 1
 
 fullnameOverride: actual-budget
 
+strategy:
+  type: Recreate
+  rollingUpdate: null
+
 image:
   repository: actualbudget/actual-server
   pullPolicy: IfNotPresent
@@ -33,12 +37,12 @@ ingress:
 persistence:
   enabled: true
   annotations: {}
-  existingClaim: ""
-  storageClass: rclone-csi
+  existingClaim: actual-budget-hcloud
+  storageClass: hcloud-volumes
   subPath: ""
   volumeMode: ""
   accessModes:
-    - ReadWriteMany
+    - ReadWriteOnce
   size: 10Gi
 
 login:

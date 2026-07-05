@@ -5,6 +5,7 @@ These values configure the local `hath-rust` Helm chart.
 | Value | Default | Purpose |
 | --- | --- | --- |
 | `replicaCount` | `1` | Runs one Hath pod. |
+| `strategy.type` | `Recreate` | Avoids rolling-update multi-attach conflicts with the RWO Hetzner volume. |
 | `image.repository` | `ghcr.io/james58899/hath-rust` | Hath image repository. |
 | `image.tag` | `latest` | Hath image tag. |
 | `image.pullPolicy` | `IfNotPresent` | Image pull policy. |
@@ -35,15 +36,15 @@ These values configure the local `hath-rust` Helm chart.
 | `service.port` | `8888` | Internal service port. |
 | `persistence.enabled` | `true` | Creates persistent storage. |
 | `persistence.annotations` | `{}` | Optional PVC annotations. |
-| `persistence.existingClaim` | `""` | Creates a PVC instead of using an existing one. |
-| `persistence.storageClassName` | `rclone-csi` | Uses rclone-backed storage. |
-| `persistence.accessModes` | `ReadWriteMany` | Requests RWX access. |
-| `persistence.size` | `15Gi` | Requested persistent volume size. |
+| `persistence.existingClaim` | `hath-hcloud` | Mounts the pre-created and pre-populated hcloud PVC. |
+| `persistence.storageClassName` | `hcloud-volumes` | Uses Hetzner CSI storage when the chart creates a PVC. |
+| `persistence.accessModes` | `ReadWriteOnce` | Requests RWO access for Hetzner Cloud Volumes. |
+| `persistence.size` | `30Gi` | Requested persistent volume size for fresh hcloud PVCs. |
 | `persistence.mountPath` | `/hath` | Persistent volume mount path. |
 | `temp.sizeLimit` | `""` | Uses default `emptyDir` size behavior. |
 | `resources.requests` | `cpu: 100m`, `memory: 256Mi` | Baseline scheduling request. |
 | `resources.limits` | `cpu: "1"`, `memory: 1Gi` | Runtime resource cap. |
-| `podSecurityContext` | `fsGroup: 1000`, `fsGroupChangePolicy: OnRootMismatch` | Matches rclone mount ownership. |
+| `podSecurityContext` | `fsGroup: 1000`, `fsGroupChangePolicy: OnRootMismatch` | Keeps copied data writable by the Hath process. |
 | `securityContext` | non-root UID/GID `1000`, drops all capabilities | Runs without privilege escalation. |
 | `nodeSelector` | `{}` | Optional node placement constraints. |
 | `tolerations` | `[]` | Optional taint tolerations. |
@@ -53,3 +54,5 @@ These values configure the local `hath-rust` Helm chart.
 
 - Keep one replica while `hostPort.enabled=true` unless placement rules are added.
 - Firewall rules must allow inbound TCP `8888` to the node running the pod.
+- Existing installs must copy data into `hath-hcloud` before upgrading to these values. Hath requires the data directory to exist before startup.
+- `30Gi` is intentionally larger than the usual small-volume guideline for this cluster because Hath cache/data is being moved off the pixeldrain-backed rclone backend.

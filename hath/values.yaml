@@ -1,5 +1,8 @@
 replicaCount: 1
 
+strategy:
+  type: Recreate
+
 image:
   repository: ghcr.io/james58899/hath-rust
   tag: latest
@@ -39,11 +42,11 @@ service:
 persistence:
   enabled: true
   annotations: {}
-  existingClaim: ""
-  storageClassName: rclone-csi
+  existingClaim: hath-hcloud
+  storageClassName: hcloud-volumes
   accessModes:
-    - ReadWriteMany
-  size: 15Gi
+    - ReadWriteOnce
+  size: 30Gi
   mountPath: /hath
 
 temp:
