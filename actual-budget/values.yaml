@@ -37,7 +37,6 @@ ingress:
 persistence:
   enabled: true
   annotations: {}
-  existingClaim: actual-budget-hcloud
   storageClass: hcloud-volumes
   subPath: ""
   volumeMode: ""
