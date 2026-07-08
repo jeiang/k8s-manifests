@@ -62,6 +62,8 @@ See [`AUTHENTICATION.md`](./AUTHENTICATION.md) for user-side kubeconfig setup.
 
 Install the Hetzner components after the k3s nodes are up:
 
+The chart versions currently deployed are `hcloud-cloud-controller-manager` `1.33.0` and `hcloud-csi` `2.21.2`:
+
 ```fish
 kubectl -n kube-system create secret generic hcloud \
   --from-literal=token=REPLACE_ME_HCLOUD_TOKEN \
@@ -72,12 +74,14 @@ helm repo update hcloud
 
 helm upgrade --install hccm hcloud/hcloud-cloud-controller-manager \
   --namespace kube-system \
+  --version 1.33.0 \
   --set networking.enabled=true \
   --set networking.clusterCIDR=10.42.0.0/16 \
   --wait
 
 helm upgrade --install hcloud-csi hcloud/hcloud-csi \
   --namespace kube-system \
+  --version 2.21.2 \
   --set node.kubeletDir=/var/lib/kubelet \
   --wait
 ```
