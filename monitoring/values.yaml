@@ -2,6 +2,33 @@ global:
   cluster:
     dnsDomain: cluster.local.
 
+# k3s runs kube-scheduler, kube-controller-manager, and etcd embedded in the
+# k3s binary on loopback-only ports, not as separate pods with routable
+# metrics endpoints. The chart's default Services/VMServiceScrapes for these
+# components have no matching endpoints on k3s, and the matching alert rule
+# groups fire permanently (KubeSchedulerDown, KubeControllerManagerDown,
+# ScrapePoolHasNoTargets, RecordingRulesNoData) rather than reflecting a real
+# problem. Disabled rather than fixed via k3s server flags + static
+# endpoints, since this is a single-node control plane where that visibility
+# isn't worth the added node-level configuration to maintain.
+kubeScheduler:
+  enabled: false
+kubeControllerManager:
+  enabled: false
+kubeEtcd:
+  enabled: false
+
+defaultRules:
+  groups:
+    kubernetes-system-scheduler:
+      enabled: false
+    kubernetes-system-controller-manager:
+      enabled: false
+    etcd:
+      enabled: false
+    kube-scheduler.rules:
+      enabled: false
+
 vmsingle:
   enabled: true
   spec:

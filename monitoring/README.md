@@ -9,6 +9,7 @@ Values and support manifests for deploying the upstream `vm/victoria-metrics-k8s
 - [Pocket ID Authentication](#pocket-id-authentication)
 - [Bitwarden Secret](#bitwarden-secret)
 - [Alerting](#alerting)
+- [k3s Control Plane Metrics](#k3s-control-plane-metrics)
 - [CrowdSec Dashboard](#crowdsec-dashboard)
 - [Install](#install)
 - [Verify](#verify)
@@ -29,6 +30,7 @@ Values and support manifests for deploying the upstream `vm/victoria-metrics-k8s
 - A `BitwardenSecret` manifest that syncs the Grafana OAuth client secret.
 - NetBird `NetworkResource` objects that expose the raw VictoriaMetrics and VictoriaLogs endpoints privately (see [NetBird Exposure](#netbird-exposure)).
 - Alertmanager routed to a Discord webhook, synced from Bitwarden (see [Alerting](#alerting)).
+- `kubeScheduler`, `kubeControllerManager`, and `kubeEtcd` scraping and alerting disabled, since k3s doesn't expose them the way this chart expects (see [k3s Control Plane Metrics](#k3s-control-plane-metrics)).
 
 The raw VictoriaMetrics and VictoriaLogs HTTP endpoints are not exposed publicly.
 
@@ -115,6 +117,25 @@ Alertmanager routes all alerts (the chart's `defaultRules` plus anything from `v
 
 Current routing is a single catch-all: `group_by: ["alertgroup", "job"]`, `group_wait: 30s`, `group_interval: 5m`, `repeat_interval: 12h`. Add more specific routes under `alertmanager.config.route.routes` if some alerts need a different receiver or cadence later.
 
+## k3s Control Plane Metrics
+
+`kubeScheduler.enabled`, `kubeControllerManager.enabled`, and `kubeEtcd.enabled` are set to `false`. k3s runs these components embedded in the k3s binary on loopback-only ports (`10259`, `10257`, `2381`), not as separate pods, so the chart's default headless Services/`VMServiceScrape`s for them have zero endpoints on this cluster. Left enabled, they produce permanently-firing `KubeSchedulerDown`, `KubeControllerManagerDown`, `ScrapePoolHasNoTargets`, and `RecordingRulesNoData` alerts that don't reflect a real problem — confirmed by probing the control-plane node directly (`legion-node1`, `172.17.0.1`): all three ports respond on loopback but not on the node's routable address. The matching `defaultRules.groups` entries (`kubernetes-system-scheduler`, `kubernetes-system-controller-manager`, `etcd`, `kube-scheduler.rules`) are disabled too, since removing the scrape target alone doesn't stop `absent()`-based down-alerts from firing.
+
+To get real scheduler/controller-manager/etcd metrics instead of disabling them, two changes are needed together:
+
+1. k3s server flags (outside this repo, e.g. in NixOS host config alongside the flags in [`../docs/CLUSTER.md`](../docs/CLUSTER.md)): `--kube-scheduler-arg=bind-address=0.0.0.0`, `--kube-controller-manager-arg=bind-address=0.0.0.0`, `--etcd-expose-metrics=true`.
+2. In this chart, re-enable the three toggles and set `kubeScheduler.endpoints`/`kubeControllerManager.endpoints`/`kubeEtcd.endpoints` to the control-plane node's internal IP (the chart's built-in mechanism for components "not deployed as a pod"), and `kubeEtcd.service.port`/`targetPort: 2381` (k3s's dedicated etcd metrics port, not the chart's default `2379` client port).
+
+This chart's `VMRule` and dashboard resources are created at runtime by a `sync-job` Deployment reading a ConfigMap (`monitoring-victoria-metrics-k8s-stack-sync-job-config`), not by static Helm templates, so `helm template` alone won't show whether a `defaultRules.groups`/`kubeScheduler.enabled`-style change actually took effect. Force CRD-gated resources to render and inspect that ConfigMap instead:
+
+```fish
+helm template monitoring vm/victoria-metrics-k8s-stack \
+  --namespace monitoring \
+  --api-versions "operator.victoriametrics.com/v1beta1/VMServiceScrape" \
+  -f ./monitoring/values.yaml \
+  | grep -A2 "kubernetes-system-scheduler:\|kubernetes-system-controller-manager:\|^        etcd:\|kube-scheduler.rules:"
+```
+
 ## CrowdSec Dashboard
 
 Apply the dashboard ConfigMap after Grafana is installed:
@@ -180,6 +201,16 @@ kubectl -n monitoring exec vmalertmanager-monitoring-victoria-metrics-k8s-stack-
 ```
 
 A message should appear in the configured Discord channel within a few seconds.
+
+Confirm the k3s control plane alerts and scrape pools are gone (allow a minute or two after upgrade for the `sync-job` to prune the old `VMRule`/`VMServiceScrape` resources):
+
+```fish
+kubectl -n monitoring get vmservicescrape | grep -i "scheduler\|controller-manager\|kube-etcd"
+kubectl -n monitoring get vmrule | grep -i "scheduler\|controller-manager\|^.*-etcd"
+kubectl -n monitoring exec vmalertmanager-monitoring-victoria-metrics-k8s-stack-0 -c alertmanager -- wget -qO- http://localhost:9093/api/v2/alerts | grep -o '"alertname":"[^"]*"' | sort -u
+```
+
+None of the three `kubectl get` commands above should return `kube-scheduler`/`kube-controller-manager`/`kube-etcd`, and the alertname list should no longer include `KubeSchedulerDown`, `KubeControllerManagerDown`, `ScrapePoolHasNoTargets`, or `RecordingRulesNoData`.
 
 Inspect the rendered chart before deployment for:
 

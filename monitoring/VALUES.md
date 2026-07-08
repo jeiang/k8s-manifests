@@ -37,6 +37,13 @@ These values override the upstream `vm/victoria-metrics-k8s-stack` chart for thi
 | `alertmanager.config.route.receiver` | `discord-notifications` | Routes all alerts to the Discord receiver by default. |
 | `alertmanager.config.route.group_by`/`group_wait`/`group_interval`/`repeat_interval` | `["alertgroup","job"]`, `30s`, `5m`, `12h` | Batches related alerts and controls notification cadence. |
 | `alertmanager.config.receivers[0].discord_configs[0].webhook_url_file` | `/etc/vm/secrets/alertmanager-discord/webhookUrl` | Reads the webhook URL from the mounted Secret file; never set `webhook_url` directly. |
+| `kubeScheduler.enabled` | `false` | Skips the kube-scheduler Service/scrape; k3s runs it embedded on a loopback-only port with no matching pod. |
+| `kubeControllerManager.enabled` | `false` | Skips the kube-controller-manager Service/scrape; same reason as `kubeScheduler`. |
+| `kubeEtcd.enabled` | `false` | Skips the etcd Service/scrape; k3s's embedded etcd metrics port is also loopback-only. |
+| `defaultRules.groups.kubernetes-system-scheduler.enabled` | `false` | Disables the `KubeSchedulerDown` alert rule group (an `absent()` check that fires regardless of scrape config). |
+| `defaultRules.groups.kubernetes-system-controller-manager.enabled` | `false` | Disables the `KubeControllerManagerDown` alert rule group. |
+| `defaultRules.groups.etcd.enabled` | `false` | Disables the etcd alert/recording rule group. |
+| `defaultRules.groups."kube-scheduler.rules".enabled` | `false` | Disables scheduler recording rules that would otherwise return no data. |
 
 ## Notes
 
@@ -45,3 +52,4 @@ These values override the upstream `vm/victoria-metrics-k8s-stack` chart for thi
 - The raw VictoriaMetrics and VictoriaLogs HTTP endpoints are intentionally internal; they're reachable privately over NetBird via `vmsingle-networkresource.yaml` and `vlsingle-networkresource.yaml`, not public ingress.
 - If metrics or logs grow beyond the small RWO profile, revisit retention and storage before increasing write volume.
 - The Discord webhook URL must not be placed in `values.yaml`. It should be synced to `alertmanager-discord` with key `webhookUrl`, referenced only via `webhook_url_file`.
+- `kubeScheduler`/`kubeControllerManager`/`kubeEtcd` are disabled because k3s exposes them on loopback-only ports with no matching pod, not because they're unimportant; see [k3s Control Plane Metrics](./README.md#k3s-control-plane-metrics) in the README for the exact node-level fix if real metrics are ever wanted instead.
