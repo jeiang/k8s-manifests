@@ -42,7 +42,7 @@ service:
 persistence:
   enabled: true
   annotations: {}
-  existingClaim: hath-hcloud
+  existingClaim: ""
   storageClassName: hcloud-volumes
   accessModes:
     - ReadWriteOnce
