@@ -12,6 +12,9 @@ These values configure the local website Helm chart.
 | `service.port` | `80` | HTTP service port. |
 | `resources.requests` | `cpu: 25m`, `memory: 32Mi` | Baseline scheduling request. |
 | `resources.limits` | `cpu: 100m`, `memory: 128Mi` | Runtime resource cap. |
+| `securityContext` | drops all capabilities, adds `NET_BIND_SERVICE`, no privilege escalation | Allows the nginx-based image to bind port `80` as root without broader privileges. |
+| `probes.readiness` | `httpGet` on `/`, `http` port | Gates traffic until nginx is accepting connections. |
+| `probes.liveness` | `httpGet` on `/`, `http` port | Restarts a wedged container. |
 | `ingress.enabled` | `true` | Creates public ingress. |
 | `ingress.className` | `traefik` | Uses Traefik ingress. |
 | `ingress.hosts` | `jeiang.dev`, `aidanpinard.co`, `pinard.co.tt` | Public hostnames. |
