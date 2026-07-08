@@ -21,5 +21,11 @@ spec:
           ports:
             - name: http
               containerPort: 80
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          readinessProbe:
+            {{- toYaml .Values.probes.readiness | nindent 12 }}
+          livenessProbe:
+            {{- toYaml .Values.probes.liveness | nindent 12 }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
