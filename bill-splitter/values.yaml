@@ -2,7 +2,7 @@ replicaCount: 1
 
 image:
   repository: ghcr.io/jeiang/bill-splitter
-  tag: latest
+  tag: ba481839c2eb24aa1079e902827121dc81d2936f
   pullPolicy: IfNotPresent
 
 service:

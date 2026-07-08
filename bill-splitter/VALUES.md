@@ -6,7 +6,7 @@ These values configure the local bill splitter Helm chart.
 | --- | --- | --- |
 | `replicaCount` | `1` | Runs one bill splitter pod. |
 | `image.repository` | `ghcr.io/jeiang/bill-splitter` | Bill splitter image repository. |
-| `image.tag` | `latest` | Bill splitter image tag. |
+| `image.tag` | `ba481839c2eb24aa1079e902827121dc81d2936f` | Bill splitter image tag; pinned to an immutable build sha, not a floating tag. Bump explicitly when deploying a new build. |
 | `image.pullPolicy` | `IfNotPresent` | Image pull policy. |
 | `service.type` | `ClusterIP` | Keeps the service internal behind ingress. |
 | `service.port` | `80` | HTTP service port. |

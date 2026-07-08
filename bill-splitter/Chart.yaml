@@ -2,5 +2,5 @@ apiVersion: v2
 name: bill-splitter
 description: Bill splitter website deployment with Traefik ingress and cert-manager TLS
 type: application
-version: 0.1.0
-appVersion: "latest"
+version: 0.1.1
+appVersion: "ba481839c2eb24aa1079e902827121dc81d2936f"

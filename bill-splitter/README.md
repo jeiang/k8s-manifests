@@ -2,7 +2,7 @@
 
 Helm chart for deploying the bill splitter website behind Traefik.
 
-Default application image: `ghcr.io/jeiang/bill-splitter:latest`.
+Default application image: `ghcr.io/jeiang/bill-splitter:ba481839c2eb24aa1079e902827121dc81d2936f` (pinned to an immutable build sha, not `latest`).
 
 ## What This Chart Creates
 
