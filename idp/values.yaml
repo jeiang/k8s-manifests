@@ -38,7 +38,7 @@ pocketId:
   email:
     verificationEnabled: true
     oneTimeAccessAsAdminEnabled: true
-    loginNotificationEnabled: false
+    loginNotificationEnabled: true
     apiKeyExpirationEnabled: false
     oneTimeAccessAsUnauthenticatedEnabled: false
   signups:
