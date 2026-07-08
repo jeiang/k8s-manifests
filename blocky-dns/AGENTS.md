@@ -9,7 +9,7 @@ This local Helm chart deploys Blocky as an internal DNS resolver. It owns the De
 - The Kubernetes Service is `ClusterIP` and exposes DNS on TCP and UDP port `53`.
 - The HPA is enabled by default and requires metrics-server or another metrics provider.
 - Remote blocklists require outbound HTTPS from the pod.
-- The optional NetBird integration is disabled by default and is enabled with `netbird.enabled=true`.
+- The NetBird integration is enabled by default (`netbird.enabled=true`) and requires the shared `NetworkRouter/k8s` in the `netbird` namespace to already exist; set `netbird.enabled=false` to opt out.
 - When NetBird is enabled, the local dependency alias is `netbird` and it should render only workload-specific `NetworkResource` objects.
 
 ## Editing Notes

@@ -72,7 +72,7 @@ blocky:
       format: text
 
 netbird:
-  enabled: false
+  enabled: true
   bitwardenSecrets:
     netbirdApi:
       enabled: false
