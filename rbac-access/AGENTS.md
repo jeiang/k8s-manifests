@@ -18,6 +18,7 @@ This local Helm chart creates Pocket ID/OIDC group-based bootstrap RBAC and Kyve
 
 - Kyverno and Kubernetes OIDC auth must exist before normal users can use this chart.
 - Do not reintroduce chart-managed per-user certificate RBAC or kubeconfig generation.
+- The `kubeconfigs/` directory holds vestigial per-user cert/key/kubeconfig files from a pre-OIDC access model; it is `.gitignore`'d (never committed) and safe to delete locally now that OIDC via Pocket ID is the only supported user auth path.
 - Keep namespace lifecycle RBAC broad enough for Kubernetes authorization and keep Kyverno policies strict enough to enforce ownership.
 - Verify all group subjects match exact Pocket ID group names emitted in the Kubernetes OIDC groups claim.
 - Treat new global admin subjects, break-glass subjects, kube-system subjects, delegated roles, and allowed groups as high risk.
