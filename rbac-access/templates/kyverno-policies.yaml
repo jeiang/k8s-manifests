@@ -13,7 +13,6 @@ metadata:
   labels:
     {{- $labels | nindent 4 }}
 spec:
-  validationFailureAction: {{ $failureAction | quote }}
   background: false
   rules:
     - name: require-kubernetes-access-group
@@ -30,6 +29,7 @@ spec:
           - subjects:
 {{- toYaml $bypassSubjects | nindent 14 }}
       validate:
+        failureAction: {{ $failureAction | quote }}
         message: "Namespace self-service requires the kubernetes-access group."
         deny:
           conditions:
@@ -50,6 +50,7 @@ spec:
           - subjects:
 {{- toYaml $bypassSubjects | nindent 14 }}
       validate:
+        failureAction: {{ $failureAction | quote }}
         message: "Users may create only their personal namespace or namespaces prefixed by their username."
         anyPattern:
           - metadata:
@@ -69,6 +70,7 @@ spec:
           - subjects:
 {{- toYaml $bypassSubjects | nindent 14 }}
       validate:
+        failureAction: {{ $failureAction | quote }}
 {{- if .Values.namespaceLifecycle.allowDeletePrefixed }}
         message: "Users may delete only prefixed namespaces they own; personal namespaces require a Kubernetes admin."
         deny:
@@ -150,7 +152,6 @@ metadata:
   labels:
     {{- $labels | nindent 4 }}
 spec:
-  validationFailureAction: {{ $failureAction | quote }}
   background: false
   rules:
     - name: protect-generated-owner-rolebinding
@@ -171,6 +172,7 @@ spec:
           - subjects:
 {{- toYaml $controllerSubjects | nindent 14 }}
       validate:
+        failureAction: {{ $failureAction | quote }}
         message: "Generated owner RoleBindings are managed by Kyverno and Kubernetes admins."
         deny:
           conditions:
@@ -195,6 +197,7 @@ spec:
           - subjects:
 {{- toYaml $controllerSubjects | nindent 14 }}
       validate:
+        failureAction: {{ $failureAction | quote }}
         message: "Namespace access delegation requires the kubernetes-access group."
         deny:
           conditions:
@@ -219,6 +222,7 @@ spec:
           - subjects:
 {{- toYaml $controllerSubjects | nindent 14 }}
       validate:
+        failureAction: {{ $failureAction | quote }}
         message: "Users may share access only from namespaces prefixed by their username."
         deny:
           conditions:
@@ -242,6 +246,7 @@ spec:
           - subjects:
 {{- toYaml $controllerSubjects | nindent 14 }}
       validate:
+        failureAction: {{ $failureAction | quote }}
         message: "Delegated RoleBindings may grant only configured ClusterRoles."
         deny:
           conditions:
@@ -269,6 +274,7 @@ spec:
           - subjects:
 {{- toYaml $controllerSubjects | nindent 14 }}
       validate:
+        failureAction: {{ $failureAction | quote }}
         message: "Delegated RoleBindings may reference User subjects or explicitly allowed Group subjects only."
         foreach:
           - list: request.object.subjects[]
