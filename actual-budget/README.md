@@ -7,7 +7,7 @@ Values for deploying Actual Budget with the upstream `community-charts/actualbud
 - Actual Budget behind Traefik at `https://budget.jeiang.dev`.
 - cert-manager TLS using the `letsencrypt-prod` `ClusterIssuer`.
 - A `ClusterIP` Service on port `5006`.
-- A pre-created Hetzner CSI-backed persistent volume claim named `actual-budget-hcloud`.
+- A Hetzner CSI-backed persistent volume claim mounted at `/data`.
 - A `Recreate` Deployment strategy for the RWO Hetzner volume.
 - An init container that creates `/data/server-files` and `/data/user-files` before Actual starts.
 - Password-based Actual Budget login.
@@ -20,14 +20,14 @@ Values for deploying Actual Budget with the upstream `community-charts/actualbud
 - cert-manager installed with a `letsencrypt-prod` `ClusterIssuer`.
 - DNS for `budget.jeiang.dev` pointing at the Traefik load balancer.
 - Hetzner CSI installed with the RWO `hcloud-volumes` StorageClass.
-- A `10Gi` PVC named `actual-budget-hcloud` in the `actual-budget` namespace, populated with the existing Actual Budget data before the Deployment starts.
-- Copied files must be writable by UID/GID `1000`; this values file runs the Actual Budget pod as UID/GID `1000`.
+- A dynamically provisioned `10Gi` PVC in the `actual-budget` namespace.
+- Restored files must be writable by UID/GID `1000`; this values file runs the Actual Budget pod as UID/GID `1000`.
 
-## Existing Data Migration
+## Existing Data Restore
 
-Existing installs cannot mutate the old `actual-budget-data` PVC from `rclone-csi` to `hcloud-volumes`. Create `actual-budget-hcloud` outside these values, stop Actual Budget, copy the old PVC contents into the new PVC, and verify `server-files` and `user-files` are present before upgrading this release.
+Existing installs cannot mutate the old `actual-budget-data` PVC from `rclone-csi` to `hcloud-volumes`. If you already have a local backup, you can delete the old PVC, let this chart create a fresh `hcloud-volumes` PVC, let the application run once, and then upload the backup contents into the new PVC.
 
-Do not commit one-off copy Jobs, copy pod manifests, or live storage credentials to this repository.
+Do not commit one-off restore Jobs, copy pod manifests, local backup data, or live storage credentials to this repository.
 
 ## Install
 
@@ -64,7 +64,7 @@ kubectl -n actual-budget rollout status deployment/actual-budget --timeout=5m
 kubectl -n actual-budget get ingress actual-budget
 ```
 
-Confirm the Deployment mounts `actual-budget-hcloud` and uses the `Recreate` strategy before starting it against migrated data.
+Confirm the Deployment uses the `Recreate` strategy and the PVC uses `hcloud-volumes` with a `10Gi` request before starting it against restored data.
 
 If ingress is not ready yet, use a port-forward:
 

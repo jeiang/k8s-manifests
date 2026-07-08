@@ -22,7 +22,7 @@ These values override the upstream `community-charts/actualbudget` chart for thi
 | `ingress.tls` | `actual-budget-tls` for `budget.jeiang.dev` | TLS Secret and covered host. |
 | `persistence.enabled` | `true` | Enables persistent application data. |
 | `persistence.annotations` | `{}` | Optional PVC annotations. |
-| `persistence.existingClaim` | `actual-budget-hcloud` | Mounts the pre-created and pre-populated hcloud PVC. |
+| `persistence.existingClaim` | `""` | Creates a fresh hcloud PVC for this release. |
 | `persistence.storageClass` | `hcloud-volumes` | Uses Hetzner CSI storage when the chart creates a PVC. |
 | `persistence.subPath` | `""` | Mounts the PVC root. |
 | `persistence.volumeMode` | `""` | Uses Kubernetes default volume mode. |
@@ -44,5 +44,5 @@ These values override the upstream `community-charts/actualbudget` chart for thi
 ## Notes
 
 - `budget.jeiang.dev` must resolve to the Traefik load balancer before ingress is useful.
-- Existing installs must copy data into `actual-budget-hcloud` before upgrading to these values.
-- Do not commit one-off migration Jobs, copy pods, or live storage credentials.
+- Existing installs with a local backup can delete the old rclone-backed PVC, let the chart create the new hcloud PVC, let Actual Budget run once, and then upload the backup contents into the new PVC.
+- Do not commit one-off restore Jobs, copy pods, or live storage credentials.
