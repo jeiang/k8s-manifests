@@ -1,0 +1,16 @@
+apiVersion: netbird.io/v1alpha1
+kind: NetworkResource
+metadata:
+  name: vlsingle-monitoring
+  namespace: monitoring
+  labels:
+    app.kubernetes.io/name: monitoring
+    app.kubernetes.io/component: netbird
+spec:
+  networkRouterRef:
+    name: k8s
+    namespace: netbird
+  serviceRef:
+    name: vlsingle-monitoring-victoria-metrics-k8s-stack
+  groups:
+    - name: All

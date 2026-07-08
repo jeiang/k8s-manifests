@@ -11,7 +11,7 @@ Values and support manifests for deploying the upstream `vm/victoria-metrics-k8s
 - [CrowdSec Dashboard](#crowdsec-dashboard)
 - [Install](#install)
 - [Verify](#verify)
-- [Future NetBird Exposure](#future-netbird-exposure)
+- [NetBird Exposure](#netbird-exposure)
 - [Values](#values)
 - [References](#references)
 
@@ -26,6 +26,7 @@ Values and support manifests for deploying the upstream `vm/victoria-metrics-k8s
 - Public Grafana ingress at `https://grafana.jeiang.dev` through Traefik and cert-manager.
 - Pocket ID generic OAuth for Grafana.
 - A `BitwardenSecret` manifest that syncs the Grafana OAuth client secret.
+- NetBird `NetworkResource` objects that expose the raw VictoriaMetrics and VictoriaLogs endpoints privately (see [NetBird Exposure](#netbird-exposure)).
 
 The raw VictoriaMetrics and VictoriaLogs HTTP endpoints are not exposed publicly.
 
@@ -163,14 +164,21 @@ kubectl -n monitoring logs deploy/monitoring-grafana -c grafana --previous --tai
 
 The Grafana values intentionally set memory requests/limits and persistence so startup, plugin loading, and first-login database work do not run as a BestEffort emptyDir workload.
 
-## Future NetBird Exposure
+## NetBird Exposure
 
-VictoriaMetrics and VictoriaLogs raw HTTP endpoints are meant to be exposed through NetBird resources in a later change. Do not expose these endpoints through public ingress.
+VictoriaMetrics and VictoriaLogs raw HTTP endpoints are exposed privately over NetBird instead of public ingress, via `vmsingle-networkresource.yaml` and `vlsingle-networkresource.yaml`. Apply them after the shared NetBird router and operator resources exist (see `../netbird-resources/`):
 
-Expected internal services for the deferred NetBird work:
+```fish
+kubectl apply -f ./monitoring/vmsingle-networkresource.yaml
+kubectl apply -f ./monitoring/vlsingle-networkresource.yaml
+```
+
+They reference:
 
 - `vmsingle-monitoring-victoria-metrics-k8s-stack` in namespace `monitoring` on port `8428`.
 - `vlsingle-monitoring-victoria-metrics-k8s-stack` in namespace `monitoring` on port `9428`.
+
+Both `NetworkResource` objects currently scope access to the `All` NetBird group, matching the existing `blocky-dns` convention; narrow the group if a more restrictive one exists for this organization.
 
 ## Values
 
