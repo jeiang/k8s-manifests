@@ -31,11 +31,14 @@ helm repo add crowdsec https://crowdsecurity.github.io/helm-charts
 helm repo update
 ```
 
+The upstream chart version checked while creating this file was `0.24.0`, with app version `v1.7.8`.
+
 Render the chart:
 
 ```fish
 helm template crowdsec crowdsec/crowdsec \
   --namespace crowdsec \
+  --version 0.24.0 \
   -f ./crowdsec/values.yaml
 ```
 
@@ -45,6 +48,7 @@ Install or upgrade:
 helm upgrade --install crowdsec crowdsec/crowdsec \
   --namespace crowdsec \
   --create-namespace \
+  --version 0.24.0 \
   -f ./crowdsec/values.yaml \
   --wait
 ```

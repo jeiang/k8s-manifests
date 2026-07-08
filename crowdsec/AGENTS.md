@@ -26,7 +26,7 @@ This directory contains values and support manifests for the upstream `crowdsec/
 ## Validation
 
 ```sh
-helm template crowdsec crowdsec/crowdsec --namespace crowdsec -f ./crowdsec/values.yaml
+helm template crowdsec crowdsec/crowdsec --namespace crowdsec --version 0.24.0 -f ./crowdsec/values.yaml
 kubectl diff --server-side -f ./crowdsec/crowdsec-vmservicescrape.yaml
 kubectl diff --server-side -f ./crowdsec/traefik-crowdsec-dynamic-bitwardensecret.yaml
 ```

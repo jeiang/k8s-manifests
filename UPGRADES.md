@@ -962,7 +962,7 @@ if unavoidable, cluster-affecting) under that item. `Watch`-priority items
 - [ ] **BD-3** — blocky-dns remove HPA
 - [ ] **CS-TR-1** — CrowdSec/Traefik AppSec outage risk
 - [ ] **TR-1** — Traefik CrowdSec bouncer plugin bump
-- [ ] **CS-1** — crowdsec chart version pin
+- [x] **CS-1** — crowdsec chart version pin. Added `--version 0.24.0` to the `helm template`/`helm upgrade --install` commands in `crowdsec/README.md` and the validation command in `crowdsec/AGENTS.md`, plus a "checked version" note. Commands run: `helm search repo crowdsec/crowdsec --versions` (confirmed `0.24.0`/`v1.7.8` current); `helm template crowdsec crowdsec/crowdsec --namespace crowdsec --version 0.24.0 -f ./crowdsec/values.yaml` diffed against the earlier unpinned render — only difference was Helm's randomly-generated `csLapiSecret`/`registrationToken` values (re-rolled per invocation), no schema drift.
 - [ ] **ID-1** — idp Pocket ID version bump
 - [ ] **ID-2** — idp email notification toggles
 - [ ] **RB-1** — rbac-access Kyverno `failureAction` rename
