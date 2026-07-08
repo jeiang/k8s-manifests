@@ -65,12 +65,13 @@ The Bitwarden machine-account token Secret must already exist in the `netbird` n
 kubectl -n netbird get secret bw-auth-token
 ```
 
-Install the upstream NetBird operator chart with the self-hosted management URL set to `https://netbird.jeiang.dev`:
+Install the upstream NetBird operator chart with the self-hosted management URL set to `https://netbird.jeiang.dev`. The chart version currently deployed is `0.7.0`:
 
 ```fish
 helm upgrade --install netbird-operator oci://ghcr.io/netbirdio/helm-charts/netbird-operator \
   --namespace netbird \
   --create-namespace \
+  --version 0.7.0 \
   -f ./netbird-resources/operator-values.yaml \
   --wait \
   --timeout=10m

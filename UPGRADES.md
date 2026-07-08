@@ -975,4 +975,4 @@ if unavoidable, cluster-affecting) under that item. `Watch`-priority items
 - [ ] **DOC-1** — Hetzner CCM/CSI version pin in docs
 - [ ] **NB-1** — netbird core/relay/proxy image bump
 - [ ] **NB-2** — netbird dashboard image bump
-- [ ] **NR-1** — netbird-resources operator chart version pin
+- [x] **NR-1** — netbird-resources operator chart version pin. Added `--version 0.7.0` to the `netbird-operator` install command in `netbird-resources/README.md`, noting it matches what's currently deployed. Commands run (read-only): `helm list -n netbird` and `helm get metadata netbird-operator -n netbird` (confirmed the live release is chart `netbird-operator-0.7.0`, app `v0.7.0`); `helm show chart oci://ghcr.io/netbirdio/helm-charts/netbird-operator --version 0.7.0` (confirms the pin resolves and matches).
