@@ -6,7 +6,7 @@ These values configure the local Blocky DNS Helm chart.
 | --- | --- | --- |
 | `replicaCount` | `2` | Fixed replica count for availability across node reboots/maintenance; ignored when `autoscaling.enabled=true`. |
 | `image.repository` | `ghcr.io/0xerr0r/blocky` | Blocky image repository. |
-| `image.tag` | `v0.28.2` | Blocky image tag. |
+| `image.tag` | `v0.33.0` | Blocky image tag. |
 | `image.pullPolicy` | `IfNotPresent` | Image pull policy. |
 | `service.type` | `ClusterIP` | Keeps DNS service internal. |
 | `service.annotations` | `{}` | Optional Service annotations. |

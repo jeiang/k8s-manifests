@@ -2,7 +2,7 @@
 
 Helm chart for running Blocky as an internal DNS service.
 
-Default application version: `v0.28.2`.
+Default application version: `v0.33.0`.
 
 ## What This Chart Creates
 
