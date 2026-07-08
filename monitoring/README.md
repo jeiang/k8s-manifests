@@ -8,6 +8,7 @@ Values and support manifests for deploying the upstream `vm/victoria-metrics-k8s
 - [Dependencies](#dependencies)
 - [Pocket ID Authentication](#pocket-id-authentication)
 - [Bitwarden Secret](#bitwarden-secret)
+- [Alerting](#alerting)
 - [CrowdSec Dashboard](#crowdsec-dashboard)
 - [Install](#install)
 - [Verify](#verify)
@@ -27,6 +28,7 @@ Values and support manifests for deploying the upstream `vm/victoria-metrics-k8s
 - Pocket ID generic OAuth for Grafana.
 - A `BitwardenSecret` manifest that syncs the Grafana OAuth client secret.
 - NetBird `NetworkResource` objects that expose the raw VictoriaMetrics and VictoriaLogs endpoints privately (see [NetBird Exposure](#netbird-exposure)).
+- Alertmanager routed to a Discord webhook, synced from Bitwarden (see [Alerting](#alerting)).
 
 The raw VictoriaMetrics and VictoriaLogs HTTP endpoints are not exposed publicly.
 
@@ -72,6 +74,14 @@ The synced Kubernetes Secret must be named `grafana-oauth` and contain:
 GF_AUTH_GENERIC_OAUTH_CLIENT_SECRET: <client-secret>
 ```
 
+Store the Alertmanager Discord webhook URL in Bitwarden Secrets Manager. Update `alertmanager-discord-bitwardensecret.yaml` so `spec.map[0].bwSecretId` points at that Bitwarden secret item.
+
+The synced Kubernetes Secret must be named `alertmanager-discord` and contain:
+
+```yaml
+webhookUrl: <discord-webhook-url>
+```
+
 Create the namespace and Bitwarden auth token Secret:
 
 ```fish
@@ -87,13 +97,23 @@ kubectl -n monitoring create secret generic bw-auth-token \
 set --erase BW_AUTH_TOKEN
 ```
 
-Sync the Grafana OAuth secret:
+Sync the Grafana OAuth secret and Alertmanager Discord webhook:
 
 ```fish
 kubectl apply -f ./monitoring/grafana-oauth-bitwardensecret.yaml
 kubectl -n monitoring get bitwardensecret grafana-oauth
 kubectl -n monitoring get secret grafana-oauth
+
+kubectl apply -f ./monitoring/alertmanager-discord-bitwardensecret.yaml
+kubectl -n monitoring get bitwardensecret alertmanager-discord
+kubectl -n monitoring get secret alertmanager-discord
 ```
+
+## Alerting
+
+Alertmanager routes all alerts (the chart's `defaultRules` plus anything from `vmalert`) to a single Discord receiver via `discord_configs`. The webhook URL is never written to `values.yaml`; it is synced from Bitwarden into the `alertmanager-discord` Secret (see [Bitwarden Secret](#bitwarden-secret)), mounted into the Alertmanager pod at `/etc/vm/secrets/alertmanager-discord/webhookUrl` via `alertmanager.spec.secrets`, and referenced by `alertmanager.config.receivers[0].discord_configs[0].webhook_url_file`.
+
+Current routing is a single catch-all: `group_by: ["alertgroup", "job"]`, `group_wait: 30s`, `group_interval: 5m`, `repeat_interval: 12h`. Add more specific routes under `alertmanager.config.route.routes` if some alerts need a different receiver or cadence later.
 
 ## CrowdSec Dashboard
 
@@ -144,6 +164,22 @@ kubectl -n monitoring get configmap crowdsec-dashboard
 
 Confirm that Grafana is reachable at `https://grafana.jeiang.dev` and redirects to Pocket ID. Test users in `monitoring_admin`, `monitoring_editor`, and `monitoring_reader` should receive the matching Grafana role. A user without those groups should be denied.
 Open the `CrowdSec` dashboard and confirm panels populate after CrowdSec metrics are scraped.
+
+Confirm Alertmanager loaded the Discord receiver and can reach the webhook mount:
+
+```fish
+kubectl -n monitoring get secret alertmanager-discord
+kubectl -n monitoring exec vmalertmanager-monitoring-victoria-metrics-k8s-stack-0 -- cat /etc/vm/secrets/alertmanager-discord/webhookUrl | head -c0 && echo mounted
+kubectl -n monitoring logs vmalertmanager-monitoring-victoria-metrics-k8s-stack-0 -c alertmanager --tail=50
+```
+
+Trigger a test alert to confirm delivery end-to-end (safe to run any time; `TestAlert` is not a real alertname):
+
+```fish
+kubectl -n monitoring exec vmalertmanager-monitoring-victoria-metrics-k8s-stack-0 -- wget -q -O- --post-data='[{"labels":{"alertname":"TestAlert","severity":"info"}}]' --header='Content-Type: application/json' http://localhost:9093/api/v2/alerts
+```
+
+A message should appear in the configured Discord channel within a few seconds.
 
 Inspect the rendered chart before deployment for:
 

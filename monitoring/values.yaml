@@ -90,6 +90,19 @@ alertmanager:
       limits:
         cpu: 100m
         memory: 256Mi
+    secrets:
+      - alertmanager-discord
+  config:
+    route:
+      receiver: discord-notifications
+      group_by: ["alertgroup", "job"]
+      group_wait: 30s
+      group_interval: 5m
+      repeat_interval: 12h
+    receivers:
+      - name: discord-notifications
+        discord_configs:
+          - webhook_url_file: /etc/vm/secrets/alertmanager-discord/webhookUrl
 
 internal:
   vmauth:

@@ -15,13 +15,16 @@ This directory contains values and support manifests for the upstream `victoria-
 - VictoriaMetrics and VictoriaLogs raw HTTP endpoints must not be exposed through public ingress; they are reachable privately over NetBird instead, via `vmsingle-networkresource.yaml` and `vlsingle-networkresource.yaml`.
 - VMSingle, VLSingle, and Grafana use the RWO-only `hcloud-volumes` StorageClass.
 - Grafana must keep `grafana.deploymentStrategy.type: Recreate` and `grafana.deploymentStrategy.rollingUpdate: null`; rolling updates can leave replacement pods stuck on multi-attach errors with Hetzner RWO volumes.
+- Alertmanager routes all alerts to a single Discord receiver via `discord_configs`; the webhook URL is synced by Bitwarden Secrets Manager into the `alertmanager-discord` Secret from `alertmanager-discord-bitwardensecret.yaml`, mounted at `/etc/vm/secrets/alertmanager-discord/webhookUrl` via `alertmanager.spec.secrets`, and referenced with `webhook_url_file` (never `webhook_url`) so the URL never appears in `values.yaml` or the rendered chart.
 
 ## Editing Notes
 
 - Do not commit the Grafana OAuth client secret.
+- Do not commit the Discord webhook URL; always reference it via `webhook_url_file` against the mounted `alertmanager-discord` Secret.
 - Keep the Grafana OAuth callback aligned with Pocket ID: `https://grafana.jeiang.dev/login/generic_oauth`.
 - Keep `vmsingle.ingress`, `vlsingle.ingress`, and `vlagent.ingress` disabled unless an explicit access-control design is added.
 - If `vmsingle`/`vlsingle` Service names ever change (e.g. a release rename), update `serviceRef.name` in both `vmsingle-networkresource.yaml` and `vlsingle-networkresource.yaml` to match.
+- If the Discord webhook is ever rotated, only the Bitwarden secret item needs to change; `alertmanager-discord-bitwardensecret.yaml` and `values.yaml` do not need edits.
 
 ## Validation
 
@@ -34,4 +37,5 @@ kubectl apply --dry-run=client -f ./monitoring/grafana-oauth-bitwardensecret.yam
 kubectl apply --dry-run=client -f ./monitoring/crowdsec-dashboard-configmap.yaml
 kubectl apply --dry-run=client -f ./monitoring/vmsingle-networkresource.yaml
 kubectl apply --dry-run=client -f ./monitoring/vlsingle-networkresource.yaml
+kubectl apply --dry-run=client -f ./monitoring/alertmanager-discord-bitwardensecret.yaml
 ```

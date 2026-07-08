@@ -33,10 +33,15 @@ These values override the upstream `vm/victoria-metrics-k8s-stack` chart for thi
 | `grafana.ingress.annotations` | `cert-manager.io/cluster-issuer: letsencrypt-prod` | Requests TLS through cert-manager. |
 | `grafana.ingress.hosts` | `grafana.jeiang.dev` | Public Grafana hostname. |
 | `grafana.ingress.tls` | `grafana-tls` for `grafana.jeiang.dev` | TLS secret created by cert-manager. |
+| `alertmanager.spec.secrets` | `[alertmanager-discord]` | Mounts the Bitwarden-synced webhook Secret at `/etc/vm/secrets/alertmanager-discord/`. |
+| `alertmanager.config.route.receiver` | `discord-notifications` | Routes all alerts to the Discord receiver by default. |
+| `alertmanager.config.route.group_by`/`group_wait`/`group_interval`/`repeat_interval` | `["alertgroup","job"]`, `30s`, `5m`, `12h` | Batches related alerts and controls notification cadence. |
+| `alertmanager.config.receivers[0].discord_configs[0].webhook_url_file` | `/etc/vm/secrets/alertmanager-discord/webhookUrl` | Reads the webhook URL from the mounted Secret file; never set `webhook_url` directly. |
 
 ## Notes
 
 - The Grafana OAuth client secret must not be placed in `values.yaml`. It should be synced to `grafana-oauth` with key `GF_AUTH_GENERIC_OAUTH_CLIENT_SECRET`.
 - Grafana uses `Recreate` because `hcloud-volumes` is RWO block storage; rolling updates can leave a replacement pod waiting on a multi-attach error until the old pod releases the volume.
-- The raw VictoriaMetrics and VictoriaLogs HTTP endpoints are intentionally internal for now. A later change should expose them through NetBird resources, not public ingress.
+- The raw VictoriaMetrics and VictoriaLogs HTTP endpoints are intentionally internal; they're reachable privately over NetBird via `vmsingle-networkresource.yaml` and `vlsingle-networkresource.yaml`, not public ingress.
 - If metrics or logs grow beyond the small RWO profile, revisit retention and storage before increasing write volume.
+- The Discord webhook URL must not be placed in `values.yaml`. It should be synced to `alertmanager-discord` with key `webhookUrl`, referenced only via `webhook_url_file`.
