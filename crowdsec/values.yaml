@@ -82,7 +82,17 @@ agent:
 
 appsec:
   enabled: true
-  replicas: 1
+  replicas: 2
+  strategy:
+    type: RollingUpdate
+  affinity:
+    podAntiAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        - labelSelector:
+            matchLabels:
+              k8s-app: crowdsec
+              type: appsec
+          topologyKey: kubernetes.io/hostname
   acquisitions:
     - source: appsec
       listen_addr: "0.0.0.0:7422"

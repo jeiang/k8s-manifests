@@ -24,6 +24,9 @@ These values override the upstream `crowdsec/crowdsec` chart for this cluster.
 | `agent.env.COLLECTIONS` | `crowdsecurity/traefik` | Installs Traefik parsing/scenario collection. |
 | `agent.service.labels.victoria-metrics-scrape` | `crowdsec` | Selects the agent metrics service for `VMServiceScrape`. |
 | `appsec.enabled` | `true` | Runs CrowdSec AppSec/WAF. |
+| `appsec.replicas` | `2` | Keeps at least one AppSec pod ready during a rolling restart, since Traefik's bouncer plugin is configured fail-closed cluster-wide. |
+| `appsec.strategy.type` | `RollingUpdate` | AppSec has no PVC (unlike LAPI), so it doesn't need `Recreate`; rolling updates avoid a zero-ready-pod window. |
+| `appsec.affinity` | Hard pod anti-affinity on `k8s-app=crowdsec,type=appsec` | Spreads the 2 replicas across different nodes so a single node loss doesn't take out both. |
 | `appsec.acquisitions` | AppSec listener on `0.0.0.0:7422` | Provides the WAF endpoint used by Traefik. |
 | `appsec.configs.crs-vpatch.yaml` | Virtual patching config with a NetBird allow hook | Enables in-band request inspection with default ban remediation, disables broad CRS out-of-band rules, and allows NetBird signal, management, and WebSocket endpoints. |
 | `appsec.env.COLLECTIONS` | `crowdsecurity/appsec-virtual-patching crowdsecurity/appsec-crs` | Installs AppSec WAF collections. |
@@ -39,3 +42,4 @@ These values override the upstream `crowdsec/crowdsec` chart for this cluster.
 - The Traefik dynamic config Secret must exist before applying the Traefik `HelmChartConfig` that mounts it.
 - Broad `crowdsecurity/crs` out-of-band rules are intentionally disabled after false-positive AppSec decisions on legitimate NetBird traffic.
 - The NetBird AppSec allow hook is host/path scoped so it works for roaming laptop IPs and in-cluster peers without static IP allowlisting.
+- AppSec runs 2 replicas with `RollingUpdate` specifically because Traefik's bouncer plugin is fail-closed (`crowdsecAppsecFailureBlock`/`crowdsecAppsecUnreachableBlock: true`): with 1 replica and `Recreate`, any AppSec restart (chart bump, OOM, node drain) dropped to zero ready pods and blocked all public HTTP/HTTPS traffic cluster-wide for the whole restart window. This does not cover every failure mode: AppSec pods run a `wait-for-lapi-and-register` init container that blocks startup until LAPI is reachable, so `lapi.replicas: 1` + `Recreate` is still a narrower single point of failure for AppSec pods that are starting fresh (not already-running replicas).

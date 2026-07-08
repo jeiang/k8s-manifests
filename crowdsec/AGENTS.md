@@ -13,6 +13,7 @@ This directory contains values and support manifests for the upstream `crowdsec/
 - Traefik WAF integration uses separate LAPI and AppSec bouncer keys generated from CrowdSec and stored in Bitwarden Secrets Manager.
 - NetBird reverse proxy IP reputation uses a separate bouncer key generated from CrowdSec and stored in Bitwarden Secrets Manager.
 - Do not commit bouncer keys, CrowdSec console enrollment keys, or API credentials.
+- AppSec runs `replicas: 2` with `strategy.type: RollingUpdate` and hard pod anti-affinity because Traefik's bouncer plugin is fail-closed (`crowdsecAppsecFailureBlock`/`crowdsecAppsecUnreachableBlock: true`) and applied globally to every route; a single AppSec replica on `Recreate` meant any restart blocked all public traffic cluster-wide.
 
 ## Editing Notes
 
@@ -22,6 +23,8 @@ This directory contains values and support manifests for the upstream `crowdsec/
 - Keep Traefik acquisition scoped to `kube-system` `traefik-*` pods unless Traefik is moved.
 - If changing service labels, update `crowdsec-vmservicescrape.yaml`.
 - If changing AppSec service names or ports, update the Traefik dynamic config instructions in `README.md`.
+- Do not drop `appsec.replicas` back to `1` or revert `appsec.strategy.type` to `Recreate` without re-accepting the fail-closed-single-point-of-failure risk this fixed (see `UPGRADES.md` CS-TR-1). AppSec has no PVC, unlike LAPI, so `RollingUpdate` is safe here specifically.
+- `lapi.replicas` stays at `1` with `Recreate` (LAPI has a real PVC); AppSec pods run a `wait-for-lapi-and-register` init container, so a LAPI outage can still block new/restarting AppSec pods even though running AppSec replicas are otherwise independent.
 
 ## Validation
 

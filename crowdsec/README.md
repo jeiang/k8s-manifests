@@ -6,7 +6,7 @@ Values and support manifests for deploying the upstream `crowdsec/crowdsec` Helm
 
 - CrowdSec LAPI in the `crowdsec` namespace.
 - CrowdSec Agent log acquisition for k3s bundled Traefik pods in `kube-system`.
-- CrowdSec AppSec/WAF on the internal AppSec service.
+- CrowdSec AppSec/WAF on the internal AppSec service, running 2 replicas with `RollingUpdate` and pod anti-affinity so a restart never drops to zero ready pods (Traefik's bouncer is fail-closed globally — see `AGENTS.md`).
 - Prometheus metrics on internal port `6060` for LAPI, Agent, and AppSec.
 - A `VMServiceScrape` for VictoriaMetrics.
 - A `BitwardenSecret` manifest that syncs Traefik's dynamic CrowdSec middleware config.
