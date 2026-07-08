@@ -26,5 +26,6 @@ This directory contains values for the upstream `community-charts/actualbudget` 
 ```sh
 helm template actual-budget community-charts/actualbudget \
   --namespace actual-budget \
+  --version 1.9.1 \
   -f ./actual-budget/values.yaml
 ```

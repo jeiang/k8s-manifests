@@ -953,7 +953,7 @@ if unavoidable, cluster-affecting) under that item. `Watch`-priority items
 (BW-2, CS-2, RC-1, NB-3, NR-2) need no implementation and are omitted.
 
 - [x] **AB-1** — actual-budget PVC docs. Rewrote `actual-budget/README.md`, `AGENTS.md`, `VALUES.md` to describe the chart-created `actual-budget-data` PVC (dynamic `hcloud-volumes` provisioning) instead of the stale pre-created `actual-budget-hcloud` claim workflow, matching the pattern already fixed in `hath/`. Commands run: `grep -rn "actual-budget-hcloud" actual-budget/` (confirmed clean after edit); `helm template actual-budget community-charts/actualbudget --namespace actual-budget -f ./actual-budget/values.yaml | grep -A8 "kind: PersistentVolumeClaim"` (confirms rendered PVC is `actual-budget-data`, matches corrected docs).
-- [ ] **AB-2** — actual-budget chart version pin
+- [x] **AB-2** — actual-budget chart version pin. Added `--version 1.9.1` to the `helm template`/`helm upgrade --install` commands in `actual-budget/README.md` and `AGENTS.md`, plus a "checked version" note matching the `bitwarden-sm-operator` convention. Commands run: `helm search repo community-charts/actualbudget --versions` (confirmed `1.9.1`/`26.7.0` is current); `helm template actual-budget community-charts/actualbudget --namespace actual-budget --version 1.9.1 -f ./actual-budget/values.yaml` diffed byte-for-byte identical against the earlier unpinned render.
 - [ ] **BS-1** — bill-splitter immutable image tag
 - [ ] **BS-2** — bill-splitter securityContext/probes
 - [ ] **BW-1** — bitwarden-sm-operator VMServiceScrape

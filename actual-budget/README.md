@@ -38,11 +38,14 @@ helm repo add community-charts https://community-charts.github.io/helm-charts
 helm repo update
 ```
 
+The upstream chart version checked while creating this file was `1.9.1`, with app version `26.7.0`.
+
 Review the rendered manifests:
 
 ```fish
 helm template actual-budget community-charts/actualbudget \
   --namespace actual-budget \
+  --version 1.9.1 \
   -f ./actual-budget/values.yaml
 ```
 
@@ -52,6 +55,7 @@ Install or upgrade:
 helm upgrade --install actual-budget community-charts/actualbudget \
   --namespace actual-budget \
   --create-namespace \
+  --version 1.9.1 \
   -f ./actual-budget/values.yaml \
   --wait
 ```
@@ -86,6 +90,7 @@ Change the public hostname:
 helm upgrade --install actual-budget community-charts/actualbudget \
   --namespace actual-budget \
   --create-namespace \
+  --version 1.9.1 \
   -f ./actual-budget/values.yaml \
   --set ingress.hosts[0].host=budget.example.com \
   --set ingress.tls[0].hosts[0]=budget.example.com \
