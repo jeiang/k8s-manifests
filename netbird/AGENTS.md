@@ -12,7 +12,7 @@ This local Helm chart deploys the self-hosted NetBird management server, dashboa
 - Relay replicas default to `1` because `relay.exposedAddress` advertises one shared `rels://` URL. Do not scale relay behind the same Service without relay-aware stickiness or distinct advertised relay addresses; peers connected to different relay pods cannot see each other.
 - Relay pods use host networking and require nodes labeled `netbird.io/stun=true`.
 - Server and relay Deployments use `Recreate`; rolling updates conflict with the server's RWO PVC and the relay's host-network STUN port binding.
-- DNS for `stun.netbird.jeiang.dev` must point at the public address of the labeled relay node.
+- DNS for `stun.netbird.jeiang.dev` must point at the public address of the labeled relay node. When moving the `netbird.io/stun` label to a different node, update both the A and AAAA records to that node's addresses; a stale AAAA record left over from a previous node causes STUN checks to hang against a dead host even though the current node and firewall are fine.
 - DNS for `proxy.jeiang.dev` and `*.proxy.jeiang.dev` must point at the Traefik load balancer.
 - Persistence uses the RWO-only `hcloud-volumes` StorageClass.
 - `netbird-secrets` is expected to be synced by the chart-managed `BitwardenSecret`; the only direct namespace Secret should be the Bitwarden bootstrap `bw-auth-token`.
