@@ -9,7 +9,7 @@ spec:
       plugins:
         crowdsec-bouncer:
           moduleName: github.com/maxlerebourg/crowdsec-bouncer-traefik-plugin
-          version: v1.3.3
+          version: v1.6.0
     accessLog:
       enabled: true
     additionalArguments:
