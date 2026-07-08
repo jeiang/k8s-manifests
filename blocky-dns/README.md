@@ -6,8 +6,8 @@ Default application version: `v0.28.2`.
 
 ## What This Chart Creates
 
-- A Blocky Deployment.
-- A `HorizontalPodAutoscaler` that keeps at least 1 pod and scales up to 5 pods.
+- A Blocky Deployment with 2 fixed replicas for availability across node reboots/maintenance.
+- An optional `HorizontalPodAutoscaler` (disabled by default; `autoscaling.enabled=true` scales 1-5 pods on CPU).
 - A `ClusterIP` Service exposing DNS on port `53` for UDP and TCP inside the cluster.
 - A ConfigMap-mounted Blocky `config.yml`.
 - DNS blocklists from StevenBlack and Hagezi.
@@ -18,7 +18,7 @@ Default application version: `v0.28.2`.
 ## Dependencies
 
 - Helm 3 and `kubectl`.
-- metrics-server or another Kubernetes resource metrics provider for HPA CPU scaling.
+- metrics-server or another Kubernetes resource metrics provider, only if `autoscaling.enabled=true`.
 - Outbound HTTPS access so Blocky can download remote blocklists.
 - Outbound DNS access to the configured upstream resolvers.
 - NetBird operator CRDs and the shared `NetworkRouter/k8s` in the `netbird` namespace, since NetBird integration is enabled by default.
@@ -41,11 +41,11 @@ With the default values, that creates a `NetworkResource` named `blocky-dns` in 
 
 ## Verify
 
-Verify the Service and HPA:
+Verify the Service and replica count:
 
 ```fish
 kubectl -n dns get svc blocky-dns
-kubectl -n dns get hpa blocky-dns
+kubectl -n dns get deploy blocky-dns
 ```
 
 ## Values

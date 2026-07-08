@@ -4,7 +4,7 @@ These values configure the local Blocky DNS Helm chart.
 
 | Value | Default | Purpose |
 | --- | --- | --- |
-| `replicaCount` | `1` | Starts one Blocky pod before HPA scaling. |
+| `replicaCount` | `2` | Fixed replica count for availability across node reboots/maintenance; ignored when `autoscaling.enabled=true`. |
 | `image.repository` | `ghcr.io/0xerr0r/blocky` | Blocky image repository. |
 | `image.tag` | `v0.28.2` | Blocky image tag. |
 | `image.pullPolicy` | `IfNotPresent` | Image pull policy. |
@@ -14,7 +14,7 @@ These values configure the local Blocky DNS Helm chart.
 | `service.dnsPort` | `53` | DNS TCP/UDP service port. |
 | `resources.requests` | `cpu: 100m`, `memory: 128Mi` | Baseline scheduling request. |
 | `resources.limits` | `cpu: 500m`, `memory: 350Mi` | Runtime resource cap. |
-| `autoscaling.enabled` | `true` | Creates an HPA. |
+| `autoscaling.enabled` | `false` | Creates an HPA when enabled; off by default in favor of the fixed `replicaCount`. |
 | `autoscaling.minReplicas` | `1` | Minimum HPA replica count. |
 | `autoscaling.maxReplicas` | `5` | Maximum HPA replica count. |
 | `autoscaling.targetCPUUtilizationPercentage` | `70` | CPU utilization target. |
@@ -34,5 +34,5 @@ These values configure the local Blocky DNS Helm chart.
 
 ## Notes
 
-- The HPA requires metrics-server or another resource metrics provider.
+- The HPA is disabled by default; each Blocky pod keeps its own independent in-memory blocklist cache, so CPU-triggered scaling multiplies cold-start cost without a caching benefit. Enable `autoscaling.enabled=true` only with a deliberate reason, and note it requires metrics-server or another resource metrics provider.
 - Remote blocklists require outbound HTTPS from the Blocky pod.
