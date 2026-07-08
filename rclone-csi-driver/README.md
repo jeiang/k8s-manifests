@@ -99,11 +99,14 @@ kubectl -n rclone-csi get bitwardensecret rclone-config
 kubectl -n rclone-csi get secret rclone-config
 ```
 
+The upstream chart version checked while creating this file was `0.4.11`.
+
 Render the chart:
 
 ```fish
 helm template csi-rclone oci://ghcr.io/veloxpack/charts/csi-driver-rclone \
   --namespace rclone-csi \
+  --version 0.4.11 \
   -f ./rclone-csi-driver/values.yaml
 ```
 
@@ -113,6 +116,7 @@ Install or upgrade:
 helm upgrade --install csi-rclone oci://ghcr.io/veloxpack/charts/csi-driver-rclone \
   --namespace rclone-csi \
   --create-namespace \
+  --version 0.4.11 \
   -f ./rclone-csi-driver/values.yaml \
   --wait
 ```

@@ -26,5 +26,6 @@ This directory contains values and support manifests for the upstream `oci://ghc
 ```sh
 helm template csi-rclone oci://ghcr.io/veloxpack/charts/csi-driver-rclone \
   --namespace rclone-csi \
+  --version 0.4.11 \
   -f ./rclone-csi-driver/values.yaml
 ```

@@ -970,7 +970,7 @@ if unavoidable, cluster-affecting) under that item. `Watch`-priority items
 - [ ] **MO-1** — monitoring retention extension (optional)
 - [ ] **MO-2** — monitoring Alertmanager receiver
 - [ ] **MO-3** — monitoring NetBird exposure for VM/VL
-- [ ] **RC-2** — rclone-csi-driver chart version pin
+- [x] **RC-2** — rclone-csi-driver chart version pin. Added `--version 0.4.11` to the `helm template`/`helm upgrade --install` commands in `rclone-csi-driver/README.md` and `AGENTS.md`, plus a "checked version" note. Commands run: `helm show chart oci://ghcr.io/veloxpack/charts/csi-driver-rclone` (confirmed `0.4.11` current); `helm template csi-rclone oci://ghcr.io/veloxpack/charts/csi-driver-rclone --version 0.4.11 -f ./rclone-csi-driver/values.yaml --namespace rclone-csi` diffed byte-for-byte identical against the earlier unpinned render.
 - [ ] **WS-1** — website securityContext/probes
 - [ ] **DOC-1** — Hetzner CCM/CSI version pin in docs
 - [ ] **NB-1** — netbird core/relay/proxy image bump
