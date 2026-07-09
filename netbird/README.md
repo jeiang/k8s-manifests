@@ -18,6 +18,7 @@ Default images:
 - [Install](#install)
 - [Reverse Proxy](#reverse-proxy)
 - [Verify](#verify)
+- [Troubleshooting](#troubleshooting)
 - [Values](#values)
 
 ## What This Chart Creates
@@ -187,6 +188,28 @@ kubectl -n netbird get leases
 ```
 
 In the NetBird dashboard, open **Reverse Proxy** > **Services** and confirm `proxy.jeiang.dev` appears with a cluster badge before creating a public service.
+
+## Troubleshooting
+
+### `netbird up` fails with `DeadlineExceeded` / "didn't receive a registration header from the Signal server"
+
+Signal is a long-lived gRPC stream. The Traefik CrowdSec bouncer must **not** inspect it in AppSec (inband) mode — body buffering stalls the stream and the client never receives its registration header, so `netbird up` blocks until it times out. Management (unary) and the relay (bodyless WebSocket) keep working, which makes the failure look partial.
+
+This chart's `netbird-grpc` IngressRoute (signal + management gRPC), the `/relay` route, and `/ws-proxy/` deliberately carry **no** WAF middleware; only the dashboard, `/api`, and `/oauth2` get `ingress.wafMiddleware` (`crowdsec-appsec@file`). The **global** `websecure`-entrypoint bouncer must run in IP-only mode (`crowdsecMode: stream`, `crowdsecAppsecEnabled: false`) so it never buffers request bodies. Keep AppSec (`crowdsecMode: appsec`) as a separate, per-route middleware only. See `UPGRADES.md` **TR-1** for the full incident write-up.
+
+### Network routers `0/1` and internal/VPN DNS broken after a Signal or Management outage
+
+The operator-managed `networkrouter-k8s` peers are **ephemeral**: if Signal/Management is unreachable long enough, the management server auto-evicts them, and the running agents give up (`peer is not registered` / `no peer auth method provided`) — they do **not** self-heal even once the server is healthy again. Symptoms: router pods `Running` but `0/1` Ready, `Peers count: 0/N Connected`, and no route to in-cluster blocky DNS (`100.89.255.254`) — which on a VPN client also makes internal names like `node1.jeiang.dev` unresolvable (a DNS bootstrap loop, since NetBird points system DNS at blocky but blocky is only reachable through a connected router).
+
+Fix — restart the routers so they re-register with their (still-valid) setup key:
+
+```fish
+kubectl -n netbird rollout restart deployment/networkrouter-k8s
+kubectl -n netbird rollout status deployment/networkrouter-k8s --timeout=90s
+kubectl -n netbird get pods -l app.kubernetes.io/name=networkrouter   # expect 1/1 Ready
+```
+
+Once a router is back, the DNS route re-establishes and clients reconnect on their own.
 
 ## Values
 
