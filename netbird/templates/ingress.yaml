@@ -51,12 +51,25 @@ spec:
     secretName: {{ .Values.ingress.tls.secretName | quote }}
   {{- end }}
   routes:
+    # Unary REST + auth — safe for inband AppSec inspection.
     - kind: Rule
-      match: Host(`{{ .Values.global.host }}`) && (PathPrefix(`/ws-proxy/`) || PathPrefix(`/api`) || PathPrefix(`/oauth2`))
+      match: Host(`{{ .Values.global.host }}`) && (PathPrefix(`/api`) || PathPrefix(`/oauth2`))
+      priority: 90
+      {{- with .Values.ingress.wafMiddleware }}
+      middlewares:
+        - name: {{ . | quote }}
+      {{- end }}
+      services:
+        - name: {{ include "netbird.serverName" . | quote }}
+          port: {{ .Values.server.port }}
+    # Dashboard<->management WebSocket — NO AppSec (streaming would stall).
+    - kind: Rule
+      match: Host(`{{ .Values.global.host }}`) && PathPrefix(`/ws-proxy/`)
       priority: 90
       services:
         - name: {{ include "netbird.serverName" . | quote }}
           port: {{ .Values.server.port }}
+    # Relay WebSocket — NO AppSec (streaming would stall).
     - kind: Rule
       match: Host(`{{ .Values.global.host }}`) && PathPrefix(`/relay`)
       priority: 100
@@ -81,6 +94,10 @@ spec:
     - kind: Rule
       match: Host(`{{ .Values.global.host }}`)
       priority: 1
+      {{- with .Values.ingress.wafMiddleware }}
+      middlewares:
+        - name: {{ . | quote }}
+      {{- end }}
       services:
         - name: {{ include "netbird.dashboardName" . | quote }}
           port: {{ .Values.dashboard.port }}

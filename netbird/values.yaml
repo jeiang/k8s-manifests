@@ -163,6 +163,12 @@ ingress:
   certManager:
     enabled: true
     clusterIssuer: letsencrypt-prod
+  # Traefik middleware applied ONLY to unary HTTP routes (dashboard, /api, /oauth2).
+  # Deliberately omitted from the gRPC (signal/management) and WebSocket (/relay,
+  # /ws-proxy) routes: inband CrowdSec AppSec body inspection stalls long-lived
+  # streams (see UPGRADES.md TR-1). Must be an AppSec-only middleware — the global
+  # websecure-entrypoint bouncer stays in IP-only (stream) mode. Set to "" to disable.
+  wafMiddleware: crowdsec-appsec@file
 
 persistence:
   enabled: true
