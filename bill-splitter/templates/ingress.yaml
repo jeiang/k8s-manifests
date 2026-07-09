@@ -9,8 +9,11 @@ metadata:
     {{- if .Values.certManager.enabled }}
     cert-manager.io/cluster-issuer: {{ .Values.certManager.clusterIssuer.name | quote }}
     {{- end }}
-    {{- if .Values.ingress.redirectToHttps }}
-    traefik.ingress.kubernetes.io/router.middlewares: {{ printf "%s-%s-redirect-to-https@kubernetescrd" .Release.Namespace (include "bill-splitter.fullname" .) | quote }}
+    {{- $mws := list }}
+    {{- with .Values.ingress.wafMiddleware }}{{ $mws = append $mws . }}{{- end }}
+    {{- if .Values.ingress.redirectToHttps }}{{ $mws = append $mws (printf "%s-%s-redirect-to-https@kubernetescrd" .Release.Namespace (include "bill-splitter.fullname" .)) }}{{- end }}
+    {{- if $mws }}
+    traefik.ingress.kubernetes.io/router.middlewares: {{ join "," $mws | quote }}
     {{- end }}
 spec:
   ingressClassName: {{ .Values.ingress.className | quote }}

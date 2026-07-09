@@ -55,6 +55,11 @@ ingress:
 
   redirectToHttps: true
 
+  # CrowdSec AppSec (WAF) Traefik middleware. The global websecure-entrypoint
+  # bouncer runs IP-only (stream mode); L7 body inspection is opt-in per-route.
+  # Set to "" to disable AppSec for this app (it keeps IP blocking either way).
+  wafMiddleware: crowdsec-appsec@file
+
 certManager:
   enabled: true
   clusterIssuer:

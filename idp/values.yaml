@@ -61,6 +61,8 @@ ingress:
   className: traefik
   annotations:
     cert-manager.io/cluster-issuer: letsencrypt-prod
+    # CrowdSec AppSec (WAF), opt-in per-route; global entrypoint bouncer is IP-only.
+    traefik.ingress.kubernetes.io/router.middlewares: crowdsec-appsec@file
   tls:
     enabled: true
     secretName: idp-tls
