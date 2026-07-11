@@ -17,6 +17,9 @@ breakGlass:
     - kind: User
       name: system:serviceaccount:kube-system:namespace-controller
       apiGroup: rbac.authorization.k8s.io
+    - kind: User
+      name: system:serviceaccount:kube-system:github-deployer
+      apiGroup: rbac.authorization.k8s.io
     - kind: Group
       name: system:masters
       apiGroup: rbac.authorization.k8s.io
