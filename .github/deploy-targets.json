@@ -1,0 +1,108 @@
+{
+  "actual-budget": {
+    "type": "repo",
+    "chart": "community-charts/actualbudget",
+    "release": "actual-budget",
+    "namespace": "actual-budget",
+    "repo_name": "community-charts",
+    "repo_url": "https://community-charts.github.io/helm-charts",
+    "version": "1.9.1",
+    "values": "./actual-budget/values.yaml"
+  },
+  "bill-splitter": {
+    "type": "local",
+    "chart": "./bill-splitter",
+    "release": "bill-splitter",
+    "namespace": "bill-splitter"
+  },
+  "bitwarden-sm-operator": {
+    "type": "repo",
+    "chart": "bitwarden/sm-operator",
+    "release": "sm-operator",
+    "namespace": "sm-operator-system",
+    "repo_name": "bitwarden",
+    "repo_url": "https://charts.bitwarden.com/",
+    "devel": true,
+    "values": "./bitwarden-sm-operator/values.yaml"
+  },
+  "blocky-dns": {
+    "type": "local",
+    "chart": "./blocky-dns",
+    "release": "blocky-dns",
+    "namespace": "dns",
+    "dependency_build": true
+  },
+  "crowdsec": {
+    "type": "repo",
+    "chart": "crowdsec/crowdsec",
+    "release": "crowdsec",
+    "namespace": "crowdsec",
+    "repo_name": "crowdsec",
+    "repo_url": "https://crowdsecurity.github.io/helm-charts",
+    "version": "0.24.0",
+    "values": "./crowdsec/values.yaml"
+  },
+  "hath": {
+    "type": "local",
+    "chart": "./hath",
+    "release": "hath",
+    "namespace": "hath"
+  },
+  "idp": {
+    "type": "local",
+    "chart": "./idp",
+    "release": "idp",
+    "namespace": "idp"
+  },
+  "monitoring": {
+    "type": "repo",
+    "chart": "vm/victoria-metrics-k8s-stack",
+    "release": "monitoring",
+    "namespace": "monitoring",
+    "repo_name": "vm",
+    "repo_url": "https://victoriametrics.github.io/helm-charts/",
+    "values": "./monitoring/values.yaml"
+  },
+  "netbird": {
+    "type": "local",
+    "chart": "./netbird",
+    "release": "netbird",
+    "namespace": "netbird"
+  },
+  "netbird-operator": {
+    "type": "oci",
+    "chart": "oci://ghcr.io/netbirdio/helm-charts/netbird-operator",
+    "release": "netbird-operator",
+    "namespace": "netbird",
+    "version": "0.7.0",
+    "values": "./netbird-resources/operator-values.yaml",
+    "timeout": "10m"
+  },
+  "netbird-resources": {
+    "type": "local",
+    "chart": "./netbird-resources",
+    "release": "netbird-resources",
+    "namespace": "netbird"
+  },
+  "rbac-access": {
+    "type": "local",
+    "chart": "./rbac-access",
+    "release": "rbac-access",
+    "namespace": "kube-system",
+    "create_namespace": false
+  },
+  "rclone-csi-driver": {
+    "type": "oci",
+    "chart": "oci://ghcr.io/veloxpack/charts/csi-driver-rclone",
+    "release": "csi-rclone",
+    "namespace": "rclone-csi",
+    "version": "0.4.11",
+    "values": "./rclone-csi-driver/values.yaml"
+  },
+  "website": {
+    "type": "local",
+    "chart": "./website",
+    "release": "website",
+    "namespace": "website"
+  }
+}

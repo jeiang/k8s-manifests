@@ -1,0 +1,146 @@
+name: Helm Deploy
+
+on:
+  workflow_dispatch:
+    inputs:
+      chart:
+        description: Deployable unit to install or upgrade
+        type: choice
+        required: true
+        options:
+          - actual-budget
+          - bill-splitter
+          - bitwarden-sm-operator
+          - blocky-dns
+          - crowdsec
+          - hath
+          - idp
+          - monitoring
+          - netbird
+          - netbird-operator
+          - netbird-resources
+          - rbac-access
+          - rclone-csi-driver
+          - website
+      extra_args:
+        description: Extra helm arguments, word-split and appended (e.g. --set netbird.enabled=false)
+        type: string
+        required: false
+        default: ""
+      dry_run:
+        description: Render server-side without applying (--dry-run=server --debug)
+        type: boolean
+        required: false
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: helm-${{ inputs.chart }}
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v4
+        with:
+          version: v3.16.4
+
+      - name: Materialize kubeconfig
+        env:
+          DEPLOYER_KUBECONFIG: ${{ secrets.DEPLOYER_KUBECONFIG }}
+        run: |
+          install -m 600 /dev/null "$RUNNER_TEMP/kubeconfig"
+          printf '%s' "$DEPLOYER_KUBECONFIG" > "$RUNNER_TEMP/kubeconfig"
+          echo "KUBECONFIG=$RUNNER_TEMP/kubeconfig" >> "$GITHUB_ENV"
+
+      - name: Resolve target
+        id: target
+        env:
+          UNIT: ${{ inputs.chart }}
+        run: |
+          file=".github/deploy-targets.json"
+          entry="$(jq -e --arg u "$UNIT" '.[$u]' "$file")" || {
+            echo "::error::No deploy target '$UNIT' in $file"
+            exit 1
+          }
+          {
+            echo "type=$(jq -r '.type' <<< "$entry")"
+            echo "chart=$(jq -r '.chart' <<< "$entry")"
+            echo "release=$(jq -r '.release' <<< "$entry")"
+            echo "namespace=$(jq -r '.namespace' <<< "$entry")"
+            echo "repo_name=$(jq -r '.repo_name // ""' <<< "$entry")"
+            echo "repo_url=$(jq -r '.repo_url // ""' <<< "$entry")"
+            echo "version=$(jq -r '.version // ""' <<< "$entry")"
+            echo "values=$(jq -r '.values // ""' <<< "$entry")"
+            echo "timeout=$(jq -r '.timeout // "10m"' <<< "$entry")"
+            echo "devel=$(jq -r '.devel // false' <<< "$entry")"
+            echo "dep_build=$(jq -r '.dependency_build // false' <<< "$entry")"
+            echo "create_ns=$(jq -r 'if has("create_namespace") then .create_namespace else true end' <<< "$entry")"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Deploy
+        env:
+          TYPE: ${{ steps.target.outputs.type }}
+          CHART: ${{ steps.target.outputs.chart }}
+          RELEASE: ${{ steps.target.outputs.release }}
+          NS: ${{ steps.target.outputs.namespace }}
+          REPO_NAME: ${{ steps.target.outputs.repo_name }}
+          REPO_URL: ${{ steps.target.outputs.repo_url }}
+          VERSION: ${{ steps.target.outputs.version }}
+          VALUES: ${{ steps.target.outputs.values }}
+          TIMEOUT: ${{ steps.target.outputs.timeout }}
+          DEVEL: ${{ steps.target.outputs.devel }}
+          DEP_BUILD: ${{ steps.target.outputs.dep_build }}
+          CREATE_NS: ${{ steps.target.outputs.create_ns }}
+          DRY_RUN: ${{ inputs.dry_run }}
+          EXTRA_ARGS: ${{ inputs.extra_args }}
+        run: |
+          set -euo pipefail
+
+          if [ -n "$REPO_NAME" ]; then
+            helm repo add "$REPO_NAME" "$REPO_URL"
+            helm repo update "$REPO_NAME"
+          fi
+
+          if [ "$DEP_BUILD" = "true" ]; then
+            helm dependency build "$CHART"
+          fi
+
+          args=(upgrade --install "$RELEASE" "$CHART" --namespace "$NS")
+          [ "$CREATE_NS" = "true" ] && args+=(--create-namespace)
+          [ -n "$VERSION" ] && args+=(--version "$VERSION")
+          [ "$DEVEL" = "true" ] && args+=(--devel)
+          [ -n "$VALUES" ] && args+=(-f "$VALUES")
+
+          if [ "$DRY_RUN" = "true" ]; then
+            args+=(--dry-run=server --debug)
+          else
+            args+=(--wait --timeout "$TIMEOUT")
+          fi
+
+          extra=()
+          [ -n "$EXTRA_ARGS" ] && read -r -a extra <<< "$EXTRA_ARGS"
+          args+=("${extra[@]}")
+
+          echo "::group::helm ${args[*]}"
+          helm "${args[@]}"
+          echo "::endgroup::"
+
+      - name: Post-deploy status
+        if: ${{ inputs.dry_run == false }}
+        env:
+          RELEASE: ${{ steps.target.outputs.release }}
+          NS: ${{ steps.target.outputs.namespace }}
+        run: |
+          set -euo pipefail
+          helm status "$RELEASE" --namespace "$NS"
+          kubectl get pods --namespace "$NS" -o wide
+          kubectl get events --namespace "$NS" --sort-by=.lastTimestamp | tail -n 20
