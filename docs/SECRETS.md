@@ -14,6 +14,7 @@ The only Kubernetes Secrets expected to be created directly in normal operation 
 
 - `kube-system/hcloud`, used by Hetzner Cloud Controller Manager and Hetzner CSI.
 - Per-namespace `bw-auth-token` Secrets, used by the Bitwarden Secrets Manager operator to read Bitwarden items.
+- `kube-system/github-deployer-token`, the ServiceAccount token for the deploy pipeline (see `deploy-access/` and `DEPLOY_PIPELINE.md`). Its token is exposed to GitHub Actions as the `DEPLOYER_KUBECONFIG` Actions secret; never commit either value.
 
 All other application and workload secrets should be stored in Bitwarden Secrets Manager and synced by a `BitwardenSecret`.
 

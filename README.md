@@ -9,6 +9,7 @@ Repository-wide operational notes live in:
 - [`docs/SETUP_INSTRUCTIONS.md`](./docs/SETUP_INSTRUCTIONS.md) for user setup, namespace access, and delegation commands.
 - [`docs/AGENT_INSTRUCTIONS.md`](./docs/AGENT_INSTRUCTIONS.md) for cloud agents or other users creating namespace-scoped Helm charts.
 - [`docs/SECRETS.md`](./docs/SECRETS.md) for repository secret handling and Bitwarden Secrets Manager policy.
+- [`docs/DEPLOY_PIPELINE.md`](./docs/DEPLOY_PIPELINE.md) for the GitHub Actions Helm deploy/uninstall workflows and their one-time auth setup.
 - [`AGENTS.md`](./AGENTS.md) for contributor and automation guidance.
 
 Chart-specific maintenance guidance lives in each chart directory's `AGENTS.md` when present.
