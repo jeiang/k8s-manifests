@@ -28,6 +28,12 @@ helm upgrade --install <release-name> ./<chart-name> --namespace <namespace> --c
 
 Run `helm dependency build ./<chart-name>` before rendering or installing charts that declare local dependencies. `helm lint` catches chart and template problems. `helm template` renders manifests locally for review. Use `helm upgrade --install` only when applying to a configured cluster.
 
+## Deploy Pipeline
+
+The repository ships two GitHub Actions workflows, `.github/workflows/helm-deploy.yml` and `.github/workflows/helm-uninstall.yml`, that deploy and uninstall units as the `github-deployer` ServiceAccount. They read `.github/deploy-targets.json` for each unit's chart, release, namespace, and flags. See `docs/DEPLOY_PIPELINE.md` for setup, inputs, scope exclusions, and the add-a-new-chart checklist.
+
+Hard rule: adding, renaming, or removing a deployable unit, or changing a unit README's install command, requires updating `.github/deploy-targets.json` AND the `chart` choice `options` in BOTH workflow files. The mapping keys and both choice lists must match exactly.
+
 ## Coding Style & Naming Conventions
 
 Use two-space YAML indentation. Keep Kubernetes resource names lowercase, DNS-safe, and stable. Prefer chart-local helper names such as `<chart>.fullname` and `<chart>.labels`, and use `nindent`, `quote`, `trunc 63`, and `trimSuffix "-"` where needed for valid manifests.
@@ -70,7 +76,7 @@ Pull requests should describe the affected chart, summarize behavior changes, li
 
 ## Security & Configuration Tips
 
-Do not commit live secret values. Application and workload secrets should be stored in Bitwarden Secrets Manager and synced through `BitwardenSecret` resources. The only direct Kubernetes Secrets expected in normal operation are bootstrap/operator credentials required before Bitwarden can sync secrets: `kube-system/hcloud` for Hetzner components and per-namespace `bw-auth-token` Secrets for the Bitwarden operator. Prefer existing Kubernetes Secret references in `values.yaml`; do not add literal secret values. Review public hostnames, ACME issuer names, external services, hostPort exposure, and persistent storage before applying manifests to any cluster.
+Do not commit live secret values. Application and workload secrets should be stored in Bitwarden Secrets Manager and synced through `BitwardenSecret` resources. The only direct Kubernetes Secrets expected in normal operation are bootstrap/operator credentials required before Bitwarden can sync secrets: `kube-system/hcloud` for Hetzner components, per-namespace `bw-auth-token` Secrets for the Bitwarden operator, and `kube-system/github-deployer-token` for the deploy pipeline ServiceAccount. Prefer existing Kubernetes Secret references in `values.yaml`; do not add literal secret values. Review public hostnames, ACME issuer names, external services, hostPort exposure, and persistent storage before applying manifests to any cluster.
 
 ## External Cluster Components
 
