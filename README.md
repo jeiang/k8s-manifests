@@ -21,6 +21,7 @@ Chart-specific maintenance guidance lives in each chart directory's `AGENTS.md` 
 | [`bitwarden-sm-operator`](./bitwarden-sm-operator) | Values for the upstream Bitwarden Secrets Manager Kubernetes Operator chart. |
 | [`blocky-dns`](./blocky-dns) | Internal Blocky DNS resolver exposed through a `ClusterIP` Service. |
 | [`crowdsec`](./crowdsec) | Values and support manifests for upstream CrowdSec WAF, NetBird IP reputation, and metrics scraping. |
+| [`github-redirect`](./github-redirect) | Traefik-only 301 redirect from `github.jeiang.dev` to `https://github.com/jeiang`. |
 | [`hath`](./hath) | H@H Rust client with persistent cache storage. |
 | [`idp`](./idp) | Pocket ID identity provider with persistent state. |
 | [`monitoring`](./monitoring) | Values and Bitwarden configuration for the upstream VictoriaMetrics monitoring stack with Grafana and VictoriaLogs. |
@@ -80,6 +81,7 @@ Application and workload secrets should live in Bitwarden Secrets Manager and be
 | `actual-budget` | Traefik IngressClass named `traefik`; cert-manager controller and `letsencrypt-prod` `ClusterIssuer`; DNS for `budget.jeiang.dev`; Hetzner CSI `hcloud-volumes` storage. |
 | `blocky-dns` | metrics-server or another resource metrics provider for the HPA; outbound DNS/HTTPS access for upstreams and blocklists; optional NetBird operator CRDs when `netbird.enabled=true`. |
 | `crowdsec` | Upstream CrowdSec Helm chart repository; k3s containerd logs; Traefik pods in `kube-system`; VictoriaMetrics operator CRDs for `VMServiceScrape`; Bitwarden Secrets Manager operator for the Traefik dynamic config Secret; Hetzner CSI `hcloud-volumes` storage. |
+| `github-redirect` | Traefik `IngressRoute`/`Middleware` CRDs and `websecure` entryPoint; cert-manager `Certificate` CRD/controller and `letsencrypt-prod` `ClusterIssuer`; DNS for `github.jeiang.dev` pointing at the Traefik load balancer. |
 | `hath` | Hetzner CSI `hcloud-volumes` storage for cache/data directories; firewall rules for TCP `8888` to the node running the Hath pod. |
 | `idp` | Traefik IngressClass named `traefik`; cert-manager controller and `letsencrypt-prod` `ClusterIssuer`; DNS for `auth.jeiang.dev`; Bitwarden Secrets Manager operator for `idp-secrets`; Hetzner CSI `hcloud-volumes` storage. |
 | `monitoring` | Traefik IngressClass named `traefik`; cert-manager controller and `letsencrypt-prod` `ClusterIssuer`; DNS for `grafana.jeiang.dev`; Pocket ID OIDC client `a70e6d0d-360c-415f-b154-85ec7a6bc352`; Bitwarden Secrets Manager operator for `grafana-oauth`; Hetzner CSI `hcloud-volumes` storage; later NetBird resources for raw VictoriaMetrics and VictoriaLogs endpoints. |

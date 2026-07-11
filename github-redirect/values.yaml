@@ -1,0 +1,13 @@
+ingress:
+  enabled: true
+  entryPoint: websecure
+  host: github.jeiang.dev
+  tls:
+    enabled: true
+    secretName: github-redirect-tls
+  certManager:
+    enabled: true
+    clusterIssuer: letsencrypt-prod
+
+redirect:
+  target: https://github.com/jeiang
