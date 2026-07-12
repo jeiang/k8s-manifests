@@ -92,6 +92,14 @@ owned by that account. It grants pull/push on `default`, with no delete or cache
 administration permissions (`cc`, `cr`, `cq`, `cd`). Repositories owned by an
 organization or another user do not match, even when `jeiang` can contribute.
 
+A second rule matches immutable repository ID `1297481441` (`jeiang/attic`)
+without restricting the ref or requiring branch protection, but grants only
+pull access to `default`. Pull-request and unprotected-ref workflows in that
+repository can therefore consume the cache without being able to modify it.
+Attic merges matching grants, so a protected ref in `jeiang/attic` receives
+pull/push from the owner-wide rule while retaining no delete or administration
+permissions.
+
 This rule is deliberately fail-closed. GitHub's public branch API currently
 reports `jeiang/attic` `main` as `protected: false`, so no current workflow can
 match `ref_protected: "true"`. Before removing the static token or expecting
@@ -107,10 +115,10 @@ The required result is `{"name":"main","protected":true}`. Do not change
 the claim to `ref_protected: "false"`; the immutable owner ID and protected
 status are the authorization boundary.
 
-To narrow a repository later, replace or supplement the owner-wide rule with an
-entry that uses numeric `repository_id`, an explicit `ref`, and
-`ref_protected: "true"`. Repository or owner names are mutable and are not an
-adequate authorization boundary.
+Use numeric `repository_id` for any additional repository-specific read-only
+rules. Add explicit `ref` and `ref_protected: "true"` claims before granting
+push. Repository or owner names are mutable and are not an adequate
+authorization boundary.
 
 ### Migrate the fork workflows
 
