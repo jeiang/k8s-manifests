@@ -21,10 +21,12 @@ data:
     listen = {{ printf "0.0.0.0:%v" .Values.server.port | quote }}
     allowed-hosts = [{{ .Values.server.host | quote }}]
     api-endpoint = {{ required "server.apiEndpoint is required" .Values.server.apiEndpoint | quote }}
+    max-concurrent-uploads = {{ .Values.server.maxConcurrentUploads }}
     require-proof-of-possession = {{ .Values.server.requireProofOfPossession }}
 
     [database]
     url = {{ .Values.server.databaseUrl | quote }}
+    mmap-size = {{ printf "%.0f" .Values.server.database.mmapSize }}
 
     [storage]
     type = {{ .Values.server.storage.type | quote }}

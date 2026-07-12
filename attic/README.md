@@ -17,6 +17,12 @@ Attic objects live in Mega S4; only the SQLite metadata database lives on the
 volume. The Deployment uses `Recreate` so upgrades cannot trigger a Hetzner
 volume multi-attach failure.
 
+The server is limited to two concurrent NAR uploads and uses a `128MiB` SQLite
+memory map. These override the fork's unlimited-upload and `512MiB` mmap
+defaults so upload, compression, allocator, and database memory fit within the
+pod's `512Mi` limit. The fork's global limit of ten concurrent chunk uploads and
+SQLite's default single connection remain appropriate and are left unset.
+
 Before installing, provide:
 
 - A Mega S4 bucket and S3 application key. Defaults assume region
