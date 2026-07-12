@@ -2,5 +2,5 @@ apiVersion: v2
 name: attic
 description: Attic binary cache server with OIDC authentication
 type: application
-version: 0.1.0
-appVersion: "586bcd9af71218c9b7f784bd22fa65b5c763d1c8"
+version: 0.1.1
+appVersion: "28c0295d250ac438946cea5471b70cea84c9aab0"
