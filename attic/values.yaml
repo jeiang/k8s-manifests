@@ -12,7 +12,10 @@ server:
   host: attic.jeiang.dev
   apiEndpoint: https://attic.jeiang.dev/
   port: 8080
+  maxConcurrentUploads: 2
   databaseUrl: sqlite:///data/attic.db?mode=rwc
+  database:
+    mmapSize: 134217728
   requireProofOfPossession: true
   garbageCollection:
     interval: 12 hours
