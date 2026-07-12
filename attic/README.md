@@ -22,6 +22,9 @@ memory map. These override the fork's unlimited-upload and `512MiB` mmap
 defaults so upload, compression, allocator, and database memory fit within the
 pod's `512Mi` limit. The fork's global limit of ten concurrent chunk uploads and
 SQLite's default single connection remain appropriate and are left unset.
+Attic application targets log at `debug` while dependencies remain at `info`,
+using `server.logFilter: info,attic_server=debug` and the standard `RUST_LOG`
+filter consumed by `atticd`.
 
 Before installing, provide:
 

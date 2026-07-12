@@ -12,6 +12,7 @@ server:
   host: attic.jeiang.dev
   apiEndpoint: https://attic.jeiang.dev/
   port: 8080
+  logFilter: info,attic_server=debug
   maxConcurrentUploads: 2
   databaseUrl: sqlite:///data/attic.db?mode=rwc
   database:

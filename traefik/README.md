@@ -10,6 +10,8 @@ k3s `HelmChartConfig` for the bundled Traefik chart.
 - CrowdSec Traefik plugin static configuration.
 - Global CrowdSec WAF middleware attachment for the `web` and `websecure` entryPoints.
 - A Secret-backed file-provider dynamic config mount at `/config/crowdsec-dynamic.yaml`.
+- A `15m` `websecure` request read timeout, allowing expected long-running
+  streamed uploads while retaining a finite whole-request limit.
 
 ## Dependencies
 
@@ -34,5 +36,7 @@ The config names the Hetzner Load Balancer `legion-lb1` and places it in the `us
 ```sh
 kubectl -n kube-system rollout status deployment/traefik --timeout=5m
 kubectl -n kube-system get svc traefik
+kubectl -n kube-system get deployment traefik -o yaml | grep -F -- \
+  '--entrypoints.websecure.transport.respondingtimeouts.readtimeout=15m'
 kubectl -n kube-system logs deploy/traefik --tail=100 | grep -i crowdsec
 ```

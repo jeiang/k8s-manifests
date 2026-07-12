@@ -38,6 +38,8 @@ spec:
             - --mode
             - monolithic
           env:
+            - name: RUST_LOG
+              value: {{ .Values.server.logFilter | quote }}
             - name: AWS_ACCESS_KEY_ID
               valueFrom:
                 secretKeyRef:
