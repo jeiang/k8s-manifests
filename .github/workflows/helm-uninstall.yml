@@ -9,6 +9,7 @@ on:
         required: true
         options:
           - actual-budget
+          - attic
           - bill-splitter
           - bitwarden-sm-operator
           - blocky-dns

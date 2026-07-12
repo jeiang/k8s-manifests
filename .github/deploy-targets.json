@@ -9,6 +9,12 @@
     "version": "1.9.1",
     "values": "./actual-budget/values.yaml"
   },
+  "attic": {
+    "type": "local",
+    "chart": "./attic",
+    "release": "attic",
+    "namespace": "attic"
+  },
   "bill-splitter": {
     "type": "local",
     "chart": "./bill-splitter",
