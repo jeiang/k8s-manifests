@@ -42,6 +42,12 @@
     "version": "0.24.0",
     "values": "./crowdsec/values.yaml"
   },
+  "github-redirect": {
+    "type": "local",
+    "chart": "./github-redirect",
+    "release": "github-redirect",
+    "namespace": "github-redirect"
+  },
   "hath": {
     "type": "local",
     "chart": "./hath",
