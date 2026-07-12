@@ -45,6 +45,18 @@ then builds the helm argument list from the mapping: `--namespace`, optional
 `--create-namespace`, `--version`, `--devel`, and `-f <values>`. On a real run
 it also prints `helm status`, pods, and recent events for the namespace.
 
+### Testing workflow changes on a branch
+
+GitHub only dispatches `workflow_dispatch` workflows whose file exists on the
+default branch. Once these workflows are on `main`, branch edits are testable
+before merging: pick the branch in the **Run workflow** dropdown (or
+`gh workflow run <file> --ref <branch>`), and the branch's version of the
+workflow file and `.github/deploy-targets.json` is what runs. A brand-new
+workflow file that exists only on a branch cannot be dispatched at all — it
+must merge first. To validate cluster-side behavior before such a merge, run
+the exact helm command the mapping would produce locally with the deployer
+kubeconfig and `--dry-run=server`.
+
 ## Uninstall workflow
 
 Run **Actions → Helm Uninstall → Run workflow** with:
