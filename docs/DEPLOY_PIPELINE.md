@@ -12,9 +12,9 @@ ID login. Both authenticate as the `github-deployer` ServiceAccount.
 
 ## Scope
 
-The pipeline covers all 14 deployable units: the 8 local charts (`bill-splitter`,
-`blocky-dns`, `hath`, `idp`, `netbird`, `netbird-resources`, `rbac-access`,
-`website`) and the 6 upstream values-only units (`actual-budget`,
+The pipeline covers all 15 deployable units: the 9 local charts (`bill-splitter`,
+`blocky-dns`, `github-redirect`, `hath`, `idp`, `netbird`, `netbird-resources`,
+`rbac-access`, `website`) and the 6 upstream values-only units (`actual-budget`,
 `bitwarden-sm-operator`, `crowdsec`, `monitoring`, `rclone-csi-driver`,
 `netbird-operator`).
 
@@ -29,7 +29,7 @@ Out of scope, by design:
 
 Run **Actions → Helm Deploy → Run workflow** with:
 
-- `chart` — the unit to install or upgrade (choice of the 14 unit names).
+- `chart` — the unit to install or upgrade (choice of the 15 unit names).
 - `extra_args` — extra helm arguments appended to the command, default empty.
   The string is word-split (`read -r -a`) and forwarded verbatim, for example
   `--set netbird.enabled=false`. This is intentional: dispatch already requires
