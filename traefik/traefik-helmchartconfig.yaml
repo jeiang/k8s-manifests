@@ -16,6 +16,7 @@ spec:
       - --providers.file.filename=/config/crowdsec-dynamic.yaml
       - --entrypoints.web.http.middlewares=crowdsec-bouncer@file
       - --entrypoints.websecure.http.middlewares=crowdsec-bouncer@file
+      - --entrypoints.websecure.transport.respondingtimeouts.readtimeout=15m
     volumes:
       - name: traefik-crowdsec-dynamic
         mountPath: /config
