@@ -42,6 +42,41 @@ chart once:
 helm upgrade --install rbac-access ./rbac-access --namespace kube-system
 ```
 
+### If the rbac-access upgrade is denied by Kyverno
+
+Changing `breakGlass.subjects` (or `globalAdmins.subjects`) fails the upgrade
+with:
+
+```text
+admission webhook "validate-policy.kyverno.svc" denied the request: changes of
+immutable fields of a rule spec in a generate rule is disallowed
+```
+
+The bypass subjects render into the `exclude` block of the
+`rbac-access-generate-namespace-owner` ClusterPolicy, which is a generate rule,
+and Kyverno forbids updating the match/exclude fields of generate rules in
+place. This is Kyverno's webhook validating the policy content, not an
+authorization failure — switching to the k3s admin kubeconfig does not help.
+Delete that one policy and re-run the upgrade so it is recreated with the new
+spec:
+
+```sh
+kubectl delete clusterpolicy rbac-access-generate-namespace-owner
+helm upgrade --install rbac-access ./rbac-access --namespace kube-system
+```
+
+The deletion is low-risk: Kyverno retains already-generated
+`rbac-access-owner-admin` RoleBindings, and the policy has
+`generateExisting: false` and `background: false`, so the only exposure is a
+seconds-long window in which a brand-new namespace would not get its owner
+RoleBinding auto-generated. Verify the bypass landed in every policy
+afterwards:
+
+```sh
+kubectl get clusterpolicy -o yaml | grep -c github-deployer
+# Expect 9, one per policy exclude block.
+```
+
 ## Create the DEPLOYER_KUBECONFIG secret
 
 Run these once from an admin workstation to assemble the kubeconfig the

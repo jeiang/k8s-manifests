@@ -92,6 +92,20 @@ A cluster admin performs this once. Details and commands live in
    helm upgrade --install rbac-access ./rbac-access --namespace kube-system
    ```
 
+   Whenever `breakGlass.subjects` or `globalAdmins.subjects` change (including
+   this setup), Kyverno's policy webhook may deny the upgrade with `changes of
+   immutable fields of a rule spec in a generate rule is disallowed`, because
+   the bypass subjects render into the exclude block of the
+   `rbac-access-generate-namespace-owner` generate policy. This is not an
+   authorization failure — an admin kubeconfig does not help. Delete that one
+   policy and re-run the upgrade; generated RoleBindings are retained. Full
+   explanation in `../deploy-access/README.md`:
+
+   ```sh
+   kubectl delete clusterpolicy rbac-access-generate-namespace-owner
+   helm upgrade --install rbac-access ./rbac-access --namespace kube-system
+   ```
+
 3. Extract the token and cluster CA and assemble a kubeconfig:
 
    ```sh
