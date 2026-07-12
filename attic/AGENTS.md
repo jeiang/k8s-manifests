@@ -14,8 +14,8 @@ Mega S4 object storage, a SQLite metadata database, and public Traefik ingress.
   host aligned; the endpoint and audience must end in `/`.
 - Store S3 credentials and the base64 PKCS#1 RSA private key only in the
   Bitwarden-synced Secret.
-- GitHub rules must match immutable `repository_id` plus an explicitly trusted
-  protected ref. Do not grant cache administration permissions to CI.
+- GitHub rules must match an immutable repository or owner ID plus an explicitly
+  trusted protected-ref claim. Do not grant cache administration permissions to CI.
 - Changing chunking settings harms deduplication reuse for existing data.
 
 ## Validation

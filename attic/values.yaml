@@ -43,16 +43,14 @@ oidc:
     audience: https://attic.jeiang.dev/
     jwksUrl: https://token.actions.githubusercontent.com/.well-known/jwks
     tokenValidity: 12 hours
-    # GitHub currently reports jeiang/attic main as protected=false, so this
-    # rule intentionally matches no workflow until branch protection or a
-    # ruleset protects main. Do not weaken refProtected to "false".
+    # Trust the immutable owner ID, not the mutable account name. Protected
+    # refs in any repository owned by this account may use the default cache.
     rules:
       - claims:
-          repositoryId: "1297481441"
-          ref: refs/heads/main
-          refProtected: "true"
+          repository_owner_id: "31970261"
+          ref_protected: "true"
         caches:
-          attic-ci:
+          default:
             pull: true
             push: true
             delete: false

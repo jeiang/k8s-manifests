@@ -59,7 +59,7 @@ data:
     {{- range .Values.oidc.githubActions.rules }}
 
     [[oidc.providers.rules]]
-    claims = { repository_id = {{ .claims.repositoryId | quote }}, ref = {{ .claims.ref | quote }}, ref_protected = {{ .claims.refProtected | quote }} }
+    claims = { {{- $first := true }}{{- range $name, $claim := .claims }}{{ if not $first }}, {{ end }}{{ $name | quote }} = {{ $claim | quote }}{{- $first = false }}{{- end }} }
     caches = { {{- $first := true }}{{- range $name, $permissions := .caches }}{{ if not $first }}, {{ end }}{{ $name | quote }} = {{ include "attic.permissionTable" $permissions }}{{- $first = false }}{{- end }} }
     {{- end }}
     {{- end }}
