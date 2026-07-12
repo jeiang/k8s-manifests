@@ -19,9 +19,9 @@ server:
     defaultRetentionPeriod: 0 seconds
   storage:
     type: s3
-    region: eu-central-1
+    region: ca-montreal
     bucket: attic
-    endpoint: https://s3.eu-central-1.s4.mega.io
+    endpoint: https://s3.ca-montreal.megas4.com
   chunking:
     narSizeThreshold: 65536
     minSize: 16384
@@ -57,11 +57,11 @@ oidc:
             configureRetention: false
             destroy: false
   pocketId:
-    enabled: false
+    enabled: true
     name: pocketid
     displayName: Pocket ID
     issuer: https://auth.jeiang.dev
-    audience: ""
+    audience: "0304a563-8b46-4731-9eb0-224e8f0d1c7b"
     jwksUrl: https://auth.jeiang.dev/.well-known/jwks.json
     authorizationEndpoint: https://auth.jeiang.dev/authorize
     tokenEndpoint: https://auth.jeiang.dev/api/oidc/token
@@ -70,7 +70,40 @@ oidc:
       - profile
       - groups
     tokenValidity: 12 hours
-    rules: []
+    rules:
+      - claims:
+          attic_role: admin
+        caches:
+          "*":
+            pull: true
+            push: true
+            delete: true
+            create: true
+            configure: true
+            configureRetention: true
+            destroy: true
+      - claims:
+          attic_role: writer
+        caches:
+          "*":
+            pull: true
+            push: true
+            delete: false
+            create: false
+            configure: false
+            configureRetention: false
+            destroy: false
+      - claims:
+          attic_role: reader
+        caches:
+          "*":
+            pull: true
+            push: false
+            delete: false
+            create: false
+            configure: false
+            configureRetention: false
+            destroy: false
 
 secrets:
   existingSecret: attic-secrets
@@ -82,15 +115,15 @@ secrets:
 # Enable after creating these three Secrets Manager entries. Secret IDs are
 # identifiers, not secret values, but stay environment-specific.
 bitwardenSecrets:
-  enabled: false
-  organizationId: ""
+  enabled: true
+  organizationId: "af918704-c223-4f10-a245-b4640144f2d9"
   authToken:
     secretName: bw-auth-token
     secretKey: token
   secretIds:
-    s3AccessKeyId: ""
-    s3SecretAccessKey: ""
-    tokenRs256SecretBase64: ""
+    s3AccessKeyId: "4665f391-c3ec-45ef-8aab-b48500717b56"
+    s3SecretAccessKey: "e9ff9778-0c28-42fd-a318-b48500719679"
+    tokenRs256SecretBase64: "296c5301-9dda-4ab7-a472-b4850071559e"
 
 service:
   type: ClusterIP
@@ -121,7 +154,7 @@ ingress:
 
 resources:
   requests:
-    cpu: 50m
+    cpu: 250m
     memory: 128Mi
   limits:
     cpu: 500m
@@ -157,6 +190,7 @@ probes:
     timeoutSeconds: 2
     failureThreshold: 3
 
-nodeSelector: {}
+nodeSelector:
+  workload.jeiang.dev/attic: "true"
 tolerations: []
 affinity: {}

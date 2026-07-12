@@ -26,6 +26,14 @@ Before installing, provide:
 - The Bitwarden Secrets Manager operator and an `attic/bw-auth-token` Secret.
 - Traefik, cert-manager, and the existing `letsencrypt-prod` ClusterIssuer.
 - DNS for `attic.jeiang.dev` pointing to Traefik's load balancer.
+- A selected Kubernetes node labeled for the Attic workload:
+
+  ```sh
+  kubectl label node <node-name> workload.jeiang.dev/attic=true --overwrite
+  ```
+
+  The Deployment's default node selector requires this label. Confirm the
+  chosen node is ready before deploying with `kubectl get nodes -o wide`.
 
 ## Create credentials
 
@@ -167,9 +175,24 @@ The fork workflow edits are intentionally outside this Kubernetes chart. This
 runbook describes them but does not imply the current fork workflows support
 OIDC. GitHub OIDC grants access to an existing cache; it does not create one.
 
-Pocket ID is modeled under `oidc.pocketId` but disabled. Before enabling it,
-create a public PKCE client, register `http://127.0.0.1:*/callback`, fill in its
-client ID as `audience`, and add at least one deny-by-default claim/cache rule.
+Pocket ID uses a public PKCE client with `http://127.0.0.1:*/callback` as its
+registered callback. Set that client's ID as `oidc.pocketId.audience`; an empty
+audience is rejected when the provider is enabled.
+
+The default Pocket ID rules use the `attic_role` custom claim across all caches:
+
+- `admin` has pull, push, delete, cache creation, cache configuration, retention
+  configuration, and cache destruction permissions.
+- `writer` has pull and push permissions.
+- `reader` has pull permission.
+
+Configure Pocket ID to include exactly one of those scalar claim values in the
+ID token. Identities with a missing or different `attic_role` value receive no
+Attic permissions. Then log in with:
+
+```sh
+attic login --set-default pocketid https://attic.jeiang.dev/ --oidc pocketid
+```
 
 ## Validate and install
 
