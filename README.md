@@ -18,6 +18,7 @@ Chart-specific maintenance guidance lives in each chart directory's `AGENTS.md` 
 
 | Chart | Purpose |
 | --- | --- |
+| [`attic`](./attic) | OIDC-enabled Nix binary cache backed by Mega S4. |
 | [`website`](./website) | Static website deployment behind Traefik with cert-manager TLS. |
 | [`bitwarden-sm-operator`](./bitwarden-sm-operator) | Values for the upstream Bitwarden Secrets Manager Kubernetes Operator chart. |
 | [`blocky-dns`](./blocky-dns) | Internal Blocky DNS resolver exposed through a `ClusterIP` Service. |
@@ -77,6 +78,7 @@ Application and workload secrets should live in Bitwarden Secrets Manager and be
 
 | Chart | Dependencies |
 | --- | --- |
+| `attic` | Mega S4 bucket and application key; Bitwarden Secrets Manager operator for `attic-secrets`; Traefik IngressClass named `traefik`; cert-manager controller and `letsencrypt-prod` `ClusterIssuer`; DNS for `attic.jeiang.dev`; Hetzner CSI `hcloud-volumes` storage. |
 | `website` | Traefik IngressClass named `traefik`; Traefik `Middleware` CRD; cert-manager CRDs/controller; existing `letsencrypt-prod` `ClusterIssuer` unless `certManager.clusterIssuer.create=true`; DNS for all `ingress.hosts`. |
 | `bitwarden-sm-operator` | Bitwarden organization with Secrets Manager enabled; machine account access token; permissions to install CRDs/RBAC/operator resources; network egress to Bitwarden Cloud or self-hosted Bitwarden URLs. |
 | `actual-budget` | Traefik IngressClass named `traefik`; cert-manager controller and `letsencrypt-prod` `ClusterIssuer`; DNS for `budget.jeiang.dev`; Hetzner CSI `hcloud-volumes` storage. |

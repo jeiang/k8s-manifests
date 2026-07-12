@@ -1,0 +1,162 @@
+replicaCount: 1
+
+image:
+  repository: ghcr.io/jeiang/attic
+  tag: 586bcd9af71218c9b7f784bd22fa65b5c763d1c8
+  pullPolicy: IfNotPresent
+
+strategy:
+  type: Recreate
+
+server:
+  host: attic.jeiang.dev
+  apiEndpoint: https://attic.jeiang.dev/
+  port: 8080
+  databaseUrl: sqlite:///data/attic.db?mode=rwc
+  requireProofOfPossession: true
+  garbageCollection:
+    interval: 12 hours
+    defaultRetentionPeriod: 0 seconds
+  storage:
+    type: s3
+    region: eu-central-1
+    bucket: attic
+    endpoint: https://s3.eu-central-1.s4.mega.io
+  chunking:
+    narSizeThreshold: 65536
+    minSize: 16384
+    avgSize: 65536
+    maxSize: 262144
+  compression:
+    type: zstd
+    level: 8
+
+oidc:
+  githubActions:
+    enabled: true
+    name: github-actions
+    issuer: https://token.actions.githubusercontent.com
+    audience: https://attic.jeiang.dev/
+    jwksUrl: https://token.actions.githubusercontent.com/.well-known/jwks
+    tokenValidity: 12 hours
+    # GitHub currently reports jeiang/attic main as protected=false, so this
+    # rule intentionally matches no workflow until branch protection or a
+    # ruleset protects main. Do not weaken refProtected to "false".
+    rules:
+      - claims:
+          repositoryId: "1297481441"
+          ref: refs/heads/main
+          refProtected: "true"
+        caches:
+          attic-ci:
+            pull: true
+            push: true
+            delete: false
+            create: false
+            configure: false
+            configureRetention: false
+            destroy: false
+  pocketId:
+    enabled: false
+    name: pocketid
+    displayName: Pocket ID
+    issuer: https://auth.jeiang.dev
+    audience: ""
+    jwksUrl: https://auth.jeiang.dev/.well-known/jwks.json
+    authorizationEndpoint: https://auth.jeiang.dev/authorize
+    tokenEndpoint: https://auth.jeiang.dev/api/oidc/token
+    scopes:
+      - openid
+      - profile
+      - groups
+    tokenValidity: 12 hours
+    rules: []
+
+secrets:
+  existingSecret: attic-secrets
+  keys:
+    s3AccessKeyId: AWS_ACCESS_KEY_ID
+    s3SecretAccessKey: AWS_SECRET_ACCESS_KEY
+    tokenRs256SecretBase64: ATTIC_SERVER_TOKEN_RS256_SECRET_BASE64
+
+# Enable after creating these three Secrets Manager entries. Secret IDs are
+# identifiers, not secret values, but stay environment-specific.
+bitwardenSecrets:
+  enabled: false
+  organizationId: ""
+  authToken:
+    secretName: bw-auth-token
+    secretKey: token
+  secretIds:
+    s3AccessKeyId: ""
+    s3SecretAccessKey: ""
+    tokenRs256SecretBase64: ""
+
+service:
+  type: ClusterIP
+  port: 8080
+
+persistence:
+  enabled: true
+  existingClaim: ""
+  storageClassName: hcloud-volumes
+  accessModes:
+    - ReadWriteOnce
+  size: 5Gi
+  mountPath: /data
+  annotations:
+    helm.sh/resource-policy: keep
+
+ingress:
+  enabled: true
+  className: traefik
+  annotations: {}
+  host: attic.jeiang.dev
+  tls:
+    enabled: true
+    secretName: attic-tls
+    clusterIssuer: letsencrypt-prod
+  # Leave empty by default: AppSec body inspection can reject large NAR uploads.
+  crowdsecMiddleware: ""
+
+resources:
+  requests:
+    cpu: 50m
+    memory: 128Mi
+  limits:
+    cpu: 500m
+    memory: 512Mi
+
+podSecurityContext:
+  fsGroup: 1000
+  fsGroupChangePolicy: OnRootMismatch
+
+securityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+      - ALL
+  readOnlyRootFilesystem: true
+  runAsNonRoot: true
+  runAsUser: 1000
+  runAsGroup: 1000
+
+probes:
+  readiness:
+    tcpSocket:
+      port: http
+    initialDelaySeconds: 3
+    periodSeconds: 10
+    timeoutSeconds: 2
+    failureThreshold: 6
+  liveness:
+    tcpSocket:
+      port: http
+    initialDelaySeconds: 15
+    periodSeconds: 20
+    timeoutSeconds: 2
+    failureThreshold: 3
+
+nodeSelector: {}
+tolerations: []
+affinity: {}

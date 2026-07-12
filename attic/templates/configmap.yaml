@@ -1,0 +1,83 @@
+{{- if not (hasSuffix "/" .Values.server.apiEndpoint) }}
+{{- fail "server.apiEndpoint must end with /" }}
+{{- end }}
+{{- if and .Values.oidc.githubActions.enabled (ne .Values.oidc.githubActions.audience .Values.server.apiEndpoint) }}
+{{- fail "oidc.githubActions.audience must equal server.apiEndpoint" }}
+{{- end }}
+{{- if and .Values.oidc.githubActions.enabled (empty .Values.oidc.githubActions.rules) }}
+{{- fail "oidc.githubActions.rules must contain at least one rule when enabled" }}
+{{- end }}
+{{- if and .Values.oidc.pocketId.enabled (empty .Values.oidc.pocketId.rules) }}
+{{- fail "oidc.pocketId.rules must contain at least one rule when enabled" }}
+{{- end }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "attic.fullname" . }}
+  labels:
+    {{- include "attic.labels" . | nindent 4 }}
+data:
+  server.toml: |
+    listen = {{ printf "0.0.0.0:%v" .Values.server.port | quote }}
+    allowed-hosts = [{{ .Values.server.host | quote }}]
+    api-endpoint = {{ required "server.apiEndpoint is required" .Values.server.apiEndpoint | quote }}
+    require-proof-of-possession = {{ .Values.server.requireProofOfPossession }}
+
+    [database]
+    url = {{ .Values.server.databaseUrl | quote }}
+
+    [storage]
+    type = {{ .Values.server.storage.type | quote }}
+    region = {{ .Values.server.storage.region | quote }}
+    bucket = {{ required "server.storage.bucket is required" .Values.server.storage.bucket | quote }}
+    endpoint = {{ .Values.server.storage.endpoint | quote }}
+
+    [chunking]
+    nar-size-threshold = {{ .Values.server.chunking.narSizeThreshold }}
+    min-size = {{ .Values.server.chunking.minSize }}
+    avg-size = {{ .Values.server.chunking.avgSize }}
+    max-size = {{ .Values.server.chunking.maxSize }}
+
+    [compression]
+    type = {{ .Values.server.compression.type | quote }}
+    level = {{ .Values.server.compression.level }}
+
+    [garbage-collection]
+    interval = {{ .Values.server.garbageCollection.interval | quote }}
+    default-retention-period = {{ .Values.server.garbageCollection.defaultRetentionPeriod | quote }}
+    {{- if .Values.oidc.githubActions.enabled }}
+
+    [[oidc.providers]]
+    name = {{ .Values.oidc.githubActions.name | quote }}
+    mode = "github-actions"
+    issuer = {{ .Values.oidc.githubActions.issuer | quote }}
+    audience = {{ .Values.oidc.githubActions.audience | quote }}
+    jwks-url = {{ .Values.oidc.githubActions.jwksUrl | quote }}
+    token-validity = {{ .Values.oidc.githubActions.tokenValidity | quote }}
+    {{- range .Values.oidc.githubActions.rules }}
+
+    [[oidc.providers.rules]]
+    claims = { repository_id = {{ .claims.repositoryId | quote }}, ref = {{ .claims.ref | quote }}, ref_protected = {{ .claims.refProtected | quote }} }
+    caches = { {{- $first := true }}{{- range $name, $permissions := .caches }}{{ if not $first }}, {{ end }}{{ $name | quote }} = {{ include "attic.permissionTable" $permissions }}{{- $first = false }}{{- end }} }
+    {{- end }}
+    {{- end }}
+    {{- if .Values.oidc.pocketId.enabled }}
+
+    [[oidc.providers]]
+    name = {{ .Values.oidc.pocketId.name | quote }}
+    display-name = {{ .Values.oidc.pocketId.displayName | quote }}
+    mode = "authorization-code-pkce"
+    issuer = {{ .Values.oidc.pocketId.issuer | quote }}
+    audience = {{ required "oidc.pocketId.audience is required when Pocket ID is enabled" .Values.oidc.pocketId.audience | quote }}
+    jwks-url = {{ .Values.oidc.pocketId.jwksUrl | quote }}
+    authorization-endpoint = {{ .Values.oidc.pocketId.authorizationEndpoint | quote }}
+    token-endpoint = {{ .Values.oidc.pocketId.tokenEndpoint | quote }}
+    scopes = [{{ range $index, $scope := .Values.oidc.pocketId.scopes }}{{ if $index }}, {{ end }}{{ $scope | quote }}{{ end }}]
+    token-validity = {{ .Values.oidc.pocketId.tokenValidity | quote }}
+    {{- range .Values.oidc.pocketId.rules }}
+
+    [[oidc.providers.rules]]
+    claims = { {{- $first := true }}{{- range $name, $claim := .claims }}{{ if not $first }}, {{ end }}{{ $name | quote }} = {{ $claim | quote }}{{- $first = false }}{{- end }} }
+    caches = { {{- $first := true }}{{- range $name, $permissions := .caches }}{{ if not $first }}, {{ end }}{{ $name | quote }} = {{ include "attic.permissionTable" $permissions }}{{- $first = false }}{{- end }} }
+    {{- end }}
+    {{- end }}
