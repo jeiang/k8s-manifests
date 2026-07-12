@@ -58,10 +58,10 @@ oidc:
             configure: false
             configureRetention: false
             destroy: false
-      # Allow every workflow context in jeiang/attic to consume the cache.
-      # Protected refs also match the owner rule above and gain push access.
+      # Allow every workflow context in repositories owned by jeiang to consume
+      # the cache. Protected refs also match the rule above and gain push access.
       - claims:
-          repository_id: "1297481441"
+          repository_owner_id: "31970261"
         caches:
           default:
             pull: true
