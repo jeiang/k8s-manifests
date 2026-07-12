@@ -86,10 +86,11 @@ they can be recorded in Helm release state and shell history.
 ## GitHub Actions OIDC
 
 The enabled `github-actions` provider follows the fork's exact schema and
-denies access unless every configured claim matches. Its initial rule trusts
-only immutable repository ID `1297481441` (`jeiang/attic`), protected
-`refs/heads/main`, and grants pull/push on `attic-ci`. It grants none of the
-cache administration permissions (`cc`, `cr`, `cq`, `cd`) and no delete access.
+denies access unless every configured claim matches. Its rule trusts immutable
+repository owner ID `31970261` (`jeiang`) and protected refs in any repository
+owned by that account. It grants pull/push on `default`, with no delete or cache
+administration permissions (`cc`, `cr`, `cq`, `cd`). Repositories owned by an
+organization or another user do not match, even when `jeiang` can contribute.
 
 This rule is deliberately fail-closed. GitHub's public branch API currently
 reports `jeiang/attic` `main` as `protected: false`, so no current workflow can
@@ -103,14 +104,13 @@ gh api repos/jeiang/attic/branches/main \
 ```
 
 The required result is `{"name":"main","protected":true}`. Do not change
-the claim to `ref_protected: "false"`; the immutable repository ID, exact ref,
-and protected status are the authorization boundary.
+the claim to `ref_protected: "false"`; the immutable owner ID and protected
+status are the authorization boundary.
 
-Add repositories as additional entries under `oidc.githubActions.rules`. Use
-the numeric `repository_id`, an explicit ref, and `ref_protected: "true"`;
-repository names and other mutable claims are not an adequate boundary. The
-`jeiang/k8s-manifests` repository ID is `1258439963` if this repository later
-needs its own rule.
+To narrow a repository later, replace or supplement the owner-wide rule with an
+entry that uses numeric `repository_id`, an explicit `ref`, and
+`ref_protected: "true"`. Repository or owner names are mutable and are not an
+adequate authorization boundary.
 
 ### Migrate the fork workflows
 
@@ -141,7 +141,7 @@ Migrate every one of those five jobs as a single change:
    ```
 
 3. Set `ATTIC_SERVER=https://attic.jeiang.dev/` and
-   `ATTIC_CACHE=attic-ci`. Replace token login with the fork's OIDC flow:
+   `ATTIC_CACHE=default`. Replace token login with the fork's OIDC flow:
 
    ```yaml
    - name: Configure Attic cache
@@ -153,10 +153,10 @@ Migrate every one of those five jobs as a single change:
 
 4. Apply that same `if` condition to Attic pushes and any cache-only step. Jobs
    must continue normally without `ATTIC_CACHE` when the condition is false.
-   The configured server rule permits only protected pushes whose ref is
-   exactly `refs/heads/main`; pull-request refs and unprotected branches are
-   intentionally excluded. Supporting PRs would require a separate, narrowly
-   reviewed read-only rule rather than broadening this one.
+   The configured server rule permits protected refs in repositories owned by
+   `jeiang`; pull-request refs and unprotected branches are intentionally
+   excluded. Supporting PRs would require a separate, narrowly reviewed
+   read-only rule rather than broadening this one.
 
 5. Only after branch protection reports `true` and an OIDC run succeeds,
    remove the old token from job environments and repository/environment
@@ -228,10 +228,10 @@ kubectl -n attic exec deployment/attic -- \
   /bin/atticadm -f /etc/attic/server.toml make-token \
   --sub bootstrap \
   --validity '15 minutes' \
-  --pull attic-ci \
-  --push attic-ci \
-  --create-cache attic-ci \
-  --configure-cache attic-ci
+  --pull default \
+  --push default \
+  --create-cache default \
+  --configure-cache default
 ```
 
 Copy the printed token into a temporary local variable, create the cache, then
@@ -241,7 +241,7 @@ erase it:
 read --silent --prompt-str 'Short-lived Attic bootstrap token: ' ATTIC_BOOTSTRAP_TOKEN
 echo
 attic login --set-default bootstrap https://attic.jeiang.dev/ "$ATTIC_BOOTSTRAP_TOKEN"
-attic cache create attic-ci
+attic cache create default
 set --erase ATTIC_BOOTSTRAP_TOKEN
 ```
 
@@ -252,7 +252,7 @@ the local client keeps the expired token.
 Before testing OIDC, confirm all of these are true:
 
 - GitHub reports `main` as protected.
-- `attic-ci` already exists.
+- `default` already exists.
 - All five applicable jobs install the pinned fork client.
 - Those jobs have `contents: read` and `id-token: write`.
 - Token login has been replaced by the guarded OIDC login/use steps above.
@@ -261,7 +261,7 @@ Then verify OIDC from a protected `main` push workflow:
 
 ```sh
 attic login --set-default ci "$ATTIC_SERVER" --oidc github-actions
-attic use attic-ci
+attic use default
 ```
 
 ## Verify and troubleshoot
@@ -281,8 +281,8 @@ curl -fsS https://attic.jeiang.dev/
 - TLS problems require checking DNS, the Ingress, Certificate, and
   `letsencrypt-prod` events.
 - An OIDC `403` usually means one of the verified claims does not match. Check
-  the repository ID, exact `refs/heads/main` ref, branch protection status, and
-  canonical audience; do not loosen the server rule to make the error vanish.
+  repository owner ID `31970261`, protected-ref status, and the canonical
+  audience; do not loosen the server rule to make the error vanish.
 - OIDC login is expected to be skipped on pull requests and unprotected branch
   pushes. Those jobs should run without the Attic cache.
 - If `attic login` rejects `--oidc`, the job is still using the old
