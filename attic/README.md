@@ -4,7 +4,7 @@ Helm chart for the OIDC-enabled [`jeiang/attic`](https://github.com/jeiang/attic
 fork, backed by Mega S4 and exposed at `https://attic.jeiang.dev/`.
 
 The image is pinned to the multi-architecture Nix build at
-`ghcr.io/jeiang/attic:28c0295d250ac438946cea5471b70cea84c9aab0`.
+`ghcr.io/jeiang/attic:8dc07c15f25579d5219464c54f3f14354840b753`.
 That commit supports OIDC token exchange. It does not use a Dockerfile: the
 fork's container workflow builds `attic-server-image` from `flake/packages.nix`.
 
@@ -128,7 +128,7 @@ Migrate every one of those five jobs as a single change:
    pinned to the same reviewed fork commit as the server:
 
    ```sh
-   nix profile install 'github:jeiang/attic/28c0295d250ac438946cea5471b70cea84c9aab0#attic-client'
+   nix profile install 'github:jeiang/attic/8dc07c15f25579d5219464c54f3f14354840b753#attic-client'
    ```
 
 2. Give each applicable job (or its workflow, if intentionally shared by all
@@ -171,7 +171,7 @@ permissions:
 
 steps:
   - uses: actions/checkout@v7
-  - run: nix profile install 'github:jeiang/attic/28c0295d250ac438946cea5471b70cea84c9aab0#attic-client'
+  - run: nix profile install 'github:jeiang/attic/8dc07c15f25579d5219464c54f3f14354840b753#attic-client'
   - if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     run: |
       attic login --set-default ci "$ATTIC_SERVER" --oidc github-actions
