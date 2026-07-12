@@ -2,7 +2,7 @@ replicaCount: 1
 
 image:
   repository: ghcr.io/jeiang/attic
-  tag: 586bcd9af71218c9b7f784bd22fa65b5c763d1c8
+  tag: 28c0295d250ac438946cea5471b70cea84c9aab0
   pullPolicy: IfNotPresent
 
 strategy:
