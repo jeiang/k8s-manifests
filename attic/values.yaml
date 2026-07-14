@@ -13,7 +13,10 @@ server:
   apiEndpoint: https://attic.jeiang.dev/
   port: 8080
   logFilter: info,attic_server=debug
-  maxConcurrentUploads: 2
+  # Sized for CI fan-out: ~2-3 concurrent jobs x 8 parallel client uploads.
+  # Uploads queue for a permit before the body is read, so a low value makes
+  # queued connections look idle and proxies reap them mid-push.
+  maxConcurrentUploads: 16
   databaseUrl: sqlite:///data/attic.db?mode=rwc
   database:
     mmapSize: 134217728
@@ -33,7 +36,9 @@ server:
     maxSize: 262144
   compression:
     type: zstd
-    level: 8
+    # Favor ingest throughput over storage: CI pushes are CPU-bound on
+    # compression. Only affects newly written chunks; dedup is unaffected.
+    level: 3
 
 oidc:
   githubActions:
@@ -169,11 +174,13 @@ ingress:
 
 resources:
   requests:
-    cpu: 250m
-    memory: 128Mi
-  limits:
     cpu: 500m
-    memory: 512Mi
+    memory: 256Mi
+  limits:
+    # Concurrent zstd streams need CPU to drain the upload queue; the pinned
+    # node idles around 4%. Memory limit stays under node5's free headroom.
+    cpu: "2"
+    memory: 768Mi
 
 podSecurityContext:
   fsGroup: 1000
