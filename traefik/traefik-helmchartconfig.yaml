@@ -10,8 +10,9 @@ spec:
         crowdsec-bouncer:
           moduleName: github.com/maxlerebourg/crowdsec-bouncer-traefik-plugin
           version: v1.6.0
-    accessLog:
-      enabled: true
+    logs:
+      access:
+        enabled: true
     additionalArguments:
       - --providers.file.filename=/config/crowdsec-dynamic.yaml
       - --entrypoints.web.http.middlewares=crowdsec-bouncer@file
