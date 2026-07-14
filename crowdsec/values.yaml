@@ -1,6 +1,20 @@
 container_runtime: containerd
 
 config:
+  parsers:
+    s02-enrich:
+      # The attic binary cache is hammered by legitimate clients: CI
+      # runners fetch thousands of narinfo/NAR URLs in bursts, which
+      # matches http-crawl/probing scenarios and got GitHub runner IPs
+      # banned mid-push. Any client of the cache vhost is expected to
+      # behave this way, so drop those events before scenarios see them.
+      attic-cache-whitelist.yaml: |
+        name: jeiang/attic-cache-whitelist
+        description: "Do not feed attic binary cache traffic into ban scenarios"
+        whitelist:
+          reason: "attic binary cache clients legitimately fetch in bursts"
+          expression:
+            - evt.Parsed.traefik_router_name contains "attic-attic-attic-jeiang-dev"
   config.yaml.local: |
     api:
       server:
