@@ -17,6 +17,11 @@ server:
   # Uploads queue for a permit before the body is read, so a low value makes
   # queued connections look idle and proxies reap them mid-push.
   maxConcurrentUploads: 16
+  # Bridge until the busy-timeout image (attic PR #14) is deployed:
+  # concurrent chunk inserts self-contend on SQLite's write lock and
+  # exceed sqlx's 5s busy timeout on low-dedup NARs. Remove once the
+  # image carries database.busy-timeout.
+  maxConcurrentChunkUploads: 2
   databaseUrl: sqlite:///data/attic.db?mode=rwc
   database:
     mmapSize: 134217728

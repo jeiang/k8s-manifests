@@ -22,6 +22,9 @@ data:
     allowed-hosts = [{{ .Values.server.host | quote }}]
     api-endpoint = {{ required "server.apiEndpoint is required" .Values.server.apiEndpoint | quote }}
     max-concurrent-uploads = {{ .Values.server.maxConcurrentUploads }}
+    {{- with .Values.server.maxConcurrentChunkUploads }}
+    max-concurrent-chunk-uploads = {{ . }}
+    {{- end }}
     require-proof-of-possession = {{ .Values.server.requireProofOfPossession }}
 
     [database]
