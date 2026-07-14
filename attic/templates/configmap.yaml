@@ -27,6 +27,9 @@ data:
     [database]
     url = {{ .Values.server.databaseUrl | quote }}
     mmap-size = {{ printf "%.0f" .Values.server.database.mmapSize }}
+    {{- with .Values.server.database.maxConnections }}
+    max-connections = {{ . }}
+    {{- end }}
 
     [storage]
     type = {{ .Values.server.storage.type | quote }}

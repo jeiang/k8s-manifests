@@ -20,6 +20,10 @@ server:
   databaseUrl: sqlite:///data/attic.db?mode=rwc
   database:
     mmapSize: 134217728
+    # Default pool of 10 starves under concurrent chunked uploads (each
+    # chunk does lookups/inserts), stalling uploads until proxies reset
+    # them. WAL readers scale with connections; writers still serialize.
+    maxConnections: 32
   requireProofOfPossession: true
   garbageCollection:
     interval: 12 hours
