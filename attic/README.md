@@ -252,6 +252,16 @@ attic cache create default
 set --erase ATTIC_BOOTSTRAP_TOKEN
 ```
 
+Make the cache publicly readable after creation:
+
+```sh
+attic cache configure default --public
+```
+
+This changes cache state in SQLite rather than Helm configuration. Anonymous
+clients can pull and inspect cache metadata, but pushing and cache
+administration still require a token with the corresponding permissions.
+
 Keep the token local and out of GitHub. Do not add `cc` to the CI rule merely to
 bootstrap the cache. Remove the `bootstrap` client login after initialization if
 the local client keeps the expired token.
