@@ -2,11 +2,11 @@ replicaCount: 1
 
 image:
   repository: ghcr.io/jeiang/attic
-  tag: 8dc07c15f25579d5219464c54f3f14354840b753
+  tag: 828b7ba583afae9523cda1c66d466ea430ea0160
   pullPolicy: IfNotPresent
 
 strategy:
-  type: Recreate
+  type: RollingUpdate
 
 server:
   host: attic.jeiang.dev
@@ -14,10 +14,15 @@ server:
   port: 8080
   logFilter: info,attic_server=debug
   maxConcurrentUploads: 2
-  databaseUrl: sqlite:///data/attic.db?mode=rwc
+  # The PostgreSQL connection URL contains credentials, so it lives only in
+  # the Bitwarden-synced Secret and reaches the server through the
+  # ATTIC_SERVER_DATABASE_URL environment variable, never this file.
   database:
-    mmapSize: 134217728
-  requireProofOfPossession: true
+    heartbeat: true
+  # Must stay false: chunk-level dedup negotiation for uploads is disabled by
+  # the server whenever proof of possession is required. The tradeoff is that
+  # knowing a NAR hash grants access to that NAR in the global dedup store.
+  requireProofOfPossession: false
   garbageCollection:
     interval: 12 hours
     defaultRetentionPeriod: 0 seconds
@@ -26,11 +31,14 @@ server:
     region: ca-montreal
     bucket: attic
     endpoint: https://s3.ca-montreal.megas4.com
+  # Sized for per-object Mega S4 latency (~0.2-0.35s per chunk PUT): 256KiB
+  # average keeps large NAR uploads inside client/LB connection limits.
+  # Changed 2026-07-19 while the store was empty, so no dedup reuse was lost.
   chunking:
     narSizeThreshold: 65536
-    minSize: 16384
-    avgSize: 65536
-    maxSize: 262144
+    minSize: 65536
+    avgSize: 262144
+    maxSize: 1048576
   compression:
     type: zstd
     level: 8
@@ -126,8 +134,9 @@ secrets:
     s3AccessKeyId: AWS_ACCESS_KEY_ID
     s3SecretAccessKey: AWS_SECRET_ACCESS_KEY
     tokenRs256SecretBase64: ATTIC_SERVER_TOKEN_RS256_SECRET_BASE64
+    databaseUrl: ATTIC_SERVER_DATABASE_URL
 
-# Enable after creating these three Secrets Manager entries. Secret IDs are
+# Enable after creating these four Secrets Manager entries. Secret IDs are
 # identifiers, not secret values, but stay environment-specific.
 bitwardenSecrets:
   enabled: true
@@ -139,21 +148,11 @@ bitwardenSecrets:
     s3AccessKeyId: "4665f391-c3ec-45ef-8aab-b48500717b56"
     s3SecretAccessKey: "e9ff9778-0c28-42fd-a318-b48500719679"
     tokenRs256SecretBase64: "296c5301-9dda-4ab7-a472-b4850071559e"
+    databaseUrl: "a783a91e-c57d-4dc7-a7f5-b48b00f4e2ad"
 
 service:
   type: ClusterIP
   port: 8080
-
-persistence:
-  enabled: true
-  existingClaim: ""
-  storageClassName: hcloud-volumes
-  accessModes:
-    - ReadWriteOnce
-  size: 5Gi
-  mountPath: /data
-  annotations:
-    helm.sh/resource-policy: keep
 
 ingress:
   enabled: true

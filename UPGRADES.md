@@ -43,6 +43,14 @@ alerting at all.
 
 ### Already resolved this session (context, not open findings)
 
+- **TR-1 is stale as of 2026-07-18**: `traefik/traefik-helmchartconfig.yaml`
+  and the live cluster both already run bouncer plugin `v1.6.0`. Also note the
+  globally-applied `crowdsec-bouncer@file` middleware runs `crowdsecMode:
+  stream` with `crowdsecAppsecEnabled: false`; AppSec body inspection is a
+  separate opt-in `crowdsec-appsec@file` middleware, so CS-TR-1's
+  "AppSec restart blocks all traffic" scenario no longer applies as written
+  (AppSec is also at 2 replicas now).
+
 - **blocky-dns OOM on startup**: memory reverted from an over-aggressive
   `192Mi` limit to `350Mi`, plus a `startupProbe` added, after the pod was
   OOMKilled while parsing 5 remote denylists before binding port 53.

@@ -47,7 +47,7 @@ The target cluster is k3s on Hetzner Cloud nodes running NixOS. Keep cluster-fac
 - k3s should use the Hetzner private network interface for Flannel.
 - k3s ServiceLB is disabled because Hetzner Cloud Controller Manager owns `LoadBalancer` Services.
 - k3s embedded cloud controller is disabled and kubelet uses `cloud-provider=external` for `hcloud-cloud-controller-manager`.
-- The cluster is IPv4-only for pod and service networking; public IPv6 can still be handled by Hetzner Load Balancers where needed.
+- The cluster is IPv4-only for pod and service networking, so pods can only reach external IPv4 endpoints. The underlying nodes are dual-stack and can access IPv6 addresses themselves (host-network workloads included), and public IPv6 can still be handled by Hetzner Load Balancers where needed.
 - Hetzner CSI uses a `kube-system/hcloud` Secret. Use the RWO-only `hcloud-volumes` StorageClass for small volumes, roughly less than `20Gi`, when the workload can run on one node at a time. Any Deployment using an `hcloud-volumes` PVC must use a `Recreate` strategy, otherwise rolling updates can leave replacement pods stuck on multi-attach volume errors. When migrating an existing Deployment from `RollingUpdate` to `Recreate`, explicitly clear the rolling update settings, for example with `rollingUpdate: null` in Helm values when the upstream chart supports it. Use `rclone-csi` for larger volumes, growth-prone volumes, or anything requiring RWX/multi-pod access. Never commit live storage tokens or rclone credentials.
 - On this k3s/NixOS setup, install `hcloud-csi` with `node.kubeletDir=/var/lib/kubelet`.
 - Hetzner public IPv4s belong in node OS networking, but k3s node external addresses should generally be left to the external cloud controller.

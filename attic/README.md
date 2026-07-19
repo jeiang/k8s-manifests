@@ -4,24 +4,33 @@ Helm chart for the OIDC-enabled [`jeiang/attic`](https://github.com/jeiang/attic
 fork, backed by Mega S4 and exposed at `https://attic.jeiang.dev/`.
 
 The image is pinned to the multi-architecture Nix build at
-`ghcr.io/jeiang/attic:8dc07c15f25579d5219464c54f3f14354840b753`.
+`ghcr.io/jeiang/attic:828b7ba583afae9523cda1c66d466ea430ea0160`.
 That commit supports OIDC token exchange. It does not use a Dockerfile: the
 fork's container workflow builds `attic-server-image` from `flake/packages.nix`.
 
 ## Architecture and prerequisites
 
 The chart creates one Attic server, a `ClusterIP` Service on port `8080`, a
-Traefik Ingress with `letsencrypt-prod` TLS, a retained `5Gi`
-`hcloud-volumes` RWO claim for SQLite, and an optional `BitwardenSecret`.
-Attic objects live in Mega S4; only the SQLite metadata database lives on the
-volume. The Deployment uses `Recreate` so upgrades cannot trigger a Hetzner
-volume multi-attach failure.
+Traefik Ingress with `letsencrypt-prod` TLS, and an optional `BitwardenSecret`.
+The workload is stateless: Attic objects live in Mega S4 and cache metadata
+lives in an external Supabase-hosted PostgreSQL database, so the Deployment
+uses the default `RollingUpdate` strategy and needs no volume.
 
-The server is limited to two concurrent NAR uploads and uses a `128MiB` SQLite
-memory map. These override the fork's unlimited-upload and `512MiB` mmap
-defaults so upload, compression, allocator, and database memory fit within the
-pod's `512Mi` limit. The fork's global limit of ten concurrent chunk uploads and
-SQLite's default single connection remain appropriate and are left unset.
+The PostgreSQL connection URL contains credentials and is delivered only
+through the synced Secret as `ATTIC_SERVER_DATABASE_URL`; the rendered
+`server.toml` deliberately omits `database.url`. Database heartbeat queries
+are enabled (`server.database.heartbeat: true`) so broken connections to the
+remote database are detected instead of failing the next request. Pod egress
+is IPv4-only (the nodes are dual-stack, the pod network is not), so the URL
+must point at a Supabase host reachable over IPv4 — the Supavisor **session**
+pooler (port `5432`) or the paid IPv4 add-on, not the IPv6-only direct host.
+Do not use the transaction-mode pooler on port `6543`: the server uses
+prepared statements, which transaction pooling does not support reliably.
+
+The server is limited to two concurrent NAR uploads so upload, compression,
+and allocator memory fit within the pod's `512Mi` limit. The fork's global
+limit of ten concurrent chunk uploads and its default connection-pool sizing
+remain appropriate and are left unset.
 Attic application targets log at `debug` while dependencies remain at `info`,
 using `server.logFilter: info,attic_server=debug` and the standard `RUST_LOG`
 filter consumed by `atticd`.
@@ -32,6 +41,9 @@ Before installing, provide:
   `eu-central-1`, endpoint `https://s3.eu-central-1.s4.mega.io`, and bucket
   `attic`; change `server.storage.bucket` if the created bucket differs. Attic
   automatically uses path-style addressing for a custom S3 endpoint.
+- A Supabase PostgreSQL database (us-east) reachable over IPv4, with a
+  dedicated database (or schema) for Attic. The server runs its own
+  migrations on startup; the connecting role must be able to create tables.
 - The Bitwarden Secrets Manager operator and an `attic/bw-auth-token` Secret.
 - Traefik, cert-manager, and the existing `letsencrypt-prod` ClusterIssuer.
 - DNS for `attic.jeiang.dev` pointing to Traefik's load balancer.
@@ -54,17 +66,23 @@ openssl genrsa -traditional -out attic-token-rs256.pem 4096
 base64 < attic-token-rs256.pem | tr -d '\n'
 ```
 
-Create three Bitwarden Secrets Manager entries containing:
+Create four Bitwarden Secrets Manager entries containing:
 
 1. The Mega S4 access key ID.
 2. The Mega S4 secret access key.
 3. The base64 PKCS#1 private key from above.
+4. The Supabase PostgreSQL connection URL, in the form
+   `postgresql://<user>:<password>@<ipv4-capable-host>:5432/<database>`.
+   Use the session pooler host; URL-encode any special characters in the
+   password.
 
 Set `bitwardenSecrets.enabled: true`, the Bitwarden organization ID, and those
-three entry IDs in `values.yaml`. The IDs identify external secrets; do not put
-credential values in the file. The resulting Kubernetes Secret is
-`attic-secrets` with keys `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, and
-`ATTIC_SERVER_TOKEN_RS256_SECRET_BASE64`.
+four entry IDs in `values.yaml` (`bitwardenSecrets.secretIds.databaseUrl` is
+the new one; rendering fails while it is empty). The IDs identify external
+secrets; do not put credential values in the file. The resulting Kubernetes
+Secret is `attic-secrets` with keys `AWS_ACCESS_KEY_ID`,
+`AWS_SECRET_ACCESS_KEY`, `ATTIC_SERVER_TOKEN_RS256_SECRET_BASE64`, and
+`ATTIC_SERVER_DATABASE_URL`.
 
 Create the namespace-local operator bootstrap Secret before Helm waits for the
 Deployment. Read the machine-account token without putting it in shell history:
@@ -135,7 +153,7 @@ Migrate every one of those five jobs as a single change:
    pinned to the same reviewed fork commit as the server:
 
    ```sh
-   nix profile install 'github:jeiang/attic/8dc07c15f25579d5219464c54f3f14354840b753#attic-client'
+   nix profile install 'github:jeiang/attic/828b7ba583afae9523cda1c66d466ea430ea0160#attic-client'
    ```
 
 2. Give each applicable job (or its workflow, if intentionally shared by all
@@ -178,7 +196,7 @@ permissions:
 
 steps:
   - uses: actions/checkout@v7
-  - run: nix profile install 'github:jeiang/attic/8dc07c15f25579d5219464c54f3f14354840b753#attic-client'
+  - run: nix profile install 'github:jeiang/attic/828b7ba583afae9523cda1c66d466ea430ea0160#attic-client'
   - if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     run: |
       attic login --set-default ci "$ATTIC_SERVER" --oidc github-actions
@@ -224,6 +242,45 @@ helm upgrade --install attic ./attic \
 
 The repository's **Helm Deploy** workflow can run the same install after
 `bw-auth-token`, Bitwarden entries, the bucket, and DNS exist.
+
+## Migrating from the SQLite deployment
+
+Attic has no built-in SQLite-to-PostgreSQL migration. Starting against an
+empty Supabase database means the server recreates the schema and the
+`default` cache must be re-initialized (next section); previously uploaded
+store paths are forgotten, and their objects remain orphaned in the Mega
+bucket where garbage collection can no longer see them. For a clean start,
+snapshot the old Hetzner volume, empty (or recreate) the `attic` bucket, and
+re-run cache initialization. Copying existing rows with a tool such as
+`pgloader` is possible in principle but is not a supported or tested path;
+the fresh start loses only cache/dedup history, not source data.
+
+Reset sequence, with the old deployment stopped first so nothing writes
+mid-wipe:
+
+```sh
+kubectl -n attic scale deployment/attic --replicas=0
+# Snapshot the Hetzner volume backing the old SQLite PVC in the Hetzner
+# console (or via `hcloud volume` tooling) before destroying anything.
+```
+
+Empty the bucket with the same Mega S4 credentials stored in Bitwarden,
+read into the environment without echoing into shell history:
+
+```fish
+read --silent --prompt-str 'Mega S4 access key ID: ' --export AWS_ACCESS_KEY_ID
+read --silent --prompt-str 'Mega S4 secret access key: ' --export AWS_SECRET_ACCESS_KEY
+aws s3 rm s3://attic --recursive \
+  --endpoint-url https://s3.ca-montreal.megas4.com \
+  --region ca-montreal
+aws s3 ls s3://attic --recursive \
+  --endpoint-url https://s3.ca-montreal.megas4.com \
+  --region ca-montreal
+set --erase AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY
+```
+
+The final `ls` must print nothing. Then deploy chart `0.2.0` and continue
+with cache initialization below.
 
 ## Initialize the cache
 
@@ -274,7 +331,7 @@ attic use default
 ## Verify and troubleshoot
 
 ```sh
-kubectl -n attic get bitwardensecret,secret,pvc,deploy,pods,svc,ingress
+kubectl -n attic get bitwardensecret,secret,deploy,pods,svc,ingress
 kubectl -n attic rollout status deployment/attic --timeout=5m
 kubectl -n attic logs deployment/attic
 kubectl -n attic get certificate attic-tls
@@ -282,7 +339,13 @@ curl -fsS https://attic.jeiang.dev/
 ```
 
 - `CreateContainerConfigError` usually means `attic-secrets` or one of its
-  three mapped keys is missing.
+  four mapped keys is missing.
+- Database connection failures at startup usually mean the Supabase URL uses
+  the IPv6-only direct host (pod egress is IPv4-only), the password needs
+  URL-encoding, or Supabase network restrictions block the cluster egress
+  address. Prepared-statement errors mean the URL points at the
+  transaction-mode pooler (port `6543`); switch to the session pooler on
+  `5432`.
 - S3 authorization errors usually mean the Mega key lacks bucket access, the
   bucket/region differs from `values.yaml`, or the endpoint is wrong.
 - TLS problems require checking DNS, the Ingress, Certificate, and
@@ -303,17 +366,16 @@ curl -fsS https://attic.jeiang.dev/
 ## Backup and uninstall
 
 Back up both parts of the service together: copy/version the Mega bucket and
-snapshot the Hetzner volume containing `/data/attic.db` while Attic is stopped
-so SQLite is consistent. Bucket data without the database is not a complete
-backup, and the database without objects cannot restore cache contents.
+dump the PostgreSQL database (`pg_dump` against the Supabase database, or
+Supabase's own scheduled backups). Bucket data without the database is not a
+complete backup, and the database without objects cannot restore cache
+contents. Both can be backed up online; no scale-down is required.
 
-```sh
-kubectl -n attic scale deployment/attic --replicas=0
-# Snapshot the PVC's Hetzner volume, and back up the Mega S4 bucket.
-kubectl -n attic scale deployment/attic --replicas=1
-```
+`helm uninstall attic --namespace attic` does not delete the Supabase
+database, Mega bucket, Bitwarden entries, TLS Secret, or namespace. Delete
+those only after verifying the backup and retention requirements.
 
-`helm uninstall attic --namespace attic` retains the PVC because it has
-`helm.sh/resource-policy: keep`. It also does not delete the Mega bucket,
-Bitwarden entries, TLS Secret, or namespace. Delete those only after verifying
-the backup and retention requirements.
+The retained PVC from the pre-0.2.0 SQLite deployment (`attic`, on
+`hcloud-volumes`) is no longer referenced by the chart. Keep its Hetzner
+volume snapshot until the PostgreSQL deployment is verified, then delete the
+PVC manually.

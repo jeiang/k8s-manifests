@@ -1,9 +1,3 @@
-{{- if ne (int .Values.replicaCount) 1 }}
-{{- fail "replicaCount must remain 1 while using the SQLite database" }}
-{{- end }}
-{{- if ne .Values.strategy.type "Recreate" }}
-{{- fail "strategy.type must remain Recreate while using an hcloud-volumes RWO claim" }}
-{{- end }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -55,6 +49,11 @@ spec:
                 secretKeyRef:
                   name: {{ include "attic.secretName" . | quote }}
                   key: {{ .Values.secrets.keys.tokenRs256SecretBase64 | quote }}
+            - name: ATTIC_SERVER_DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "attic.secretName" . | quote }}
+                  key: {{ .Values.secrets.keys.databaseUrl | quote }}
             - name: HOME
               value: /tmp
           ports:
@@ -74,21 +73,12 @@ spec:
               mountPath: /etc/attic/server.toml
               subPath: server.toml
               readOnly: true
-            - name: data
-              mountPath: {{ .Values.persistence.mountPath | quote }}
             - name: tmp
               mountPath: /tmp
       volumes:
         - name: config
           configMap:
             name: {{ include "attic.fullname" . }}
-        - name: data
-          {{- if .Values.persistence.enabled }}
-          persistentVolumeClaim:
-            claimName: {{ include "attic.claimName" . | quote }}
-          {{- else }}
-          emptyDir: {}
-          {{- end }}
         - name: tmp
           emptyDir: {}
       {{- with .Values.nodeSelector }}

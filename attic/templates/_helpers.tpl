@@ -32,10 +32,6 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 {{- required "secrets.existingSecret is required" .Values.secrets.existingSecret -}}
 {{- end }}
 
-{{- define "attic.claimName" -}}
-{{- default (include "attic.fullname" .) .Values.persistence.existingClaim -}}
-{{- end }}
-
 {{- define "attic.permissionTable" -}}
 {{- $p := . -}}
 { r = {{ ternary 1 0 (default false $p.pull) }}, w = {{ ternary 1 0 (default false $p.push) }}, d = {{ ternary 1 0 (default false $p.delete) }}, cc = {{ ternary 1 0 (default false $p.create) }}, cr = {{ ternary 1 0 (default false $p.configure) }}, cq = {{ ternary 1 0 (default false $p.configureRetention) }}, cd = {{ ternary 1 0 (default false $p.destroy) }} }

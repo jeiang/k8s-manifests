@@ -24,9 +24,11 @@ data:
     max-concurrent-uploads = {{ .Values.server.maxConcurrentUploads }}
     require-proof-of-possession = {{ .Values.server.requireProofOfPossession }}
 
+    # database.url is intentionally absent: the server falls back to the
+    # ATTIC_SERVER_DATABASE_URL environment variable so credentials stay in
+    # the synced Secret.
     [database]
-    url = {{ .Values.server.databaseUrl | quote }}
-    mmap-size = {{ printf "%.0f" .Values.server.database.mmapSize }}
+    heartbeat = {{ .Values.server.database.heartbeat }}
 
     [storage]
     type = {{ .Values.server.storage.type | quote }}
@@ -35,10 +37,10 @@ data:
     endpoint = {{ .Values.server.storage.endpoint | quote }}
 
     [chunking]
-    nar-size-threshold = {{ .Values.server.chunking.narSizeThreshold }}
-    min-size = {{ .Values.server.chunking.minSize }}
-    avg-size = {{ .Values.server.chunking.avgSize }}
-    max-size = {{ .Values.server.chunking.maxSize }}
+    nar-size-threshold = {{ printf "%.0f" (float64 .Values.server.chunking.narSizeThreshold) }}
+    min-size = {{ printf "%.0f" (float64 .Values.server.chunking.minSize) }}
+    avg-size = {{ printf "%.0f" (float64 .Values.server.chunking.avgSize) }}
+    max-size = {{ printf "%.0f" (float64 .Values.server.chunking.maxSize) }}
 
     [compression]
     type = {{ .Values.server.compression.type | quote }}
