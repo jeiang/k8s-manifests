@@ -209,6 +209,13 @@ The fork workflow edits are intentionally outside this Kubernetes chart. This
 runbook describes them but does not imply the current fork workflows support
 OIDC. GitHub OIDC grants access to an existing cache; it does not create one.
 
+The fork's CI pins its own client (`ATTIC_CLIENT_PIN` in the workflow files)
+to the same commit as this chart's server image. Routine commits do not need
+a pin bump; bump both together on major client-relevant updates — a new
+upload protocol, additional server features the client must speak, or
+security fixes — and pre-seed the cache with the newly pinned client build
+so CI does not compile it from source.
+
 Pocket ID uses a public PKCE client with `http://127.0.0.1:*/callback` as its
 registered callback. Set that client's ID as `oidc.pocketId.audience`; an empty
 audience is rejected when the provider is enabled.
