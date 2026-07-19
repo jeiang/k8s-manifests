@@ -4,9 +4,12 @@ Helm chart for the OIDC-enabled [`jeiang/attic`](https://github.com/jeiang/attic
 fork, backed by Mega S4 and exposed at `https://attic.jeiang.dev/`.
 
 The image is pinned to the multi-architecture Nix build at
-`ghcr.io/jeiang/attic:828b7ba583afae9523cda1c66d466ea430ea0160`.
-That commit supports OIDC token exchange. It does not use a Dockerfile: the
-fork's container workflow builds `attic-server-image` from `flake/packages.nix`.
+`ghcr.io/jeiang/attic:7e0a356cf10ed1a6b4bb5b565faed8be35d5607e`.
+That commit supports OIDC token exchange and ships a database migration that
+adds indexes on `cache.deleted_at` and `object.store_path_hash`, so scale the
+Deployment to zero before upgrading to it (see below). It does not use a
+Dockerfile: the fork's container workflow builds `attic-server-image` from
+`flake/packages.nix`.
 
 ## Architecture and prerequisites
 
@@ -236,6 +239,18 @@ attic login --set-default pocketid https://attic.jeiang.dev/ --oidc pocketid
 ```
 
 ## Validate and install
+
+When the incoming image contains a database migration (chart `0.2.1`'s index
+migration, and any future migrating release), stop the running server first so
+the old pod does not serve traffic against a schema mid-migration under the
+default `RollingUpdate` strategy:
+
+```sh
+kubectl -n attic scale deployment/attic --replicas=0
+```
+
+The subsequent `helm upgrade` restores the chart's `replicaCount`. The server
+runs its migrations on startup.
 
 Review the bucket name and Bitwarden IDs, then run:
 
